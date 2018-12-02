@@ -1,0 +1,13 @@
+This is the code for the MT M1M3 Thermal System assuming we can get python 3.6 code running on the NI-cRIO.
+
+Build Instructions:
+- cd src
+- python3 Setup.py build_ext
+- cp ./Run.py build/lib.linu..../
+
+Execution Instructions:
+- python3 Run.py
+
+Unit Test Instructions:
+- cd tests
+- python3 Tests.py
