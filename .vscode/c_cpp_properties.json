@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/include",
+                "${OSPL_HOME}/include",
+                "${OSPL_HOME}/include/sys",
+                "${OSPL_HOME}/include/dcps/C++/SACPP",
+                "${SAL_HOME}/include",
+                "${SAL_WORK_DIR}/MTM1M3TS/cpp",
+                "${SAL_WORK_DIR}/MTM1M3TS/cpp/src",
+                "${SAL_WORK_DIR}/MTM1M3SS/cpp",
+                "${SAL_WORK_DIR}/MTM1M3SS/cpp/src"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}
