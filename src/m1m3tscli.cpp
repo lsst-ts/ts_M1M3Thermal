@@ -1,5 +1,5 @@
 /*
- * Command line TS client.
+ * Command line Thermal System client.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,6 +20,8 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "ThermalFPGA.h"
+
 #include <cRIO/ThermalILC.h>
 #include <cRIO/FPGA.h>
 #include <spdlog/spdlog.h>
@@ -28,6 +30,7 @@
 #include <iomanip>
 
 using namespace LSST::cRIO;
+using namespace LSST::M1M3::TS;
 
 class M1M3TScli : public CliApp {
 public:
@@ -52,6 +55,32 @@ void M1M3TScli::processArg(int opt, const char* optarg) {
             std::cerr << "Unknown command: " << (char)(opt) << std::endl;
             exit(EXIT_FAILURE);
     }
+}
+
+ThermalFPGA* fpga = NULL;
+
+int closeFPGA(command_vec cmds) {
+    if (fpga == NULL) {
+        std::cerr << "FPGA already closed/not initialized!" << std::endl;
+        return 1;
+    }
+    fpga->close();
+    delete fpga;
+    fpga = NULL;
+    return 0;
+}
+
+int info(command_vec cmds) {}
+
+int openFPGA(command_vec cmds) {
+    if (fpga != NULL) {
+        std::cerr << "FPGA already opened!" << std::endl;
+        return 1;
+    }
+    fpga = new ThermalFPGA("/home/petr/");
+    fpga->initialize();
+    fpga->open();
+    return 0;
 }
 
 M1M3TScli cli("M1M3 Thermal System Command Line Interface");
@@ -109,23 +138,10 @@ int verbose(command_vec cmds) {
     return 0;
 }
 
-command_t commands[] = {
-#if 0
-        {"close",
-         [=](command_vec cmds) {
-             closeFPGA();
-             return 0;
-         },
-         "", 0, NULL, "Close FPGA connection"},
-        {"info", [=](command_vec cmds) { return cli.info(cmds); }, "S?", 0, "<address>..", "Print ILC info"},
-        {"open",
-         [=](command_vec) {
-             openFPGA();
-             return 0;
-         },
-         "", 0, NULL, "Open FPGA"},
-#endif
-        {"verbose", &verbose, "?", 0, "<new level>", "Report/set verbosity level"},
-        {NULL, NULL, NULL, 0, NULL, NULL}};
+command_t commands[] = {{"close", &closeFPGA, "", 0, NULL, "Close FPGA connection"},
+                        {"info", &info, "S?", 0, "<address>..", "Print ILC info"},
+                        {"open", &openFPGA, "", 0, NULL, "Open FPGA"},
+                        {"verbose", &verbose, "?", 0, "<new level>", "Report/set verbosity level"},
+                        {NULL, NULL, NULL, 0, NULL, NULL}};
 
 int main(int argc, char* const argv[]) { command_vec cmds = cli.init(commands, "hv", argc, argv); }
