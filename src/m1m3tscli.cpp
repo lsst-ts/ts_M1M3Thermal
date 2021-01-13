@@ -116,7 +116,39 @@ void M1M3TScli::processArg(int opt, const char* optarg) {
     }
 }
 
-ThermalFPGA* fpga = NULL;
+void _printBuffer(std::string prefix, uint16_t* buf, size_t len) {
+    if (_verbose == 0) {
+        return;
+    }
+
+    std::cout << prefix;
+    for (size_t i = 0; i < len; i++) {
+        std::cout << std::hex << std::setfill('0') << std::setw(4) << buf[i] << " ";
+    }
+    std::cout << std::endl;
+}
+
+class PrintTSFPGA : public ThermalFPGA {
+public:
+    PrintTSFPGA(const char* dir) : ThermalFPGA(dir) {}
+
+    void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override {
+        _printBuffer("C> ", data, length);
+        ThermalFPGA::writeCommandFIFO(data, length, timeout);
+    }
+
+    void writeRequestFIFO(uint16_t* data, int32_t length, int32_t timeout) {
+        _printBuffer("R> ", data, length);
+        ThermalFPGA::writeRequestFIFO(data, length, timeout);
+    }
+
+    void readU16ResponseFIFO(uint16_t* data, int32_t length, int32_t timeout) override {
+        ThermalFPGA::readU16ResponseFIFO(data, length, timeout);
+        _printBuffer("R< ", data, length);
+    }
+};
+
+PrintTSFPGA* fpga = NULL;
 PrintThermal ilc;
 
 int M1M3TScli::processCommand(const command_t* cmd, const command_vec& args) {
@@ -133,14 +165,6 @@ int closeFPGA() {
     delete fpga;
     fpga = NULL;
     return 0;
-}
-
-void _printBuffer(ModbusBuffer& mbuf) {
-    std::cout << "> ";
-    for (size_t i = 0; i < mbuf.getLength(); i++) {
-        std::cout << std::hex << std::setfill('0') << std::setw(4) << mbuf.getBuffer()[i] << " ";
-    }
-    std::cout << std::endl;
 }
 
 int info(command_vec cmds) {
@@ -171,9 +195,6 @@ int info(command_vec cmds) {
     }
 
     if (ilc.getLength() > 0) {
-        if (_verbose) {
-            _printBuffer(ilc);
-        }
         fpga->ilcCommands(9, ilc);
     }
 
@@ -191,7 +212,7 @@ int openFPGA(command_vec cmds) {
     } else {
         memcpy(dir, cmds[0].c_str(), cmds[0].length() + 1);
     }
-    fpga = new ThermalFPGA(dir);
+    fpga = new PrintTSFPGA(dir);
     fpga->initialize();
     fpga->open();
     return 0;
