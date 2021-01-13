@@ -58,8 +58,16 @@ void PrintThermal::processServerID(uint8_t address, uint64_t uniqueID, uint8_t i
                                    uint8_t networkNodeType, uint8_t ilcSelectedOptions,
                                    uint8_t networkNodeOptions, uint8_t majorRev, uint8_t minorRev,
                                    std::string firmwareName) {
-    std::cout << "Address:" << address << std::endl
-              << "UniqueID:" << std::hex << std::setw(8) << std::setfill('0') << (uniqueID) << std::endl;
+    std::cout << "Address: " << std::to_string(address) << std::endl
+              << "UniqueID: " << std::hex << std::setw(8) << std::setfill('0') << (uniqueID) << std::endl
+              << "ILC application type: " << std::to_string(ilcAppType) << std::endl
+              << "Network node type: " << std::to_string(networkNodeType) << std::endl
+              << "ILC selected options: " << std::to_string(ilcSelectedOptions) << std::endl
+              << "Network node options: " << std::to_string(networkNodeOptions) << std::endl
+              << "Firmware revision: " << std::to_string(majorRev) << "." << std::to_string(minorRev)
+              << std::endl
+              << "Firmware name: " << firmwareName << std::endl
+              << std::endl;
 }
 
 constexpr int NEED_FPGA = 0x01;
