@@ -271,7 +271,7 @@ command_t commands[] = {
         {"close", [=](command_vec) { return closeFPGA(); }, "", NEED_FPGA, NULL, "Close FPGA connection"},
         {"help", [=](command_vec cmds) { return cli.helpCommands(cmds); }, "", 0, NULL,
          "Print commands help"},
-        {"info", &info, "S?", NEED_FPGA, "<address>..", "Print ILC info"},
+        {"info", &info, "s?", NEED_FPGA, "<address>..", "Print ILC info"},
         {"open", &openFPGA, "", 0, NULL, "Open FPGA"},
         {"power", &setPower, "i", NEED_FPGA, "<0|1>", "Power off/on ILC bus"},
         {"verbose", &verbose, "?", 0, "<new level>", "Report/set verbosity level"},
