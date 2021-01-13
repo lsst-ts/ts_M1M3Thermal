@@ -12,13 +12,15 @@ OBJS = $(patsubst %.c,%.c.o,$(C_SRCS)) $(patsubst %.cpp,%.cpp.o,$(CPP_SRCS))
 C_DEPS = $(patsubst %.c,%.c.d,$(C_SRCS))
 CPP_DEPS = $(patsubst %.cpp,%.cpp.d,$(CPP_SRCS))
 
+.PRECIOUS: *.d
+
 ifneq ($(MAKECMDGOALS),clean)
   -include ${C_DEPS} ${CPP_DEPS}
 endif
 
 m1m3tscli: m1m3tscli.cpp.o libM1M3TS.a
 	@echo '[LD ] $@'
-	${co}$(CPP) -o $@ $^ ../../ts_cRIOcpp/src/libcRIOcpp.a -lreadline -ldl
+	${co}$(CPP) -o $@ $^ ../../ts_cRIOcpp/src/libcRIOcpp.a -lreadline
 
 libM1M3TS.a: $(OBJS)
 	@echo '[AR ] $@'

@@ -12,10 +12,10 @@ endif
 # compile x86 simulator or real cRIO stuff
 ifdef SIMULATOR
   C := gcc -Wall ${c_opts}
-  CPP := g++ -std=c++14 -pedantic -Wall ${c_opts} -DSIMULATOR
+  CPP := g++ -std=c++14 -pedantic -Wall ${c_opts} -DSIMULATOR -lpthread
 else
   C := gcc -Wall -fmessage-length=0 ${c_opts}
-  CPP := g++ -std=c++14 -Wall -fmessage-length=0 ${c_opts}
+  CPP := g++ -std=c++14 -Wall -fmessage-length=0 ${c_opts} -ldl -lpthread
   m1m3cli := m1m3cli
 endif
 
