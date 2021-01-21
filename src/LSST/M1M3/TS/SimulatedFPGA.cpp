@@ -35,4 +35,3 @@ void SimulatedFPGA::readU16ResponseFIFO(uint16_t* data, int32_t length, int32_t 
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
-
