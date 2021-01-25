@@ -23,6 +23,7 @@
 #include <cRIO/FPGA.h>
 #include <cRIO/NiError.h>
 #include <cRIO/ModbusBuffer.h>
+#include <cRIO/ThermalILC.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -31,7 +32,7 @@ namespace TS {
 /**
  * Simulated Thermal FPGA. Simulates answers to FPGA functions.
  */
-class SimulatedFPGA : public LSST::cRIO::FPGA {
+class SimulatedFPGA : public LSST::cRIO::FPGA, public LSST::cRIO::ThermalILC {
 public:
     SimulatedFPGA(){};
     virtual ~SimulatedFPGA(){};
@@ -42,12 +43,28 @@ public:
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, int32_t length, int32_t timeout) override;
     void readU16ResponseFIFO(uint16_t* data, int32_t length, int32_t timeout) override;
-    void waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered = NULL);
-    void ackIrqs(uint32_t irqs);
+    void waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered = NULL) override{};
+    void ackIrqs(uint32_t irqs){};
+
+protected:
+    void processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType, uint8_t networkNodeType,
+                         uint8_t ilcSelectedOptions, uint8_t networkNodeOptions, uint8_t majorRev,
+                         uint8_t minorRev, std::string firmwareName) override;
+
+    void processServerStatus(uint8_t address, uint8_t mode, uint16_t status, uint16_t faults) override;
+
+    void processChangeILCMode(uint8_t address, uint16_t mode) override;
+
+    void processSetTempILCAddress(uint8_t address, uint8_t newAddress) override;
+
+    void processResetServer(uint8_t address) override;
+
+    void processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
+                              float absoluteTemperature) override;
 
 private:
-    LSST::cRIO::ModbusBuffer buf;
-};
+    LSST::cRIO::ModbusBuffer response;
+};  // namespace TS
 
 }  // namespace TS
 }  // namespace M1M3

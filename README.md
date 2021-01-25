@@ -21,9 +21,9 @@ nozzle.
 
 # Make Targets
 
-- all: build the application
-- ts_M1M3Thermal: builds M1M3 TS CsC
-- clean: remove build artefacts
+- all: build the application and command line client
+- M1M3ThermalCsC: builds M1M3 TS CsC
+- clean: remove build artifacts
 - deploy: deploy CsC on cRIO
 - tests: build tests
 - run_tests: build and run tests
