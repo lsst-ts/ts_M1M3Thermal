@@ -64,6 +64,8 @@ protected:
 
 private:
     LSST::cRIO::ModbusBuffer response;
+
+    void _simulateModbus(uint16_t* data, size_t length);
 };  // namespace TS
 
 }  // namespace TS

@@ -1,5 +1,5 @@
 /*
- * Subscriber class.
+ * RIOSubscriber class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,11 +20,13 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "Subscriber.h"
+#include <RIOSubscriber.h>
 
 #include <cRIO/Command.h>
 #include <SAL_MTM1M3TS.h>
 #include <spdlog/spdlog.h>
+
+#include <chrono>
 
 namespace LSST {
 namespace M1M3 {
@@ -34,15 +36,19 @@ constexpr int32_t ACK_INPROGRESS = 301;  /// Acknowledges command reception, com
 constexpr int32_t ACK_COMPLETE = 303;    /// Command is completed.
 constexpr int32_t ACK_FAILED = -302;     /// Command execution failed.
 
-#define TRYACCEPT_COMMAND(command)               \
-    MTM1M3TS_command_##command##C command##Data; \
-    commandID = sal->acceptCommand_##command(&command##data);
+RIOSubscriber::RIOSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
+    _events = {"logLevel"};
 
-Subscriber::Subscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
+    for (auto e : _events) {
+        m1m3tsSAL->salEventPub((char *)("MTM1M3TS_logevent_" + e).c_str());
+    }
+
     _commands["setLogLevel"] = [m1m3tsSAL]() {
         MTM1M3TS_command_setLogLevelC data;
         MTM1M3TS_logevent_logLevelC newData;
         int32_t commandID = m1m3tsSAL->acceptCommand_setLogLevel(&data);
+        if (commandID <= 0) return;
+
         if (data.level >= 40) {
             spdlog::set_level(spdlog::level::err);
             newData.level = 40;
@@ -69,9 +75,16 @@ Subscriber::Subscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
     }
 }
 
-Subscriber::~Subscriber() {}
+RIOSubscriber::~RIOSubscriber() {}
 
-void Subscriber::tryCommands() {
+void RIOSubscriber::run() {
+    while (keepRunning) {
+        tryCommands();
+        std::this_thread::sleep_for(100us);
+    }
+}
+
+void RIOSubscriber::tryCommands() {
     for (auto c : _commands) {
         c.second();
     }

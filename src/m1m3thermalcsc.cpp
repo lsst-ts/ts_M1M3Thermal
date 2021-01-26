@@ -1,6 +1,37 @@
+/*
+ * Thermal CsC.
+ *
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
+ * This product includes software developed by the Vera C.Rubin Observatory Project
+ * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
+ * this distribution for details of code ownership.
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include <ThermalFPGA.h>
+
+#if SIMULATOR
+#include <SimulatedFPGA.h>
+#else
+#include <ThermalFPGA.h>
+#endif
+
+#include <RIOSubscriber.h>
+
 #include <cRIO/FPGA.h>
 #include <cRIO/SALSink.h>
-#include <ThermalFPGA.h>
 
 #include <SAL_MTM1M3TS.h>
 
@@ -91,6 +122,16 @@ void initializeFPGAs(FPGA* fpga) {
 }
 
 void runFPGAs(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
+    RIOSubscriber subscriber(m1m3tsSAL);
+
+    try {
+        subscriber.start();
+        subscriber.join();
+    } catch (std::exception& ex) {
+        SPDLOG_CRITICAL("Error starting.stopping or joining threads: {)", ex.what());
+    }
+
+    subscriber.stop();
 #if 0
     SPDLOG_INFO("Main: Creating subscriber");
     M1M3SSSubscriber::get().setSAL(m1m3SAL, mtMountSAL);
@@ -167,7 +208,11 @@ int main(int argc, char* const argv[]) {
     // M1M3SSPublisher::get().setSAL(m1m3SAL);
     // M1M3SSPublisher::get().newLogLevel(logLevel * 10);
 
+#if SIMULATOR
+    FPGA* fpga = new SimulatedFPGA();
+#else
     FPGA* fpga = new ThermalFPGA("Bitfiles");
+#endif
 
     try {
         initializeFPGAs(fpga);
