@@ -1,8 +1,8 @@
 include ../Makefile.inc
 
-all: m1m3tscli
+all: libM1M3TS.a
 
-CFLAGS += -ILSST/M1M3/TS -INiFpga
+CFLAGS += ${SAL_CPPFLAGS} -I../../ts_cRIOcpp/include -ILSST/M1M3/TS -INiFpga
 
 C_SRCS = $(shell find LSST NiFpga -name '*.c')
 CPP_SRCS = $(shell find LSST NiFpga -name '*.cpp')
@@ -17,10 +17,6 @@ CPP_DEPS = $(patsubst %.cpp,%.cpp.d,$(CPP_SRCS))
 ifneq ($(MAKECMDGOALS),clean)
   -include ${C_DEPS} ${CPP_DEPS}
 endif
-
-m1m3tscli: m1m3tscli.cpp.o libM1M3TS.a
-	@echo '[LD ] $@'
-	${co}$(CPP) -o $@ $^ ../../ts_cRIOcpp/src/libcRIOcpp.a -lreadline
 
 libM1M3TS.a: $(OBJS)
 	@echo '[AR ] $@'
