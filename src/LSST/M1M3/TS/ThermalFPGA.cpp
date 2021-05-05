@@ -33,7 +33,7 @@ namespace LSST {
 namespace M1M3 {
 namespace TS {
 
-ThermalFPGA::ThermalFPGA(const char* bitfileDir) : FPGA() {
+ThermalFPGA::ThermalFPGA(const char* bitfileDir) : FPGA(fpgaType::TS) {
     SPDLOG_DEBUG("ThermalFPGA: ThermalFPGA()");
     _bitfileDir = bitfileDir;
     _session = 0;
@@ -68,19 +68,25 @@ void ThermalFPGA::finalize() {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_Finalize());
 }
 
+uint16_t ThermalFPGA::getTxCommand(uint8_t bus) { return 9; }
+
+uint16_t ThermalFPGA::getRxCommand(uint8_t bus) { return 9; }
+
+uint32_t ThermalFPGA::getIrq(uint8_t bus) { return 1; }
+
 void ThermalFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU16(_session, NiFpga_M1M3SupportFPGA_HostToTargetFifoU16_CommandFIFO, data,
                                      length, timeout, NULL));
 }
 
-void ThermalFPGA::writeRequestFIFO(uint16_t* data, int32_t length, int32_t timeout) {
+void ThermalFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU16(_session, NiFpga_M1M3SupportFPGA_HostToTargetFifoU16_RequestFIFO, data,
                                      length, timeout, NULL));
 }
 
-void ThermalFPGA::readU16ResponseFIFO(uint16_t* data, int32_t length, int32_t timeout) {
+void ThermalFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU16(_session, NiFpga_M1M3SupportFPGA_TargetToHostFifoU16_U16ResponseFIFO,
                                     data, length, timeout, NULL));

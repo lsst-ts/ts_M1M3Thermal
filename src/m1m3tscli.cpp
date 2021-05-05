@@ -137,12 +137,12 @@ public:
         ThermalFPGA::writeCommandFIFO(data, length, timeout);
     }
 
-    void writeRequestFIFO(uint16_t* data, int32_t length, int32_t timeout) {
+    void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override {
         _printBuffer("R> ", data, length);
         ThermalFPGA::writeRequestFIFO(data, length, timeout);
     }
 
-    void readU16ResponseFIFO(uint16_t* data, int32_t length, int32_t timeout) override {
+    void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override {
         ThermalFPGA::readU16ResponseFIFO(data, length, timeout);
         _printBuffer("R< ", data, length);
     }
@@ -195,7 +195,7 @@ int info(command_vec cmds) {
     }
 
     if (ilc.getLength() > 0) {
-        fpga->ilcCommands(9, ilc);
+        fpga->ilcCommands(ilc);
     }
 
     return ret;

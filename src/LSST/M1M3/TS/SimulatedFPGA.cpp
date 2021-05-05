@@ -26,9 +26,13 @@
 
 #include <cstring>
 
+using namespace LSST::cRIO;
+
 namespace LSST {
 namespace M1M3 {
 namespace TS {
+
+SimulatedFPGA::SimulatedFPGA() : FPGA(fpgaType::TS) {}
 
 void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     uint16_t* d = data;
@@ -46,9 +50,9 @@ void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t tim
     }
 }
 
-void SimulatedFPGA::writeRequestFIFO(uint16_t* data, int32_t length, int32_t timeout) {}
+void SimulatedFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {}
 
-void SimulatedFPGA::readU16ResponseFIFO(uint16_t* data, int32_t length, int32_t timeout) {
+void SimulatedFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     memcpy(data, response.getBuffer(), response.getLength());
 }
 

@@ -128,7 +128,7 @@ void runFPGAs(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
         subscriber.start();
         subscriber.join();
     } catch (std::exception& ex) {
-        SPDLOG_CRITICAL("Error starting.stopping or joining threads: {)", ex.what());
+        SPDLOG_CRITICAL("Error starting,stopping or joining threads: {)", ex.what());
     }
 
     subscriber.stop();
