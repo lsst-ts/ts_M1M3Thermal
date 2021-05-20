@@ -24,6 +24,7 @@
 #include "TSConstants.h"
 
 #include <cRIO/ThermalILC.h>
+#include <cRIO/PrintILC.h>
 #include <cRIO/FPGA.h>
 #include <cRIO/CliApp.h>
 
@@ -37,41 +38,21 @@
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
 
-class PrintThermal : public ThermalILC {
+class PrintThermal : public ThermalILC, public PrintILC {
 public:
-    PrintThermal() : ThermalILC() { setAlwaysTrigger(true); }
+    PrintThermal() : ThermalILC(1), PrintILC(1) {}
 
 protected:
-    void processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType, uint8_t networkNodeType,
-                         uint8_t ilcSelectedOptions, uint8_t networkNodeOptions, uint8_t majorRev,
-                         uint8_t minorRev, std::string firmwareName);
-
-    void processServerStatus(uint8_t address, uint8_t mode, uint16_t status, uint16_t faults) override {}
-
-    void processChangeILCMode(uint8_t address, uint16_t mode) override {}
-
-    void processSetTempILCAddress(uint8_t address, uint8_t newAddress) override {}
-
-    void processResetServer(uint8_t address) override {}
-
     void processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
-                              float absoluteTemperature) override {}
+                              float absoluteTemperature) override;
 };
 
-void PrintThermal::processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType,
-                                   uint8_t networkNodeType, uint8_t ilcSelectedOptions,
-                                   uint8_t networkNodeOptions, uint8_t majorRev, uint8_t minorRev,
-                                   std::string firmwareName) {
-    std::cout << "Address: " << std::to_string(address) << std::endl
-              << "UniqueID: " << std::hex << std::setw(8) << std::setfill('0') << (uniqueID) << std::endl
-              << "ILC application type: " << std::to_string(ilcAppType) << std::endl
-              << "Network node type: " << std::to_string(networkNodeType) << std::endl
-              << "ILC selected options: " << std::to_string(ilcSelectedOptions) << std::endl
-              << "Network node options: " << std::to_string(networkNodeOptions) << std::endl
-              << "Firmware revision: " << std::to_string(majorRev) << "." << std::to_string(minorRev)
-              << std::endl
-              << "Firmware name: " << firmwareName << std::endl
-              << std::endl;
+void PrintThermal::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
+                                        uint8_t fanRPM, float absoluteTemperature) {
+    printBusAddress(address);
+    std::cout << "Thermal status: " << std::to_string(status) << std::endl
+              << "Differential temperature: " << std::to_string(differentialTemperature) << std::endl
+              << "Fan RPM: " << std::to_string(fanRPM) << std::endl;
 }
 
 constexpr int NEED_FPGA = 0x01;
