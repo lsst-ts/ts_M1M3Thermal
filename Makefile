@@ -6,12 +6,12 @@ include Makefile.inc
 #
 
 # All Target
-all: M1M3ThermalCsC m1m3tscli
+all: ts-M1M3thermald m1m3tscli
 
 src/libM1M3TS.a: FORCE
 	$(MAKE) -C src libM1M3TS.a
 
-M1M3ThermalCsC: src/m1m3thermalcsc.cpp.o src/libM1M3TS.a
+ts-M1M3thermald: src/ts-M1M3thermald.cpp.o src/libM1M3TS.a
 	@echo '[LD ] $@'
 	${co}$(CPP) $(LIBS_FLAGS) -o $@ $^ $(LIBS) ../ts_cRIOcpp/lib/libcRIOcpp.a
 
