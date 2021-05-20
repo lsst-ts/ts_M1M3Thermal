@@ -68,11 +68,11 @@ void ThermalFPGA::finalize() {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_Finalize());
 }
 
-uint16_t ThermalFPGA::getTxCommand(uint8_t bus) { return 9; }
+uint16_t ThermalFPGA::getTxCommand(uint8_t bus) { return 0x09; }
 
-uint16_t ThermalFPGA::getRxCommand(uint8_t bus) { return 9; }
+uint16_t ThermalFPGA::getRxCommand(uint8_t bus) { return 0x0d; }
 
-uint32_t ThermalFPGA::getIrq(uint8_t bus) { return 1; }
+uint32_t ThermalFPGA::getIrq(uint8_t bus) { return NiFpga_Irq_1; }
 
 void ThermalFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,

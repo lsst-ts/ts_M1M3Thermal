@@ -21,6 +21,7 @@
  */
 
 #include "ThermalFPGA.h"
+#include "TSConstants.h"
 
 #include <cRIO/ThermalILC.h>
 #include <cRIO/FPGA.h>
@@ -37,6 +38,9 @@ using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
 
 class PrintThermal : public ThermalILC {
+public:
+    PrintThermal() : ThermalILC() { setAlwaysTrigger(true); }
+
 protected:
     void processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType, uint8_t networkNodeType,
                          uint8_t ilcSelectedOptions, uint8_t networkNodeOptions, uint8_t majorRev,
@@ -76,6 +80,8 @@ class M1M3TScli : public LSST::cRIO::CliApp {
 public:
     M1M3TScli(const char* description);
 
+    int verbose(command_vec cmds);
+
 protected:
     void processArg(int opt, char* optarg) override;
     int processCommand(Command* cmd, const command_vec& args) override;
@@ -88,12 +94,22 @@ M1M3TScli::M1M3TScli(const char* description) : CliApp(description) {
 }
 
 bool _autoOpen = true;
-int _debugLevel = 0;
+
+int M1M3TScli::verbose(command_vec cmds) {
+    switch (cmds.size()) {
+        case 1:
+            setDebugLevel(std::stoi(cmds[0]));
+        case 0:
+            std::cout << "Debug level: " << getDebugLevel() << std::endl;
+            break;
+    }
+    return 0;
+}
 
 void M1M3TScli::processArg(int opt, char* optarg) {
     switch (opt) {
         case 'd':
-            _debugLevel++;
+            incDebugLevel();
             break;
 
         case 'h':
@@ -111,8 +127,10 @@ void M1M3TScli::processArg(int opt, char* optarg) {
     }
 }
 
+M1M3TScli cli("M1M3 Thermal System Command Line Interface");
+
 void _printBuffer(std::string prefix, uint16_t* buf, size_t len) {
-    if (_debugLevel == 0) {
+    if (cli.getDebugLevel() == 0) {
         return;
     }
 
@@ -168,7 +186,7 @@ int info(command_vec cmds) {
     for (auto c : cmds) {
         try {
             int address = std::stoi(c);
-            if (address <= 0 || address > 96) {
+            if (address <= 0 || address > TSConstants::THERMAL_ILC_COUNT) {
                 std::cerr << "Invalid address " << c << std::endl;
                 ret = -1;
                 continue;
@@ -183,7 +201,7 @@ int info(command_vec cmds) {
 
     if (ret == -2) {
         std::cout << "Info for all ILC" << std::endl;
-        for (int i = 1; i <= 96; i++) {
+        for (int i = 1; i <= TSConstants::THERMAL_ILC_COUNT; i++) {
             ilc.reportServerID(i);
         }
         ret = 0;
@@ -213,20 +231,6 @@ int openFPGA(command_vec cmds) {
     return 0;
 }
 
-void _updateVerbosity(int newVerbose) {
-    _debugLevel = newVerbose;
-    spdlog::level::level_enum logLevel = spdlog::level::trace;
-
-    switch (_debugLevel) {
-        case 0:
-            logLevel = spdlog::level::info;
-        case 1:
-            logLevel = spdlog::level::debug;
-            break;
-    }
-    spdlog::set_level(logLevel);
-}
-
 int setPower(command_vec cmds) {
     uint16_t net = 1;
     uint16_t aux = 0;
@@ -249,27 +253,15 @@ int setPower(command_vec cmds) {
     return 0;
 }
 
-int verbose(command_vec cmds) {
-    switch (cmds.size()) {
-        case 1:
-            _updateVerbosity(std::stoi(cmds[0]));
-        case 0:
-            std::cout << "Debug level: " << _debugLevel << std::endl;
-            break;
-    }
-    return 0;
-}
-
 int main(int argc, char* const argv[]) {
-    M1M3TScli cli("M1M3 Thermal System Command Line Interface");
-
     cli.addCommand("close", &closeFPGA, "", NEED_FPGA, NULL, "Close FPGA connection");
     cli.addCommand("help", std::bind(&M1M3TScli::helpCommands, &cli, std::placeholders::_1), "", 0, NULL,
                    "Print commands help");
     cli.addCommand("info", &info, "s?", NEED_FPGA, "<address>..", "Print ILC info");
     cli.addCommand("open", &openFPGA, "", 0, NULL, "Open FPGA");
     cli.addCommand("power", &setPower, "i", NEED_FPGA, "<0|1>", "Power off/on ILC bus");
-    cli.addCommand("verbose", &verbose, "?", 0, "<new level>", "Report/set verbosity level");
+    cli.addCommand("verbose", std::bind(&M1M3TScli::verbose, &cli, std::placeholders::_1), "?", 0,
+                   "<new level>", "Report/set verbosity level");
 
     command_vec cmds = cli.processArgs(argc, argv);
 
@@ -281,7 +273,6 @@ int main(int argc, char* const argv[]) {
                                                          spdlog::thread_pool(),
                                                          spdlog::async_overflow_policy::block);
     spdlog::set_default_logger(logger);
-    _updateVerbosity(_debugLevel);
 
     if (_autoOpen) {
         command_vec cmds;
