@@ -24,8 +24,8 @@
 
 #include <cRIO/ThermalILC.h>
 #include <cRIO/FPGA.h>
+#include <cRIO/CliApp.h>
 
-#include <CliApp.hpp>
 #include <iostream>
 #include <iomanip>
 
@@ -72,31 +72,30 @@ void PrintThermal::processServerID(uint8_t address, uint64_t uniqueID, uint8_t i
 
 constexpr int NEED_FPGA = 0x01;
 
-class M1M3TScli : public CliApp {
+class M1M3TScli : public LSST::cRIO::CliApp {
 public:
-    M1M3TScli(const char* description) : CliApp(description) {}
+    M1M3TScli(const char* description);
 
 protected:
-    void printUsage() override;
-    void processArg(int opt, const char* optarg) override;
-    int processCommand(const command_t* cmd, const command_vec& args) override;
+    void processArg(int opt, char* optarg) override;
+    int processCommand(Command* cmd, const command_vec& args) override;
 };
 
-void M1M3TScli::printUsage() {
-    std::cout << "M1M3 Thermal System command line tool. Access M1M3 Thermal System FPGA." << std::endl
-              << "Options: " << std::endl
-              << "  -h   help" << std::endl
-              << "  -O   don't auto open (and run) FPGA" << std::endl
-              << "  -v   increase verbosity" << std::endl;
-    command_vec cmds;
-    helpCommands(cmds);
+M1M3TScli::M1M3TScli(const char* description) : CliApp(description) {
+    addArgument('d', "increase debug level");
+    addArgument('h', "print this help");
+    addArgument('O', "don't auto open (and run) FPGA");
 }
 
 bool _autoOpen = true;
-int _verbose = 0;
+int _debugLevel = 0;
 
-void M1M3TScli::processArg(int opt, const char* optarg) {
+void M1M3TScli::processArg(int opt, char* optarg) {
     switch (opt) {
+        case 'd':
+            _debugLevel++;
+            break;
+
         case 'h':
             printAppHelp();
             exit(EXIT_SUCCESS);
@@ -106,10 +105,6 @@ void M1M3TScli::processArg(int opt, const char* optarg) {
             _autoOpen = false;
             break;
 
-        case 'v':
-            _verbose++;
-            break;
-
         default:
             std::cerr << "Unknown command: " << (char)(opt) << std::endl;
             exit(EXIT_FAILURE);
@@ -117,7 +112,7 @@ void M1M3TScli::processArg(int opt, const char* optarg) {
 }
 
 void _printBuffer(std::string prefix, uint16_t* buf, size_t len) {
-    if (_verbose == 0) {
+    if (_debugLevel == 0) {
         return;
     }
 
@@ -151,7 +146,7 @@ public:
 PrintTSFPGA* fpga = NULL;
 PrintThermal ilc;
 
-int M1M3TScli::processCommand(const command_t* cmd, const command_vec& args) {
+int M1M3TScli::processCommand(Command* cmd, const command_vec& args) {
     if ((cmd->flags & NEED_FPGA) && fpga == NULL) {
         std::cerr << "Command " << cmd->command << " needs opened FPGA. Please call open command first"
                   << std::endl;
@@ -160,7 +155,7 @@ int M1M3TScli::processCommand(const command_t* cmd, const command_vec& args) {
     return CliApp::processCommand(cmd, args);
 }
 
-int closeFPGA() {
+int closeFPGA(command_vec cmds) {
     fpga->close();
     delete fpga;
     fpga = NULL;
@@ -218,13 +213,11 @@ int openFPGA(command_vec cmds) {
     return 0;
 }
 
-M1M3TScli cli("M1M3 Thermal System Command Line Interface");
-
 void _updateVerbosity(int newVerbose) {
-    _verbose = newVerbose;
+    _debugLevel = newVerbose;
     spdlog::level::level_enum logLevel = spdlog::level::trace;
 
-    switch (_verbose) {
+    switch (_debugLevel) {
         case 0:
             logLevel = spdlog::level::info;
         case 1:
@@ -261,24 +254,24 @@ int verbose(command_vec cmds) {
         case 1:
             _updateVerbosity(std::stoi(cmds[0]));
         case 0:
-            std::cout << "Verbosity level: " << _verbose << std::endl;
+            std::cout << "Debug level: " << _debugLevel << std::endl;
             break;
     }
     return 0;
 }
 
-command_t commands[] = {
-        {"close", [=](command_vec) { return closeFPGA(); }, "", NEED_FPGA, NULL, "Close FPGA connection"},
-        {"help", [=](command_vec cmds) { return cli.helpCommands(cmds); }, "", 0, NULL,
-         "Print commands help"},
-        {"info", &info, "s?", NEED_FPGA, "<address>..", "Print ILC info"},
-        {"open", &openFPGA, "", 0, NULL, "Open FPGA"},
-        {"power", &setPower, "i", NEED_FPGA, "<0|1>", "Power off/on ILC bus"},
-        {"verbose", &verbose, "?", 0, "<new level>", "Report/set verbosity level"},
-        {NULL, NULL, NULL, 0, NULL, NULL}};
-
 int main(int argc, char* const argv[]) {
-    command_vec cmds = cli.init(commands, "hOv", argc, argv);
+    M1M3TScli cli("M1M3 Thermal System Command Line Interface");
+
+    cli.addCommand("close", &closeFPGA, "", NEED_FPGA, NULL, "Close FPGA connection");
+    cli.addCommand("help", std::bind(&M1M3TScli::helpCommands, &cli, std::placeholders::_1), "", 0, NULL,
+                   "Print commands help");
+    cli.addCommand("info", &info, "s?", NEED_FPGA, "<address>..", "Print ILC info");
+    cli.addCommand("open", &openFPGA, "", 0, NULL, "Open FPGA");
+    cli.addCommand("power", &setPower, "i", NEED_FPGA, "<0|1>", "Power off/on ILC bus");
+    cli.addCommand("verbose", &verbose, "?", 0, "<new level>", "Report/set verbosity level");
+
+    command_vec cmds = cli.processArgs(argc, argv);
 
     spdlog::init_thread_pool(8192, 1);
     std::vector<spdlog::sink_ptr> sinks;
@@ -288,7 +281,7 @@ int main(int argc, char* const argv[]) {
                                                          spdlog::thread_pool(),
                                                          spdlog::async_overflow_policy::block);
     spdlog::set_default_logger(logger);
-    _updateVerbosity(_verbose);
+    _updateVerbosity(_debugLevel);
 
     if (_autoOpen) {
         command_vec cmds;
@@ -299,7 +292,7 @@ int main(int argc, char* const argv[]) {
     if (cmds.empty()) {
         std::cout << "Please type help for more help." << std::endl;
         cli.goInteractive("M1M3TS > ");
-        closeFPGA();
+        closeFPGA(command_vec());
         return 0;
     }
 
