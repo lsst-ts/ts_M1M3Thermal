@@ -33,7 +33,7 @@ void Update::execute() {
         if (Events::EnabledILC::instance().isEnabled(i)) {
         }
     }
-};
+}
 
 }  // namespace Commands
 }  // namespace TS

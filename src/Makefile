@@ -2,7 +2,11 @@ include ../Makefile.inc
 
 all: libM1M3TS.a
 
-CFLAGS += ${SAL_CPPFLAGS} -I../../ts_cRIOcpp/include -ILSST/M1M3/TS -INiFpga
+CFLAGS += ${SAL_CPPFLAGS} \
+	-I../../ts_cRIOcpp/include \
+	-ILSST/M1M3/TS \
+	-INiFpga \
+	-DVERSION="\"$(VERSION)\""
 
 C_SRCS = $(shell find LSST NiFpga -name '*.c')
 CPP_SRCS = $(shell find LSST NiFpga -name '*.cpp')

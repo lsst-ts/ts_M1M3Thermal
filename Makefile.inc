@@ -27,3 +27,11 @@ CRIO_CFLAGS := -I${CRIO_DIR}/include
 LIBS := -ldl ${SAL_WORK_DIR}/lib/libSAL_MTM1M3TS.a -ldcpssacpp -ldcpsgapi -lddsuser -lddskernel -lpthread -lddsserialization -lddsconfparser -lddsconf -lddsdatabase -lddsutil -lddsos
 
 LIBS_FLAGS := -L"${SAL_WORK_DIR}/lib" -L"${OSPL_HOME}/lib" -L"${LSST_SDK_INSTALL}/lib"
+
+GIT := $(shell command -v git 2> /dev/null)
+
+ifndef GIT
+   VERSION := "v0.0.0-None"
+else
+   VERSION := $(shell git describe --tags --dirty)
+endif

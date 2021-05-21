@@ -47,3 +47,6 @@ junit: tests
 
 doc:
 	${co}doxygen Doxyfile
+
+simulator:
+	@${MAKE} SIMULATOR=1

@@ -33,14 +33,18 @@ namespace TS {
 
 class TSPublisher final : public cRIO::Singleton<TSPublisher> {
 public:
-    TSPublisher(token) {}
+    TSPublisher(token);
 
     void setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL);
 
     static std::shared_ptr<SAL_MTM1M3TS> CSC() { return instance()._m1m3TSSAL; }
 
+    void setLogLevel(int newLevel);
+
 private:
     std::shared_ptr<SAL_MTM1M3TS> _m1m3TSSAL;
+
+    MTM1M3TS_logevent_logLevelC _logLevel;
 };
 
 }  // namespace TS
