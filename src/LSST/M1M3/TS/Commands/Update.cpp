@@ -22,26 +22,22 @@
 
 #include "Commands/Update.h"
 #include "Events/EnabledILC.h"
-#include "TSConstants.h"
+#include "TSApplication.h"
+
+#include <cRIO/ThermalILC.h>
 
 #include <spdlog/spdlog.h>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Commands {
+using namespace LSST::M1M3::TS::Commands;
 
 void Update::execute() {
     SPDLOG_TRACE("Commands::Update execute");
-    //System::ilc.clear();
-    for (int address = 1; address <= TSConstants::THERMAL_ILC_COUNT; address++) {
+    TSApplication::ilc()->clear();
+    for (int address = 1; address <= LSST::cRIO::NUM_TS_ILC; address++) {
         if (Events::EnabledILC::instance().isEnabled(address)) {
-            //CSCFPGA::instance().ilc.reportServerID(address);
+            TSApplication::ilc()->reportServerID(address);
         }
     }
-}
 
-}  // namespace Commands
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
+    TSApplication::fpga()->ilcCommands(*TSApplication::ilc());
+}

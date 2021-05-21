@@ -1,5 +1,5 @@
 /*
- * Thermal CSC constants.
+ * Application global variables.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,18 +20,38 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TSConstants_
-#define _TSConstants_
+#ifndef _TS_TSApplication_h
+#define _TS_TSApplication_h
+
+#include <IFPGA.h>
+#include <SALThermalILC.h>
+#include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace TSConstants {
 
-constexpr int THERMAL_ILC_COUNT = 96;
-}
+class TSApplication : public cRIO::Singleton<TSApplication> {
+public:
+    TSApplication(token) {
+        _fpga = NULL;
+        _ilc = NULL;
+    }
+
+    void setFPGA(IFPGA* fpga) { _fpga = fpga; }
+
+    void setILC(SALThermalILC* ilc) { _ilc = ilc; }
+
+    static IFPGA* fpga() { return instance()._fpga; }
+    static SALThermalILC* ilc() { return instance()._ilc; }
+
+private:
+    IFPGA* _fpga;
+    SALThermalILC* _ilc;
+};
+
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //! _TS_TSConstants_
+#endif  //! _TS_TSApplication_h

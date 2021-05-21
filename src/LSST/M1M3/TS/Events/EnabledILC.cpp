@@ -20,18 +20,16 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <TSConstants.h>
+#include <cRIO/ThermalILC.h>
 #include <TSPublisher.h>
 #include <Events/EnabledILC.h>
 #include <spdlog/spdlog.h>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Events {
+using namespace LSST::M1M3::TS;
+using namespace LSST::M1M3::TS::Events;
 
 EnabledILC::EnabledILC(token) : _updated(true) {
-    for (int i = 0; i < TSConstants::THERMAL_ILC_COUNT; i++) {
+    for (int i = 0; i < LSST::cRIO::NUM_TS_ILC; i++) {
         enabled[i] = true;
     }
 }
@@ -56,8 +54,3 @@ void EnabledILC::send() {
     }
     _updated = false;
 }
-
-}  // namespace Events
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST

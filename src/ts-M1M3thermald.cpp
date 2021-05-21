@@ -29,13 +29,17 @@
 #endif
 
 #include <cRIO/ControllerThread.h>
+#include <OuterLoopClockThread.h>
 
 #include <RIOSubscriber.h>
+#include <SALThermalILC.h>
 #include <TSPublisher.h>
 
 #include <cRIO/CSC.h>
 #include <cRIO/FPGA.h>
 #include <cRIO/SALSink.h>
+
+#include <TSApplication.h>
 
 #include <SAL_MTM1M3TS.h>
 
@@ -67,6 +71,8 @@ protected:
 
 private:
     std::shared_ptr<SAL_MTM1M3TS> _m1m3tsSAL;
+
+    OuterLoopClockThread _outerLoopClock;
 };
 
 SALSinkMacro(MTM1M3TS);
@@ -77,6 +83,10 @@ void M1M3thermald::init() {
     _m1m3tsSAL->setDebugLevel(getDebugLevelSAL());
 
     addSink(std::make_shared<SALSink_mt>(_m1m3tsSAL));
+
+    SALThermalILC* ilc = new SALThermalILC(_m1m3tsSAL);
+
+    TSApplication::instance().setILC(ilc);
 
 #ifdef SIMULATOR
     SPDLOG_WARN("Starting Simulator version! Version {}", VERSION);
@@ -90,9 +100,11 @@ void M1M3thermald::init() {
     TSPublisher::instance().setLogLevel(getSpdLogLogLevel() * 10);
 
     ControllerThread::instance().start();
+    _outerLoopClock.start();
 }
 
 void M1M3thermald::done() {
+    _outerLoopClock.stop();
     ControllerThread::instance().stop();
 
     SPDLOG_INFO("Shutting down M1M3thermald");
@@ -175,18 +187,20 @@ int main(int argc, char* const argv[]) {
     csc.processArgs(argc, argv);
 
 #ifdef SIMULATOR
-    FPGA* fpga = new SimulatedFPGA();
+    SimulatedFPGA* fpga = new SimulatedFPGA();
 #else
-    FPGA* fpga = new ThermalFPGA("Bitfiles");
+    ThermalFPGA* fpga = new ThermalFPGA("Bitfiles");
 #endif
+
+    TSApplication::instance().setFPGA(fpga);
 
     try {
         csc.run(fpga);
     } catch (NiError& nie) {
         SPDLOG_CRITICAL("Main: Error initializing ThermalFPGA: {}", nie.what());
-        fpga->finalize();
-        delete fpga;
     }
+
+    delete fpga;
 
     SPDLOG_INFO("Main: Shutdown complete");
 

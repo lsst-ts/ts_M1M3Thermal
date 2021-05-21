@@ -35,7 +35,6 @@ void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
     _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_thermalData");
 
     SPDLOG_DEBUG("TSPublisher: Initializing SAL Events");
-    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_logevent_detailedState");
     _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_logevent_enabledILC");
     _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_logevent_logLevel");
     _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_logevent_summaryState");

@@ -21,7 +21,6 @@
  */
 
 #include "ThermalFPGA.h"
-#include "TSConstants.h"
 
 #include <cRIO/ThermalILC.h>
 #include <cRIO/PrintILC.h>
@@ -167,7 +166,7 @@ int info(command_vec cmds) {
     for (auto c : cmds) {
         try {
             int address = std::stoi(c);
-            if (address <= 0 || address > TSConstants::THERMAL_ILC_COUNT) {
+            if (address <= 0 || address > NUM_TS_ILC) {
                 std::cerr << "Invalid address " << c << std::endl;
                 ret = -1;
                 continue;
@@ -182,7 +181,7 @@ int info(command_vec cmds) {
 
     if (ret == -2) {
         std::cout << "Info for all ILC" << std::endl;
-        for (int i = 1; i <= TSConstants::THERMAL_ILC_COUNT; i++) {
+        for (int i = 1; i <= NUM_TS_ILC; i++) {
             ilc.reportServerID(i);
         }
         ret = 0;
