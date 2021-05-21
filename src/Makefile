@@ -9,7 +9,7 @@ CFLAGS += ${SAL_CPPFLAGS} \
 	-DVERSION="\"$(VERSION)\""
 
 C_SRCS = $(shell find LSST NiFpga -name '*.c')
-CPP_SRCS = $(shell find LSST NiFpga -name '*.cpp')
+CPP_SRCS = $(shell find LSST NiFpga -name '*.cpp') ts-M1M3thermald.cpp m1m3tscli.cpp
 
 OBJS = $(patsubst %.c,%.c.o,$(C_SRCS)) $(patsubst %.cpp,%.cpp.o,$(CPP_SRCS))
 
