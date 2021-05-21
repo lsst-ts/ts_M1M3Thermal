@@ -28,6 +28,8 @@
 #include <ThermalFPGA.h>
 #endif
 
+#include <cRIO/ControllerThread.h>
+
 #include <RIOSubscriber.h>
 #include <TSPublisher.h>
 
@@ -86,9 +88,13 @@ void M1M3thermald::init() {
     TSPublisher::instance().setSAL(_m1m3tsSAL);
 
     TSPublisher::instance().setLogLevel(getSpdLogLogLevel() * 10);
+
+    ControllerThread::instance().start();
 }
 
 void M1M3thermald::done() {
+    ControllerThread::instance().stop();
+
     SPDLOG_INFO("Shutting down M1M3thermald");
     removeSink();
 

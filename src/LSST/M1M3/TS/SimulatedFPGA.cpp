@@ -32,7 +32,7 @@ namespace LSST {
 namespace M1M3 {
 namespace TS {
 
-SimulatedFPGA::SimulatedFPGA() : FPGA(fpgaType::TS) {}
+SimulatedFPGA::SimulatedFPGA() : IFPGA() {}
 
 void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     uint16_t* d = data;

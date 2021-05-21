@@ -33,13 +33,13 @@ namespace LSST {
 namespace M1M3 {
 namespace TS {
 
-ThermalFPGA::ThermalFPGA(const char* bitfileDir) : FPGA(fpgaType::TS) {
+ThermalFPGA::ThermalFPGA(const char* bitfileDir) : IFPGA() {
     SPDLOG_DEBUG("ThermalFPGA: ThermalFPGA()");
     _bitfileDir = bitfileDir;
     _session = 0;
 }
 
-ThermalFPGA::~ThermalFPGA() { finalize(); }
+ThermalFPGA::~ThermalFPGA() {}
 
 void ThermalFPGA::initialize() {
     SPDLOG_DEBUG("ThermalFPGA: initialize()");

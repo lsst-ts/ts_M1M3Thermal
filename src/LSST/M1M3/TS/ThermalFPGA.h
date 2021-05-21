@@ -23,7 +23,7 @@
 #ifndef __TS_THERMALFPGA__
 #define __TS_THERMALFPGA__
 
-#include <cRIO/FPGA.h>
+#include <IFPGA.h>
 #include <NiFpga_M1M3SupportFPGA.h>
 #include <cRIO/NiError.h>
 
@@ -35,7 +35,7 @@ namespace TS {
  * Thermal FPGA. Provides functions specific for Thermal FPGA, implements
  * generic functions.
  */
-class ThermalFPGA : public LSST::cRIO::FPGA {
+class ThermalFPGA : public IFPGA {
 public:
     ThermalFPGA(const char* bitfileDir);
     virtual ~ThermalFPGA();

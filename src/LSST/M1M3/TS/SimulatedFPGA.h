@@ -20,7 +20,7 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cRIO/FPGA.h>
+#include <IFPGA.h>
 #include <cRIO/NiError.h>
 #include <cRIO/ModbusBuffer.h>
 #include <cRIO/ThermalILC.h>
@@ -32,7 +32,7 @@ namespace TS {
 /**
  * Simulated Thermal FPGA. Simulates answers to FPGA functions.
  */
-class SimulatedFPGA : public LSST::cRIO::FPGA, public LSST::cRIO::ThermalILC {
+class SimulatedFPGA : public IFPGA, public LSST::cRIO::ThermalILC {
 public:
     SimulatedFPGA();
     virtual ~SimulatedFPGA(){};

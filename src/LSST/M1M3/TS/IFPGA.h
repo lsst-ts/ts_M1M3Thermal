@@ -1,5 +1,5 @@
 /*
- * Update command.
+ * Abstract FPGA interface.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,28 +20,26 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "Commands/Update.h"
-#include "Events/EnabledILC.h"
-#include "TSConstants.h"
+#ifndef __TS_IFPGA__
+#define __TS_IFPGA__
 
-#include <spdlog/spdlog.h>
+#include <cRIO/FPGA.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace Commands {
 
-void Update::execute() {
-    SPDLOG_TRACE("Commands::Update execute");
-    //System::ilc.clear();
-    for (int address = 1; address <= TSConstants::THERMAL_ILC_COUNT; address++) {
-        if (Events::EnabledILC::instance().isEnabled(address)) {
-            //CSCFPGA::instance().ilc.reportServerID(address);
-        }
-    }
-}
+/**
+ * Abstract FPGA Interface. Provides common parent for real and simulated FPGA. Singleton.
+ */
+class IFPGA : public cRIO::FPGA {
+public:
+    IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
+    virtual ~IFPGA() {}
+};
 
-}  // namespace Commands
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
+
+#endif  // !__TS_IFPGA__

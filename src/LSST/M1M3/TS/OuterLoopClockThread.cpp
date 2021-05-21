@@ -1,5 +1,5 @@
 /*
- * Update command.
+ * Thread to catch outer loop clock interrupts.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,28 +20,23 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "Commands/Update.h"
-#include "Events/EnabledILC.h"
-#include "TSConstants.h"
+#include <cRIO/ControllerThread.h>
+#include <OuterLoopClockThread.h>
+#include <Commands/Update.h>
 
+#include <chrono>
 #include <spdlog/spdlog.h>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Commands {
+using namespace std::chrono_literals;
+using namespace LSST::M1M3::TS;
 
-void Update::execute() {
-    SPDLOG_TRACE("Commands::Update execute");
-    //System::ilc.clear();
-    for (int address = 1; address <= TSConstants::THERMAL_ILC_COUNT; address++) {
-        if (Events::EnabledILC::instance().isEnabled(address)) {
-            //CSCFPGA::instance().ilc.reportServerID(address);
-        }
+void OuterLoopClockThread::run() {
+    SPDLOG_INFO("OuterLoopClockThread: Run");
+    std::unique_lock<std::mutex> lock(runMutex);
+    cRIO::ControllerThread::instance().enqueue(new Commands::Update());
+    while (keepRunning) {
+        runCondition.wait_for(lock, 20ms);
+        cRIO::ControllerThread::instance().enqueue(new Commands::Update());
     }
+    SPDLOG_INFO("OuterLoopClockThread: Completed");
 }
-
-}  // namespace Commands
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
