@@ -32,7 +32,10 @@
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
 
-SimulatedFPGA::SimulatedFPGA() : IFPGA(), _U16ResponseStatus(IDLE) { response.simulateResponse(true); }
+SimulatedFPGA::SimulatedFPGA() : IFPGA(), _U16ResponseStatus(IDLE) {
+    response.simulateResponse(true);
+    srandom(time(NULL));
+}
 
 void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     uint16_t* d = data;
@@ -115,7 +118,28 @@ void SimulatedFPGA::processSetTempILCAddress(uint8_t address, uint8_t newAddress
 void SimulatedFPGA::processResetServer(uint8_t address) {}
 
 void SimulatedFPGA::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
-                                         uint8_t fanRPM, float absoluteTemperature) {}
+                                         uint8_t fanRPM, float absoluteTemperature) {
+    response.write<uint8_t>(address);
+    switch (status & 0xF0) {
+        case 0x10:
+            response.write<uint8_t>(88);
+            break;
+        case 0x20:
+            response.write<uint8_t>(89);
+            break;
+        default:
+            throw std::runtime_error("Invalid status in SimulatedFPGA::processThermalStatus");
+    }
+
+    status |= getBroadcastCounter() << 4;
+
+    response.write<uint8_t>(status);
+    response.write<float>(differentialTemperature);
+    response.write<uint8_t>(fanRPM);
+    response.write<float>(absoluteTemperature);
+
+    response.writeCRC();
+}
 
 void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
     // reply format:
@@ -136,13 +160,21 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
 
         uint8_t address = buf.read<uint8_t>();
         uint8_t func = buf.read<uint8_t>();
+        buf.checkCRC();
         switch (func) {
             // info
             case 17:
-                buf.checkCRC();
                 // generate response
                 processServerID(address, 0x01020304 + address, 0x02, 0x02, 0x02, 0x00, 1, 2,
                                 "Test Thermal ILC");
+                break;
+            case 88:
+                processThermalStatus(address, 0x10 | 0, 15.0 * random() / float(RAND_MAX),
+                                     10 * random() / float(RAND_MAX), 20 * random() / float(RAND_MAX));
+                break;
+            case 89:
+                processThermalStatus(address, 0x20 | 0, 15.0 * random() / float(RAND_MAX),
+                                     10 * random() / float(RAND_MAX), 20 * random() / float(RAND_MAX));
                 break;
             default:
                 SPDLOG_WARN("SimulatedFPGA::_simulateModbus unknown/unsupported function {0:04x} ({0:d})",

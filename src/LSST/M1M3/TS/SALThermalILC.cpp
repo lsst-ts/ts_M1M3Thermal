@@ -22,6 +22,8 @@
 
 #include <SALThermalILC.h>
 
+#include <Telemetry/ThermalData.h>
+
 namespace LSST {
 namespace M1M3 {
 namespace TS {
@@ -69,7 +71,10 @@ void SALThermalILC::processSetTempILCAddress(uint8_t address, uint8_t newAddress
 void SALThermalILC::processResetServer(uint8_t address) {}
 
 void SALThermalILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
-                                         uint8_t fanRPM, float absoluteTemperature) {}
+                                         uint8_t fanRPM, float absoluteTemperature) {
+    Telemetry::ThermalData::instance().update(address, status, differentialTemperature, fanRPM,
+                                              absoluteTemperature);
+}
 
 uint8_t SALThermalILC::_address2ILCIndex(uint8_t address) {
     // TODO verify that's true

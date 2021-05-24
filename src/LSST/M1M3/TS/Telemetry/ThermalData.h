@@ -1,5 +1,5 @@
 /*
- * Update command.
+ * ThermalData telemetry handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,34 +20,33 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "Commands/Update.h"
-#include "Events/EnabledILC.h"
-#include "TSApplication.h"
+#ifndef _TS_TelemetryData_
+#define _TS_TelemetryData_
 
-#include "Events/EnabledILC.h"
-#include "Telemetry/ThermalData.h"
+#include <SAL_MTM1M3TS.h>
+#include <cRIO/Singleton.h>
 
-#include <cRIO/ThermalILC.h>
+namespace LSST {
+namespace M1M3 {
+namespace TS {
+namespace Telemetry {
 
-#include <spdlog/spdlog.h>
+class ThermalData final : MTM1M3TS_thermalDataC, public cRIO::Singleton<ThermalData> {
+public:
+    ThermalData(token);
 
-using namespace LSST::M1M3::TS::Commands;
+    void update(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
+                float absoluteTemperature);
 
-void Update::execute() {
-    SPDLOG_TRACE("Commands::Update execute");
-    TSApplication::ilc()->clear();
-    for (int address = 1; address <= LSST::cRIO::NUM_TS_ILC; address++) {
-        if (Events::EnabledILC::instance().isEnabled(address)) {
-            TSApplication::ilc()->reportServerID(address);
-            TSApplication::ilc()->reportThermalStatus(address);
-        }
-    }
+    /**
+     * Sends updates through SAL/DDS.
+     */
+    void send();
+};
 
-    TSApplication::fpga()->ilcCommands(*TSApplication::ilc());
+}  // namespace Telemetry
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST
 
-    Telemetry::ThermalData::instance().send();
-
-    Events::EnabledILC::instance().send();
-
-    SPDLOG_TRACE("Commands::Update leaving execute");
-}
+#endif  // !_TS_TelemetryData_
