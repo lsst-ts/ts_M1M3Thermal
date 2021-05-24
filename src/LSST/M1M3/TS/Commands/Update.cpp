@@ -40,4 +40,5 @@ void Update::execute() {
     }
 
     TSApplication::fpga()->ilcCommands(*TSApplication::ilc());
+    SPDLOG_TRACE("Commands::Update leaving execute");
 }

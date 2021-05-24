@@ -69,7 +69,9 @@ private:
     LSST::cRIO::ModbusBuffer response;
 
     void _simulateModbus(uint16_t* data, size_t length);
-};  // namespace TS
+
+    enum { IDLE, LEN, DATA } _U16ResponseStatus;
+};
 
 }  // namespace TS
 }  // namespace M1M3

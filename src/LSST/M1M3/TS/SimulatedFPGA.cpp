@@ -21,18 +21,18 @@
  */
 
 #include "SimulatedFPGA.h"
+#include "TSPublisher.h"
 
 #include <cRIO/ModbusBuffer.h>
+#include <cRIO/Timestamp.h>
 
 #include <cstring>
+#include <spdlog/spdlog.h>
 
 using namespace LSST::cRIO;
+using namespace LSST::M1M3::TS;
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-
-SimulatedFPGA::SimulatedFPGA() : IFPGA() {}
+SimulatedFPGA::SimulatedFPGA() : IFPGA(), _U16ResponseStatus(IDLE) { response.simulateResponse(true); }
 
 void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     uint16_t* d = data;
@@ -46,14 +46,38 @@ void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t tim
                 _simulateModbus(d, dl);
                 d += dl;
                 break;
+            // modbus software trigger
+            case 252:
+                d++;
+                break;
+            default:
+                SPDLOG_WARN(
+                        "SimulatedFPGA::writeCommandFIFO unknown/unimplemneted instruction: {0:04x} ({0:d})",
+                        *d);
+                d++;
+                break;
         }
     }
 }
 
-void SimulatedFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {}
+void SimulatedFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
+    _U16ResponseStatus = LEN;
+}
 
 void SimulatedFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    memcpy(data, response.getBuffer(), response.getLength());
+    switch (_U16ResponseStatus) {
+        case IDLE:
+            break;
+        case LEN:
+            *data = response.getLength();
+            _U16ResponseStatus = DATA;
+            break;
+        case DATA:
+            memcpy(data, response.getBuffer(), response.getLength() * 2);
+            response.clear();
+            _U16ResponseStatus = IDLE;
+            break;
+    }
 }
 
 void SimulatedFPGA::processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType,
@@ -94,20 +118,38 @@ void SimulatedFPGA::processThermalStatus(uint8_t address, uint8_t status, float 
                                          uint8_t fanRPM, float absoluteTemperature) {}
 
 void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
+    // reply format:
+    // 4 bytes (forming uint64_t in low endian) beginning timestamp
+    // data received from ILCs (& FIFO::TX_WAIT_LONG_RX)
+    // end of frame (FIFO::RX_ENDFRAME)
+    // 8 bytes of end timestap (& FIFO::RX_TIMESTAMP)
+
+    response.writeFPGATimestamp(Timestamp::toFPGA(TSPublisher::getTimestamp()));
+
     ModbusBuffer buf(data, length);
     while (!buf.endOfBuffer()) {
+        uint16_t p = buf.peek();
+        if ((p & FIFO::CMD_MASK) != FIFO::WRITE) {
+            buf.next();
+            continue;
+        }
+
         uint8_t address = buf.read<uint8_t>();
         uint8_t func = buf.read<uint8_t>();
         switch (func) {
             // info
             case 17:
+                buf.checkCRC();
+                // generate response
                 processServerID(address, 0x01020304 + address, 0x02, 0x02, 0x02, 0x00, 1, 2,
                                 "Test Thermal ILC");
                 break;
+            default:
+                SPDLOG_WARN("SimulatedFPGA::_simulateModbus unknown/unsupported function {0:04x} ({0:d})",
+                            func);
         }
+        response.writeRxTimestamp(Timestamp::toFPGA(TSPublisher::getTimestamp()));
+
+        response.writeRxEndFrame();
     }
 }
-
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST

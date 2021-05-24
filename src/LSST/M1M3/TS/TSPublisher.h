@@ -41,6 +41,8 @@ public:
 
     void setLogLevel(int newLevel);
 
+    static double getTimestamp() { return instance()._m1m3TSSAL->getCurrentTime(); }
+
 private:
     std::shared_ptr<SAL_MTM1M3TS> _m1m3TSSAL;
 
