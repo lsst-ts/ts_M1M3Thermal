@@ -6,18 +6,18 @@ include Makefile.inc
 #
 
 # All Target
-all: M1M3ThermalCsC m1m3tscli
+all: ts-M1M3thermald m1m3tscli
 
 src/libM1M3TS.a: FORCE
 	$(MAKE) -C src libM1M3TS.a
 
-M1M3ThermalCsC: src/m1m3thermalcsc.cpp.o src/libM1M3TS.a
+ts-M1M3thermald: src/ts-M1M3thermald.cpp.o src/libM1M3TS.a
 	@echo '[LD ] $@'
-	${co}$(CPP) $(LIBS_FLAGS) -o $@ $^ $(LIBS) ../ts_cRIOcpp/src/libcRIOcpp.a
+	${co}$(CPP) $(LIBS_FLAGS) -o $@ $^ $(LIBS) ../ts_cRIOcpp/lib/libcRIOcpp.a
 
 m1m3tscli: src/m1m3tscli.cpp.o src/libM1M3TS.a
 	@echo '[LD ] $@'
-	${co}$(CPP) $(LIBS_FLAGS) -o $@ $^ $(LIBS) ../ts_cRIOcpp/src/libcRIOcpp.a -lreadline
+	${co}$(CPP) $(LIBS_FLAGS) -o $@ $^ $(LIBS) ../ts_cRIOcpp/lib/libcRIOcpp.a -lreadline
 
 # Other Targets
 clean:
@@ -47,3 +47,6 @@ junit: tests
 
 doc:
 	${co}doxygen Doxyfile
+
+simulator:
+	@${MAKE} SIMULATOR=1

@@ -20,7 +20,10 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cRIO/FPGA.h>
+#ifndef __TS_THERMALFPGA__
+#define __TS_THERMALFPGA__
+
+#include <IFPGA.h>
 #include <NiFpga_M1M3SupportFPGA.h>
 #include <cRIO/NiError.h>
 
@@ -32,7 +35,7 @@ namespace TS {
  * Thermal FPGA. Provides functions specific for Thermal FPGA, implements
  * generic functions.
  */
-class ThermalFPGA : public LSST::cRIO::FPGA {
+class ThermalFPGA : public IFPGA {
 public:
     ThermalFPGA(const char* bitfileDir);
     virtual ~ThermalFPGA();
@@ -40,9 +43,12 @@ public:
     void open() override;
     void close() override;
     void finalize() override;
+    uint16_t getTxCommand(uint8_t bus) override { return 0x09; }
+    uint16_t getRxCommand(uint8_t bus) override { return 0x0d; }
+    uint32_t getIrq(uint8_t bus) override { return NiFpga_Irq_1; }
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
-    void writeRequestFIFO(uint16_t* data, int32_t length, int32_t timeout) override;
-    void readU16ResponseFIFO(uint16_t* data, int32_t length, int32_t timeout) override;
+    void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
+    void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered = NULL);
     void ackIrqs(uint32_t irqs);
 
@@ -56,3 +62,5 @@ private:
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
+
+#endif  // !__TS_THERMALFPGA__

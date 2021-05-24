@@ -1,5 +1,5 @@
 /*
- * Simulated thermal FPGA class.
+ * SAL Thermal ILC.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,36 +20,29 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <IFPGA.h>
-#include <cRIO/NiError.h>
-#include <cRIO/ModbusBuffer.h>
+#ifndef _TS_SALThermalILC_
+#define _TS_SALThermalILC_
+
 #include <cRIO/ThermalILC.h>
+#include <SAL_MTM1M3TS.h>
+
+#include <memory>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 
 /**
- * Simulated Thermal FPGA. Simulates answers to FPGA functions.
+ * Stores data retrieved from ILCs into SAL structures.
  */
-class SimulatedFPGA : public IFPGA, public LSST::cRIO::ThermalILC {
+class SALThermalILC : public cRIO::ThermalILC {
 public:
-    SimulatedFPGA();
-    virtual ~SimulatedFPGA(){};
-    void initialize() override{};
-    void open() override{};
-    void close() override{};
-    void finalize() override{};
-    uint16_t getTxCommand(uint8_t bus) override { return 0x09; }
-    uint16_t getRxCommand(uint8_t bus) override { return 0x0d; }
-    uint32_t getIrq(uint8_t bus) override { return 1; }
-    void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
-    void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
-    void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
-    void waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered = NULL) override{};
-    void ackIrqs(uint32_t irqs){};
+    SALThermalILC(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL);
 
 protected:
+    void preProcess() override;
+    void postProcess() override;
+
     void processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType, uint8_t networkNodeType,
                          uint8_t ilcSelectedOptions, uint8_t networkNodeOptions, uint8_t majorRev,
                          uint8_t minorRev, std::string firmwareName) override;
@@ -66,13 +59,16 @@ protected:
                               float absoluteTemperature) override;
 
 private:
-    LSST::cRIO::ModbusBuffer response;
+    std::shared_ptr<SAL_MTM1M3TS> _m1m3tsSAL;
 
-    void _simulateModbus(uint16_t* data, size_t length);
+    MTM1M3TS_logevent_thermalInfoC _thermalInfo;
+    bool _thermalInfoChanged;
 
-    enum { IDLE, LEN, DATA } _U16ResponseStatus;
+    uint8_t _address2ILCIndex(uint8_t address);
 };
 
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
+
+#endif

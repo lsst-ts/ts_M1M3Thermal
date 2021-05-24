@@ -37,7 +37,7 @@ constexpr int32_t ACK_COMPLETE = 303;    /// Command is completed.
 constexpr int32_t ACK_FAILED = -302;     /// Command execution failed.
 
 RIOSubscriber::RIOSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
-    _events = {"summaryState", "logLevel"};
+    _events = {"summaryState", "logLevel", "thermalEnabled"};
 
     for (auto e : _events) {
         m1m3tsSAL->salEventPub((char *)("MTM1M3TS_logevent_" + e).c_str());
