@@ -1,6 +1,6 @@
-/.vscode/ipch/
-/builds/ts_M1M3Thermal
-/builds/ts_M1M3ThermalUnitTests
 *.log
 *.d
 *.o
+*.a
+m1m3tscli
+ts-M1M3thermald

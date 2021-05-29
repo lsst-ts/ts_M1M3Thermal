@@ -31,7 +31,7 @@
 #include <cRIO/ControllerThread.h>
 #include <OuterLoopClockThread.h>
 
-#include <RIOSubscriber.h>
+#include <TSSubscriber.h>
 #include <SALThermalILC.h>
 #include <TSPublisher.h>
 
@@ -120,7 +120,7 @@ int M1M3thermald::runLoop() {
 }
 
 void runFPGAs(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
-    RIOSubscriber subscriber(m1m3tsSAL);
+    TSSubscriber subscriber(m1m3tsSAL);
 
     try {
         subscriber.start();

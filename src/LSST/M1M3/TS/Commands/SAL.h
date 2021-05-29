@@ -1,5 +1,5 @@
 /*
- * RIOSubscriber class.
+ * SAL commands
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,44 +20,26 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_RIOSubscriber_
-#define _TS_RIOSubscriber_
+#ifndef _TS_Command_SAL
+#define _TS_Command_SAL
 
-#include <cRIO/ControllerThread.h>
-#include <cRIO/Thread.h>
-
+#include <TSPublisher.h>
 #include <SAL_MTM1M3TS.h>
-#include <functional>
-#include <map>
-#include <memory>
+
+#include <cRIO/SAL/Command.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
+namespace Commands {
 
-/**
- * Subscribes to SAL events. Looks for commands.
- */
-class RIOSubscriber : public cRIO::Thread {
-public:
-    /**
-     * Subscribes method calls and extra telemetry.
-     */
-    RIOSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL);
-    virtual ~RIOSubscriber();
+SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::CSC(), start);
 
-protected:
-    void run() override;
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::CSC(), standby);
 
-private:
-    std::vector<std::string> _events;
-    std::map<std::string, std::function<void(void)>> _commands;
-
-    void tryCommands();
-};
-
+}  // namespace Commands
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif
+#endif  //! _TS_Command_SAL
