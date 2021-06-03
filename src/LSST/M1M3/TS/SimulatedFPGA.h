@@ -40,14 +40,11 @@ public:
     void open() override{};
     void close() override{};
     void finalize() override{};
-    uint16_t getTxCommand(uint8_t bus) override { return 0x09; }
-    uint16_t getRxCommand(uint8_t bus) override { return 0x0d; }
-    uint32_t getIrq(uint8_t bus) override { return 1; }
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
-    void waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered = NULL) override{};
-    void ackIrqs(uint32_t irqs){};
+    void waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered = NULL) override {}
+    void ackIrqs(uint32_t irqs) override {}
 
 protected:
     void processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType, uint8_t networkNodeType,

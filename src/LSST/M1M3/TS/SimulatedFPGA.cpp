@@ -42,12 +42,15 @@ void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t tim
     while (d < data + length) {
         size_t dl;
         switch (*d) {
-            case 0x09:
+            case FPGAAddress::MODBUS_A_TX:
                 d++;
                 dl = *d;
                 d++;
                 _simulateModbus(d, dl);
                 d += dl;
+                break;
+            case FPGAAddress::HEARTBEAT:
+                d += 2;
                 break;
             // modbus software trigger
             case 252:
@@ -55,7 +58,7 @@ void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t tim
                 break;
             default:
                 SPDLOG_WARN(
-                        "SimulatedFPGA::writeCommandFIFO unknown/unimplemneted instruction: {0:04x} ({0:d})",
+                        "SimulatedFPGA::writeCommandFIFO unknown/unimplemented instruction: {0:04x} ({0:d})",
                         *d);
                 d++;
                 break;

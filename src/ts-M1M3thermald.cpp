@@ -37,6 +37,7 @@
 
 #include <cRIO/CSC.h>
 #include <cRIO/FPGA.h>
+#include <cRIO/NiError.h>
 #include <cRIO/SALSink.h>
 
 #include <TSApplication.h>

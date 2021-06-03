@@ -31,6 +31,6 @@ bool SAL_start::validate() {
     return true;
 }
 
-void SAL_start::execute(){};
+void SAL_start::execute() {}
 
 void SAL_standby::execute() { ackComplete(); }

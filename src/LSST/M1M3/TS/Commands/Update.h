@@ -25,6 +25,8 @@
 
 #include <cRIO/Command.h>
 
+#include <chrono>
+
 namespace LSST {
 namespace M1M3 {
 namespace TS {

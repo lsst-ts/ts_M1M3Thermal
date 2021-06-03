@@ -1,6 +1,6 @@
 include Makefile.inc
 
-.PHONY: all clean deploy tests FORCE doc
+.PHONY: all clean deploy tests FORCE doc clang-format
 
 # Add inputs and outputs from these tool invocations to the build variables 
 #
@@ -50,3 +50,6 @@ doc:
 
 simulator:
 	@${MAKE} SIMULATOR=1
+
+clang-format:
+	$(MAKE) -C src clang-format
