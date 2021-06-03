@@ -47,6 +47,7 @@ TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
     }
 
     ADD_SAL_COMMAND(start);
+    ADD_SAL_COMMAND(exitControl);
 
     _commands["enable"] = [m1m3tsSAL]() {
 

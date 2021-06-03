@@ -21,6 +21,7 @@
  */
 
 #include <Commands/SAL.h>
+#include <cRIO/ControllerThread.h>
 
 #include <spdlog/spdlog.h>
 
@@ -39,3 +40,8 @@ void SAL_start::execute() {
 }
 
 void SAL_standby::execute() { ackComplete(); }
+
+void SAL_exitControl::execute() {
+    LSST::cRIO::ControllerThread::setExitRequested();
+    ackComplete();
+}

@@ -44,7 +44,7 @@ void Heartbeat::tryToggle() {
 
     TSApplication::fpga()->setHeartbeat(heartbeat);
 
-    salReturn ret = TSPublisher::instance().CSC()->putSample_logevent_heartbeat(this);
+    salReturn ret = TSPublisher::SAL()->putSample_logevent_heartbeat(this);
     if (ret != SAL__OK) {
         SPDLOG_WARN("Cannot send heartbeat: {}", ret);
         return;

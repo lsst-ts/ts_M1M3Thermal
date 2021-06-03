@@ -49,7 +49,7 @@ doc:
 	${co}doxygen Doxyfile
 
 simulator:
-	@${MAKE} SIMULATOR=1
+	@${MAKE} SIMULATOR=1 DEBUG=1
 
 clang-format:
 	$(MAKE) -C src clang-format

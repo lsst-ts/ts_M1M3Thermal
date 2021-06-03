@@ -37,7 +37,7 @@ public:
 
     void setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL);
 
-    static std::shared_ptr<SAL_MTM1M3TS> CSC() { return instance()._m1m3TSSAL; }
+    static std::shared_ptr<SAL_MTM1M3TS> SAL() { return instance()._m1m3TSSAL; }
 
     void setLogLevel(int newLevel);
 

@@ -33,9 +33,11 @@ namespace M1M3 {
 namespace TS {
 namespace Commands {
 
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::CSC(), start);
+SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), start);
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::CSC(), standby);
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), standby);
+
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), exitControl);
 
 }  // namespace Commands
 }  // namespace TS

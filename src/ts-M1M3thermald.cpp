@@ -34,6 +34,7 @@
 #include <TSSubscriber.h>
 #include <SALThermalILC.h>
 #include <TSPublisher.h>
+#include <Commands/SAL.h>
 
 #include <cRIO/CSC.h>
 #include <cRIO/FPGA.h>
@@ -45,6 +46,7 @@
 #include <SAL_MTM1M3TS.h>
 
 #include <getopt.h>
+#include <csignal>
 
 #include <chrono>
 #include <thread>
@@ -77,7 +79,15 @@ private:
 
 SALSinkMacro(MTM1M3TS);
 
+void sigHandler(int sig) {
+    SPDLOG_INFO("Exiting on signal {}", sig);
+    ControllerThread::setExitRequested();
+}
+
 void M1M3thermald::init() {
+    std::signal(SIGINT, &sigHandler);
+    std::signal(SIGTERM, &sigHandler);
+
     SPDLOG_INFO("Main: Initializing M1M3TS SAL");
     _m1m3tsSAL = std::make_shared<SAL_MTM1M3TS>();
     _m1m3tsSAL->setDebugLevel(getDebugLevelSAL());
@@ -112,13 +122,15 @@ void M1M3thermald::done() {
     SPDLOG_INFO("Shutting down M1M3thermald");
     removeSink();
 
+    std::this_thread::sleep_for(10ms);
+
     SPDLOG_INFO("Main: Shutting down M1M3 TS SAL");
     _m1m3tsSAL->salShutdown();
 }
 
 int M1M3thermald::runLoop() {
     std::this_thread::sleep_for(20ms);
-    return 1;
+    return ControllerThread::exitRequested() ? 0 : 1;
 }
 
 #if 0
