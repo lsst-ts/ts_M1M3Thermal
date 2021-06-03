@@ -79,15 +79,7 @@ private:
 
 SALSinkMacro(MTM1M3TS);
 
-void sigHandler(int sig) {
-    SPDLOG_INFO("Exiting on signal {}", sig);
-    ControllerThread::setExitRequested();
-}
-
 void M1M3thermald::init() {
-    std::signal(SIGINT, &sigHandler);
-    std::signal(SIGTERM, &sigHandler);
-
     SPDLOG_INFO("Main: Initializing M1M3TS SAL");
     _m1m3tsSAL = std::make_shared<SAL_MTM1M3TS>();
     _m1m3tsSAL->setDebugLevel(getDebugLevelSAL());
