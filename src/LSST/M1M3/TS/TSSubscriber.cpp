@@ -30,9 +30,7 @@
 
 #include <chrono>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
+using namespace LSST::M1M3::TS;
 
 constexpr int32_t ACK_INPROGRESS = 301;  /// Acknowledges command reception, command is being executed.
 constexpr int32_t ACK_COMPLETE = 303;    /// Command is completed.
@@ -44,6 +42,7 @@ TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
         MTM1M3TS_command_##name##C data;                                                        \
         int32_t commandID = m1m3tsSAL->acceptCommand_##name(&data);                             \
         if (commandID <= 0) return;                                                             \
+        SPDLOG_INFO("Queing command " #name);                                                   \
         cRIO::ControllerThread::instance().enqueue(new Commands::SAL_##name(commandID, &data)); \
     }
 
@@ -89,6 +88,7 @@ TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
 
     // register all commands
     for (auto c : _commands) {
+        SPDLOG_TRACE("Registering command {}", c.first);
         m1m3tsSAL->salProcessor((char *)("MTM1M3TS_command_" + c.first).c_str());
     }
 }
@@ -107,7 +107,3 @@ void TSSubscriber::tryCommands() {
         c.second();
     }
 }
-
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST

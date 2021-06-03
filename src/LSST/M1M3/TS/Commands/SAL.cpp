@@ -22,6 +22,8 @@
 
 #include <Commands/SAL.h>
 
+#include <spdlog/spdlog.h>
+
 using namespace LSST::M1M3::TS::Commands;
 
 bool SAL_start::validate() {
@@ -31,6 +33,9 @@ bool SAL_start::validate() {
     return true;
 }
 
-void SAL_start::execute() {}
+void SAL_start::execute() {
+    SPDLOG_INFO("Start");
+    ackComplete();
+}
 
 void SAL_standby::execute() { ackComplete(); }
