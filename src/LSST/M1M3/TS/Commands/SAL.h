@@ -35,6 +35,10 @@ namespace Commands {
 
 SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), start);
 
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), enable);
+
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), disable);
+
 SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), standby);
 
 SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), exitControl);

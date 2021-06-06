@@ -21,11 +21,14 @@
  */
 
 #include <Commands/SAL.h>
+#include <Events/SummaryState.h>
 #include <cRIO/ControllerThread.h>
 
 #include <spdlog/spdlog.h>
 
 using namespace LSST::M1M3::TS::Commands;
+using namespace LSST::M1M3::TS::Events;
+using namespace MTM1M3TS;
 
 bool SAL_start::validate() {
     if (params.settingsToApply.empty()) {
@@ -35,11 +38,26 @@ bool SAL_start::validate() {
 }
 
 void SAL_start::execute() {
-    SPDLOG_INFO("Start");
+    SPDLOG_INFO("Starting");
+    SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
+    ackComplete();
+    SPDLOG_INFO("Started");
+}
+
+void SAL_enable::execute() {
+    SummaryState::setState(MTM1M3TS_shared_SummaryStates_EnabledState);
     ackComplete();
 }
 
-void SAL_standby::execute() { ackComplete(); }
+void SAL_disable::execute() {
+    SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
+    ackComplete();
+}
+
+void SAL_standby::execute() {
+    SummaryState::setState(MTM1M3TS_shared_SummaryStates_StandbyState);
+    ackComplete();
+}
 
 void SAL_exitControl::execute() {
     LSST::cRIO::ControllerThread::setExitRequested();

@@ -35,6 +35,7 @@
 #include <SALThermalILC.h>
 #include <TSPublisher.h>
 #include <Commands/SAL.h>
+#include <Commands/EnterControl.h>
 
 #include <cRIO/CSC.h>
 #include <cRIO/FPGA.h>
@@ -106,6 +107,8 @@ void M1M3thermald::init() {
 
     SPDLOG_INFO("Creating subscriber");
     addThread(new TSSubscriber(_m1m3tsSAL));
+
+    ControllerThread::instance().enqueue(new Commands::EnterControl());
 }
 
 void M1M3thermald::done() {

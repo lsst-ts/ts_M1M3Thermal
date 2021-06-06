@@ -24,14 +24,41 @@
 #define _TS_Event_SummaryState_
 
 #include <SAL_MTM1M3TS.h>
-#include <cRIO/SAL/SummaryState.h>
+#include <cRIO/Singleton.h>
+
+#include <TSPublisher.h>
+
+#include <spdlog/spdlog.h>
+#include <mutex>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Events {
 
-class SummaryState final : SummaryState<MTM1M3TS_logevent_summaryStateC> {};
+class SummaryState final : MTM1M3TS_logevent_summaryStateC, public cRIO::Singleton<SummaryState> {
+public:
+    SummaryState(token);
+
+    /**
+     *
+     * @multithreading safe
+     */
+    bool active();
+
+    /**
+     *
+     * @multithreading safe
+     */
+    static void setState(int newState) { instance()._switchState(newState); }
+    static void send();
+
+private:
+    void _switchState(int newState);
+    bool _updated;
+
+    std::mutex _stateMutex;
+};
 
 }  // namespace Events
 }  // namespace TS

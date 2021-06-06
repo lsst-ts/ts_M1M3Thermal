@@ -1,5 +1,5 @@
 /*
- * Thread to catch outer loop clock interrupts.
+ * EnterControl command.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,26 +20,29 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cRIO/ControllerThread.h>
-#include <OuterLoopClockThread.h>
-#include <Commands/Update.h>
+#ifndef _TS_Command_EnterControl_
+#define _TS_Command_ENterControl_
+
+#include <cRIO/Command.h>
+#include <SAL_MTM1M3TS.h>
+
 #include <Events/SummaryState.h>
 
-#include <chrono>
-#include <spdlog/spdlog.h>
+namespace LSST {
+namespace M1M3 {
+namespace TS {
+namespace Commands {
 
-using namespace std::chrono_literals;
-using namespace LSST::M1M3::TS;
-
-void OuterLoopClockThread::run() {
-    SPDLOG_INFO("OuterLoopClockThread: Run");
-    std::unique_lock<std::mutex> lock(runMutex);
-    cRIO::ControllerThread::instance().enqueue(new Commands::Update());
-    while (keepRunning) {
-        runCondition.wait_for(lock, 20ms);
-        if (Events::SummaryState::instance().active()) {
-            cRIO::ControllerThread::instance().enqueue(new Commands::Update());
-        }
+class EnterControl : public cRIO::Command {
+public:
+    void execute() override {
+        Events::SummaryState::setState(MTM1M3TS::MTM1M3TS_shared_SummaryStates_StandbyState);
     }
-    SPDLOG_INFO("OuterLoopClockThread: Completed");
-}
+};
+
+}  // namespace Commands
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST
+
+#endif  // !_TS_Command_EnterControl_

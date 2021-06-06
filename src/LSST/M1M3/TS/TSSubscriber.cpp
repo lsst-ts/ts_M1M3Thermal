@@ -42,24 +42,14 @@ TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
         MTM1M3TS_command_##name##C data;                                                        \
         int32_t commandID = m1m3tsSAL->acceptCommand_##name(&data);                             \
         if (commandID <= 0) return;                                                             \
-        SPDLOG_INFO("Queing command " #name);                                                   \
         cRIO::ControllerThread::instance().enqueue(new Commands::SAL_##name(commandID, &data)); \
     }
 
     ADD_SAL_COMMAND(start);
+    ADD_SAL_COMMAND(enable);
+    ADD_SAL_COMMAND(disable);
+    ADD_SAL_COMMAND(standby);
     ADD_SAL_COMMAND(exitControl);
-
-    _commands["enable"] = [m1m3tsSAL]() {
-
-    };
-
-    _commands["disable"] = [m1m3tsSAL]() {
-
-    };
-
-    _commands["standby"] = [m1m3tsSAL]() {
-
-    };
 
     _commands["setLogLevel"] = [m1m3tsSAL]() {
         MTM1M3TS_command_setLogLevelC data;
