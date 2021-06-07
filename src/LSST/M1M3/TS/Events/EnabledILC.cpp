@@ -47,7 +47,7 @@ void EnabledILC::send() {
     if (_updated == false) {
         return;
     }
-    salReturn ret = TSPublisher::instance().CSC()->putSample_logevent_enabledILC(this);
+    salReturn ret = TSPublisher::SAL()->putSample_logevent_enabledILC(this);
     if (ret != SAL__OK) {
         SPDLOG_WARN("Cannot send enabledILC: {}", ret);
         return;

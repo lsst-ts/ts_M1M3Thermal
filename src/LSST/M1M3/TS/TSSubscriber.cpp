@@ -1,5 +1,5 @@
 /*
- * RIOSubscriber class.
+ * TSSubscriber class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,40 +20,36 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <RIOSubscriber.h>
+#include <TSSubscriber.h>
+#include <Commands/SAL.h>
 
 #include <cRIO/Command.h>
+#include <cRIO/ControllerThread.h>
 #include <SAL_MTM1M3TS.h>
 #include <spdlog/spdlog.h>
 
 #include <chrono>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
+using namespace LSST::M1M3::TS;
 
 constexpr int32_t ACK_INPROGRESS = 301;  /// Acknowledges command reception, command is being executed.
 constexpr int32_t ACK_COMPLETE = 303;    /// Command is completed.
 constexpr int32_t ACK_FAILED = -302;     /// Command execution failed.
 
-RIOSubscriber::RIOSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
-    _events = {"summaryState", "logLevel", "thermalEnabled"};
-
-    for (auto e : _events) {
-        m1m3tsSAL->salEventPub((char *)("MTM1M3TS_logevent_" + e).c_str());
+TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
+#define ADD_SAL_COMMAND(name)                                                                   \
+    _commands[#name] = [m1m3tsSAL]() {                                                          \
+        MTM1M3TS_command_##name##C data;                                                        \
+        int32_t commandID = m1m3tsSAL->acceptCommand_##name(&data);                             \
+        if (commandID <= 0) return;                                                             \
+        cRIO::ControllerThread::instance().enqueue(new Commands::SAL_##name(commandID, &data)); \
     }
 
-    _commands["enable"] = [m1m3tsSAL]() {
-
-    };
-
-    _commands["disable"] = [m1m3tsSAL]() {
-
-    };
-
-    _commands["standby"] = [m1m3tsSAL]() {
-
-    };
+    ADD_SAL_COMMAND(start);
+    ADD_SAL_COMMAND(enable);
+    ADD_SAL_COMMAND(disable);
+    ADD_SAL_COMMAND(standby);
+    ADD_SAL_COMMAND(exitControl);
 
     _commands["setLogLevel"] = [m1m3tsSAL]() {
         MTM1M3TS_command_setLogLevelC data;
@@ -83,25 +79,22 @@ RIOSubscriber::RIOSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
 
     // register all commands
     for (auto c : _commands) {
+        SPDLOG_TRACE("Registering command {}", c.first);
         m1m3tsSAL->salProcessor((char *)("MTM1M3TS_command_" + c.first).c_str());
     }
 }
 
-RIOSubscriber::~RIOSubscriber() {}
+TSSubscriber::~TSSubscriber() {}
 
-void RIOSubscriber::run() {
+void TSSubscriber::run() {
     while (keepRunning) {
         tryCommands();
         std::this_thread::sleep_for(100us);
     }
 }
 
-void RIOSubscriber::tryCommands() {
+void TSSubscriber::tryCommands() {
     for (auto c : _commands) {
         c.second();
     }
 }
-
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST

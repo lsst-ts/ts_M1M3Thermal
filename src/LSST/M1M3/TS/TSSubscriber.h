@@ -1,5 +1,5 @@
 /*
- * Abstract FPGA interface.
+ * TSSubscriber class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,39 +20,44 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __TS_IFPGA__
-#define __TS_IFPGA__
+#ifndef _TS_TSSubscriber_
+#define _TS_TSSubscriber_
 
-#include <cRIO/FPGA.h>
-#include <NiFpga_M1M3SupportFPGA.h>
+#include <cRIO/ControllerThread.h>
+#include <cRIO/Thread.h>
+
+#include <SAL_MTM1M3TS.h>
+#include <functional>
+#include <map>
+#include <memory>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 
-namespace FPGAAddress {
-constexpr uint16_t MODBUS_A_RX = 21;
-constexpr uint16_t MODBUS_A_TX = 25;
-constexpr uint16_t HEARTBEAT = 62;
-}  // namespace FPGAAddress
-
 /**
- * Abstract FPGA Interface. Provides common parent for real and simulated FPGA. Singleton.
+ * Subscribes to SAL events. Looks for commands.
  */
-class IFPGA : public cRIO::FPGA {
+class TSSubscriber : public cRIO::Thread {
 public:
-    IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
-    virtual ~IFPGA() {}
+    /**
+     * Subscribes method calls and extra telemetry.
+     */
+    TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL);
+    virtual ~TSSubscriber();
 
-    uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
-    uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }
-    uint32_t getIrq(uint8_t bus) override { return NiFpga_Irq_1; }
+protected:
+    void run() override;
 
-    void setHeartbeat(bool heartbeat);
+private:
+    std::vector<std::string> _events;
+    std::map<std::string, std::function<void(void)>> _commands;
+
+    void tryCommands();
 };
 
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !__TS_IFPGA__
+#endif

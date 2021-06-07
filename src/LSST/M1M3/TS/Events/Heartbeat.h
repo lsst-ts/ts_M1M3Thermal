@@ -1,5 +1,5 @@
 /*
- * RIOSubscriber class.
+ * EnabledILC event handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,44 +20,33 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_RIOSubscriber_
-#define _TS_RIOSubscriber_
-
-#include <cRIO/ControllerThread.h>
-#include <cRIO/Thread.h>
+#ifndef _TS_Event_Heartbeat_
+#define _TS_Event_Heartbeat_
 
 #include <SAL_MTM1M3TS.h>
-#include <functional>
-#include <map>
-#include <memory>
+#include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
+namespace Events {
 
-/**
- * Subscribes to SAL events. Looks for commands.
- */
-class RIOSubscriber : public cRIO::Thread {
+class Heartbeat final : MTM1M3TS_logevent_heartbeatC, public cRIO::Singleton<Heartbeat> {
 public:
-    /**
-     * Subscribes method calls and extra telemetry.
-     */
-    RIOSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL);
-    virtual ~RIOSubscriber();
+    Heartbeat(token);
 
-protected:
-    void run() override;
+    /**
+     * Try to toggle heartbeat. Sends updated heartbeat if changed.
+     */
+    void tryToggle();
 
 private:
-    std::vector<std::string> _events;
-    std::map<std::string, std::function<void(void)>> _commands;
-
-    void tryCommands();
+    double _nextUpdate;
 };
 
+}  // namespace Events
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif
+#endif  // !_TS_Event_Heartbeat_

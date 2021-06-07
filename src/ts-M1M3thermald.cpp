@@ -31,12 +31,15 @@
 #include <cRIO/ControllerThread.h>
 #include <OuterLoopClockThread.h>
 
-#include <RIOSubscriber.h>
+#include <TSSubscriber.h>
 #include <SALThermalILC.h>
 #include <TSPublisher.h>
+#include <Commands/SAL.h>
+#include <Commands/EnterControl.h>
 
 #include <cRIO/CSC.h>
 #include <cRIO/FPGA.h>
+#include <cRIO/NiError.h>
 #include <cRIO/SALSink.h>
 
 #include <TSApplication.h>
@@ -44,6 +47,7 @@
 #include <SAL_MTM1M3TS.h>
 
 #include <getopt.h>
+#include <csignal>
 
 #include <chrono>
 #include <thread>
@@ -71,8 +75,7 @@ protected:
 
 private:
     std::shared_ptr<SAL_MTM1M3TS> _m1m3tsSAL;
-
-    OuterLoopClockThread _outerLoopClock;
+    std::unique_ptr<TSSubscriber> _subscriber;
 };
 
 SALSinkMacro(MTM1M3TS);
@@ -94,21 +97,27 @@ void M1M3thermald::init() {
     SPDLOG_INFO("Starting cRIO/real HW version. Version {}", VERSION);
 #endif
 
-    SPDLOG_INFO("Main: Creating publisher");
+    SPDLOG_INFO("Creating publisher");
     TSPublisher::instance().setSAL(_m1m3tsSAL);
-
     TSPublisher::instance().setLogLevel(getSpdLogLogLevel() * 10);
 
+    SPDLOG_INFO("Starting controller thread");
     ControllerThread::instance().start();
-    _outerLoopClock.start();
+    addThread(new OuterLoopClockThread());
+
+    SPDLOG_INFO("Creating subscriber");
+    addThread(new TSSubscriber(_m1m3tsSAL));
+
+    ControllerThread::instance().enqueue(new Commands::EnterControl());
 }
 
 void M1M3thermald::done() {
-    _outerLoopClock.stop();
     ControllerThread::instance().stop();
 
     SPDLOG_INFO("Shutting down M1M3thermald");
     removeSink();
+
+    std::this_thread::sleep_for(10ms);
 
     SPDLOG_INFO("Main: Shutting down M1M3 TS SAL");
     _m1m3tsSAL->salShutdown();
@@ -116,21 +125,11 @@ void M1M3thermald::done() {
 
 int M1M3thermald::runLoop() {
     std::this_thread::sleep_for(20ms);
-    return 1;
+    return ControllerThread::exitRequested() ? 0 : 1;
 }
 
-void runFPGAs(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
-    RIOSubscriber subscriber(m1m3tsSAL);
-
-    try {
-        subscriber.start();
-        subscriber.join();
-    } catch (std::exception& ex) {
-        SPDLOG_CRITICAL("Error starting,stopping or joining threads: {)", ex.what());
-    }
-
-    subscriber.stop();
 #if 0
+void runFPGAs(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
     SPDLOG_INFO("Main: Creating subscriber");
     M1M3SSSubscriber::get().setSAL(m1m3SAL, mtMountSAL);
     SPDLOG_INFO("Main: Creating subscriber thread");
@@ -178,8 +177,8 @@ void runFPGAs(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
         SPDLOG_CRITICAL("Error starting.stopping or joining threads: {)", ex.what());
         exit(1);
     }
-#endif
 }
+#endif
 
 int main(int argc, char* const argv[]) {
     M1M3thermald csc("M1M3TS", "M1M3 Thermal System CSC");

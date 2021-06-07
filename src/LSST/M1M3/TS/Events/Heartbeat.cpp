@@ -1,5 +1,5 @@
 /*
- * Abstract FPGA interface.
+ * EnabledILCs event.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,39 +20,35 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __TS_IFPGA__
-#define __TS_IFPGA__
+#include <cRIO/ThermalILC.h>
+#include <TSApplication.h>
+#include <TSPublisher.h>
+#include <Events/Heartbeat.h>
 
-#include <cRIO/FPGA.h>
-#include <NiFpga_M1M3SupportFPGA.h>
+#include <spdlog/spdlog.h>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
+using namespace LSST::M1M3::TS;
+using namespace LSST::M1M3::TS::Events;
 
-namespace FPGAAddress {
-constexpr uint16_t MODBUS_A_RX = 21;
-constexpr uint16_t MODBUS_A_TX = 25;
-constexpr uint16_t HEARTBEAT = 62;
-}  // namespace FPGAAddress
+constexpr double HEARTBEAT_PERIOD = 1;
 
-/**
- * Abstract FPGA Interface. Provides common parent for real and simulated FPGA. Singleton.
- */
-class IFPGA : public cRIO::FPGA {
-public:
-    IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
-    virtual ~IFPGA() {}
+Heartbeat::Heartbeat(token) : _nextUpdate(0) { heartbeat = false; }
 
-    uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
-    uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }
-    uint32_t getIrq(uint8_t bus) override { return NiFpga_Irq_1; }
+void Heartbeat::tryToggle() {
+    double now = TSPublisher::getTimestamp();
+    if (now < _nextUpdate) {
+        return;
+    }
 
-    void setHeartbeat(bool heartbeat);
-};
+    heartbeat = !(heartbeat);
 
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
+    TSApplication::fpga()->setHeartbeat(heartbeat);
 
-#endif  // !__TS_IFPGA__
+    salReturn ret = TSPublisher::SAL()->putSample_logevent_heartbeat(this);
+    if (ret != SAL__OK) {
+        SPDLOG_WARN("Cannot send heartbeat: {}", ret);
+        return;
+    }
+
+    _nextUpdate = now + HEARTBEAT_PERIOD;
+}

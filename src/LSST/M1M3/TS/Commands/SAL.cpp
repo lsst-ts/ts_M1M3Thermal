@@ -1,5 +1,5 @@
 /*
- * Thread to catch outer loop clock interrupts.
+ * SAL command.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,26 +20,46 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cRIO/ControllerThread.h>
-#include <OuterLoopClockThread.h>
-#include <Commands/Update.h>
+#include <Commands/SAL.h>
 #include <Events/SummaryState.h>
+#include <cRIO/ControllerThread.h>
 
-#include <chrono>
 #include <spdlog/spdlog.h>
 
-using namespace std::chrono_literals;
-using namespace LSST::M1M3::TS;
+using namespace LSST::M1M3::TS::Commands;
+using namespace LSST::M1M3::TS::Events;
+using namespace MTM1M3TS;
 
-void OuterLoopClockThread::run() {
-    SPDLOG_INFO("OuterLoopClockThread: Run");
-    std::unique_lock<std::mutex> lock(runMutex);
-    cRIO::ControllerThread::instance().enqueue(new Commands::Update());
-    while (keepRunning) {
-        runCondition.wait_for(lock, 20ms);
-        if (Events::SummaryState::instance().active()) {
-            cRIO::ControllerThread::instance().enqueue(new Commands::Update());
-        }
+bool SAL_start::validate() {
+    if (params.settingsToApply.empty()) {
+        return false;
     }
-    SPDLOG_INFO("OuterLoopClockThread: Completed");
+    return true;
+}
+
+void SAL_start::execute() {
+    SPDLOG_INFO("Starting");
+    SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
+    ackComplete();
+    SPDLOG_INFO("Started");
+}
+
+void SAL_enable::execute() {
+    SummaryState::setState(MTM1M3TS_shared_SummaryStates_EnabledState);
+    ackComplete();
+}
+
+void SAL_disable::execute() {
+    SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
+    ackComplete();
+}
+
+void SAL_standby::execute() {
+    SummaryState::setState(MTM1M3TS_shared_SummaryStates_StandbyState);
+    ackComplete();
+}
+
+void SAL_exitControl::execute() {
+    LSST::cRIO::ControllerThread::setExitRequested();
+    ackComplete();
 }

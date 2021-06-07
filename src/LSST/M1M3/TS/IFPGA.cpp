@@ -20,39 +20,13 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __TS_IFPGA__
-#define __TS_IFPGA__
+#include "IFPGA.h"
 
-#include <cRIO/FPGA.h>
-#include <NiFpga_M1M3SupportFPGA.h>
+using namespace LSST::M1M3::TS;
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-
-namespace FPGAAddress {
-constexpr uint16_t MODBUS_A_RX = 21;
-constexpr uint16_t MODBUS_A_TX = 25;
-constexpr uint16_t HEARTBEAT = 62;
-}  // namespace FPGAAddress
-
-/**
- * Abstract FPGA Interface. Provides common parent for real and simulated FPGA. Singleton.
- */
-class IFPGA : public cRIO::FPGA {
-public:
-    IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
-    virtual ~IFPGA() {}
-
-    uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
-    uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }
-    uint32_t getIrq(uint8_t bus) override { return NiFpga_Irq_1; }
-
-    void setHeartbeat(bool heartbeat);
-};
-
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
-
-#endif  // !__TS_IFPGA__
+void IFPGA::setHeartbeat(bool heartbeat) {
+    uint16_t buf[2];
+    buf[0] = FPGAAddress::HEARTBEAT;
+    buf[1] = heartbeat;
+    writeCommandFIFO(buf, 2, 0);
+}

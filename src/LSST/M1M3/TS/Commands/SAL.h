@@ -1,5 +1,5 @@
 /*
- * Abstract FPGA interface.
+ * SAL commands
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,39 +20,32 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __TS_IFPGA__
-#define __TS_IFPGA__
+#ifndef _TS_Command_SAL
+#define _TS_Command_SAL
 
-#include <cRIO/FPGA.h>
-#include <NiFpga_M1M3SupportFPGA.h>
+#include <TSPublisher.h>
+#include <SAL_MTM1M3TS.h>
+
+#include <cRIO/SAL/Command.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
+namespace Commands {
 
-namespace FPGAAddress {
-constexpr uint16_t MODBUS_A_RX = 21;
-constexpr uint16_t MODBUS_A_TX = 25;
-constexpr uint16_t HEARTBEAT = 62;
-}  // namespace FPGAAddress
+SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), start);
 
-/**
- * Abstract FPGA Interface. Provides common parent for real and simulated FPGA. Singleton.
- */
-class IFPGA : public cRIO::FPGA {
-public:
-    IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
-    virtual ~IFPGA() {}
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), enable);
 
-    uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
-    uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }
-    uint32_t getIrq(uint8_t bus) override { return NiFpga_Irq_1; }
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), disable);
 
-    void setHeartbeat(bool heartbeat);
-};
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), standby);
 
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), exitControl);
+
+}  // namespace Commands
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !__TS_IFPGA__
+#endif  //! _TS_Command_SAL

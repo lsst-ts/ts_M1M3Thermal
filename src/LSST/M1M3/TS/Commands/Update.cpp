@@ -22,6 +22,7 @@
 
 #include "Commands/Update.h"
 #include "Events/EnabledILC.h"
+#include "EVents/Heartbeat.h"
 #include "TSApplication.h"
 
 #include "Events/EnabledILC.h"
@@ -48,6 +49,8 @@ void Update::execute() {
     Telemetry::ThermalData::instance().send();
 
     Events::EnabledILC::instance().send();
+
+    Events::Heartbeat::instance().tryToggle();
 
     SPDLOG_TRACE("Commands::Update leaving execute");
 }

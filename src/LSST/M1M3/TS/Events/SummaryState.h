@@ -1,5 +1,5 @@
 /*
- * Abstract FPGA interface.
+ * SummaryState event handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,39 +20,49 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __TS_IFPGA__
-#define __TS_IFPGA__
+#ifndef _TS_Event_SummaryState_
+#define _TS_Event_SummaryState_
 
-#include <cRIO/FPGA.h>
-#include <NiFpga_M1M3SupportFPGA.h>
+#include <SAL_MTM1M3TS.h>
+#include <cRIO/Singleton.h>
+
+#include <TSPublisher.h>
+
+#include <spdlog/spdlog.h>
+#include <mutex>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
+namespace Events {
 
-namespace FPGAAddress {
-constexpr uint16_t MODBUS_A_RX = 21;
-constexpr uint16_t MODBUS_A_TX = 25;
-constexpr uint16_t HEARTBEAT = 62;
-}  // namespace FPGAAddress
-
-/**
- * Abstract FPGA Interface. Provides common parent for real and simulated FPGA. Singleton.
- */
-class IFPGA : public cRIO::FPGA {
+class SummaryState final : MTM1M3TS_logevent_summaryStateC, public cRIO::Singleton<SummaryState> {
 public:
-    IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
-    virtual ~IFPGA() {}
+    SummaryState(token);
 
-    uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
-    uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }
-    uint32_t getIrq(uint8_t bus) override { return NiFpga_Irq_1; }
+    /**
+     *
+     * @multithreading safe
+     */
+    bool active();
 
-    void setHeartbeat(bool heartbeat);
+    /**
+     *
+     * @multithreading safe
+     */
+    static void setState(int newState) { instance()._switchState(newState); }
+    static void send();
+
+private:
+    void _switchState(int newState);
+    bool _updated;
+
+    std::mutex _stateMutex;
 };
 
+}  // namespace Events
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !__TS_IFPGA__
+#endif  //! _TS_Event_SummaryState_
