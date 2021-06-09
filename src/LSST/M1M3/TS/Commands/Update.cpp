@@ -22,7 +22,7 @@
 
 #include "Commands/Update.h"
 #include "Events/EnabledILC.h"
-#include "EVents/Heartbeat.h"
+#include "Events/Heartbeat.h"
 #include "TSApplication.h"
 
 #include "Events/EnabledILC.h"
