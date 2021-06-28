@@ -51,7 +51,14 @@ void TestILC::processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcApp
                               uint8_t ilcSelectedOptions, uint8_t networkNodeOptions, uint8_t majorRev,
                               uint8_t minorRev, std::string firmwareName) {
     REQUIRE(address == 16);
-    REQUIRE(uniqueID == 1);
+    REQUIRE(uniqueID == 0x040302010000 + (static_cast<uint64_t>(address) << 40));
+    REQUIRE(ilcAppType == 0x02);
+    REQUIRE(networkNodeType == 0x02);
+    REQUIRE(ilcSelectedOptions == 0x02);
+    REQUIRE(networkNodeOptions == 0x00);
+    REQUIRE(majorRev == 1);
+    REQUIRE(minorRev == 2);
+    REQUIRE(firmwareName == "Test Thermal ILC");
 }
 
 void TestILC::processServerStatus(uint8_t address, uint8_t mode, uint16_t status, uint16_t faults) {
@@ -72,6 +79,8 @@ void TestILC::processThermalStatus(uint8_t address, uint8_t status, float differ
 TEST_CASE("Test simulated FPGA responses", "[SimulatedFPGA]") {
     SimulatedFPGA simulated;
     TestILC testILC;
+
+    testILC.reportServerID(16);
 
     simulated.ilcCommands(testILC);
 }
