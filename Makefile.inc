@@ -21,7 +21,7 @@ endif
 BOOST_CPPFLAGS := -I/usr/include/boost169
 SAL_CPPFLAGS := -I${OSPL_HOME}/include -I${OSPL_HOME}/include/sys -I${OSPL_HOME}/include/dcps/C++/SACPP -I${SAL_WORK_DIR}/MTM1M3TS/cpp/src -I${SAL_WORK_DIR}/include -I${SAL_HOME}/include -I${LSST_SDK_INSTALL}/include
 
-CRIO_DIR ?= /home/petr/ts_cRIOcpp
+CRIO_DIR ?= ../ts_cRIOcpp
 CRIO_CFLAGS := -I${CRIO_DIR}/include
 
 LIBS := -ldl ${SAL_WORK_DIR}/lib/libSAL_MTM1M3TS.a -ldcpssacpp -ldcpsgapi -lddsuser -lddskernel -lpthread -lddsserialization -lddsconfparser -lddsconf -lddsdatabase -lddsutil -lddsos
