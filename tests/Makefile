@@ -43,4 +43,4 @@ clean:
 
 ${BINARIES}: %: %.cpp.o ../src/libM1M3TS.a
 	@echo '[TPP] $<'
-	${co}$(CPP) -o $@ $(LIBS_FLAGS) $(BOOST_CPPFLAGS) $(SAL_CPPFLAGS) $(LIBS) $(M1M3_CPPFLAGS) $^ ../$(CRIO_DIR)/lib/libcRIOcpp.a
+	${co}$(CPP) -o $@ $(LIBS_FLAGS) $(BOOST_CPPFLAGS) $(SAL_CPPFLAGS) $(LIBS) $(M1M3_CPPFLAGS) $^ ../$(CRIO_DIR)/lib/libcRIOcpp.a ${SAL_WORK_DIR}/lib/libSAL_MTM1M3TS.a
