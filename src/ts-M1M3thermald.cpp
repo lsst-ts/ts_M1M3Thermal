@@ -64,7 +64,7 @@ using namespace std::chrono_literals;
 
 class M1M3thermald : public CSC {
 public:
-    M1M3thermald(std::string name, const char* description) : CSC(name, description) {}
+    M1M3thermald(const char* name, const char* description) : CSC(name, description) {}
 
 protected:
     void init() override;
