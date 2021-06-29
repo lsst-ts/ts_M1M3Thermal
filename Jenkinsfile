@@ -107,7 +107,7 @@ node {
                     cd $SALUSER_HOME/repos
                     ./ts_sal/test/MTM1M3TS/cpp/src/sacpp_MTM1M3TS_start_commander Default
                     sleep 30
-                    killall ts-M1M3supportd
+                    killall ts-M1M3thermald
                 """
             }
         }
