@@ -45,7 +45,7 @@ node {
             git branch: (BRANCH in SAME_CRIO_BRANCH) ? BRANCH : "master", url: 'https://github.com/lsst-ts/ts_cRIOcpp'
         }
         dir("ts_m1m3thermal") {
-            git branch: BRANCH, url: 'https://github.com/lsst-ts/ts_m1m3thermal'
+            checkout scm
         }
     }
 
