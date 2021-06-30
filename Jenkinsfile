@@ -23,7 +23,7 @@ node {
 
     def SALUSER_HOME = "/home/saluser"
     def BRANCH = (env.CHANGE_BRANCH != null) ? env.CHANGE_BRANCH : env.BRANCH_NAME
-    def SAME_CRIO_BRANCH = ["tickets/DM-30769"]
+    def SAME_CRIO_BRANCH = ["develop"]
 
     stage('Cloning Dockerfile')
     {
