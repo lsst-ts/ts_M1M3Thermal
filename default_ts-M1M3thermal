@@ -1,0 +1,8 @@
+OSPL_HOME=/opt/OpenSpliceDDS/V6.11.0/HDE/x86_64.linux
+OSPL_RELEASE=6.11.0
+OSPL_LOGPATH=/var/log/m1m3
+LSST_DDS_PARTITION_PREFIX=summit
+LSST_DDS_DOMAIN_ID=0
+OSPL_URI=file:///home/admin/ts_ddsconfig/config/ospl-sp.xml
+LSST_DDS_QOS=file:///home/admin/ts_ddsconfig/qos/QoS.xml
+LD_LIBRARY_PATH=$OSPL_HOME/lib
