@@ -66,6 +66,8 @@ public:
 };
 
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
+    addCommand("info", std::bind(&M1M3TScli::info, this, std::placeholders::_1), "s?", NEED_FPGA,
+               "<address>..", "Print ILC info");
     addCommand("power", std::bind(&M1M3TScli::setPower, this, std::placeholders::_1), "i", NEED_FPGA, "<0|1>",
                "Power off/on ILC bus");
     addILC(std::make_shared<PrintThermalILC>());

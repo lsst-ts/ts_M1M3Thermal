@@ -23,7 +23,6 @@
 #include "SimulatedFPGA.h"
 #include "TSPublisher.h"
 
-#include <cRIO/ModbusBuffer.h>
 #include <cRIO/Timestamp.h>
 
 #include <cstring>
@@ -32,10 +31,7 @@
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
 
-SimulatedFPGA::SimulatedFPGA() : IFPGA(), _U16ResponseStatus(IDLE) {
-    response.simulateResponse(true);
-    srandom(time(NULL));
-}
+SimulatedFPGA::SimulatedFPGA() : IFPGA(), _U16ResponseStatus(IDLE) { srandom(time(NULL)); }
 
 void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     uint16_t* d = data;
@@ -153,7 +149,7 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
 
     response.writeFPGATimestamp(Timestamp::toFPGA(TSPublisher::getTimestamp()));
 
-    ModbusBuffer buf(data, length);
+    SimulatedILC buf(data, length);
     while (!buf.endOfBuffer()) {
         uint16_t p = buf.peek();
         if ((p & FIFO::CMD_MASK) != FIFO::WRITE) {

@@ -22,7 +22,7 @@
 
 #include <IFPGA.h>
 #include <cRIO/NiError.h>
-#include <cRIO/ModbusBuffer.h>
+#include <cRIO/SimulatedILC.h>
 #include <cRIO/ThermalILC.h>
 
 namespace LSST {
@@ -63,7 +63,7 @@ protected:
                               float absoluteTemperature) override;
 
 private:
-    LSST::cRIO::ModbusBuffer response;
+    LSST::cRIO::SimulatedILC response;
 
     void _simulateModbus(uint16_t* data, size_t length);
 
