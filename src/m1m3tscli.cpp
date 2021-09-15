@@ -46,7 +46,7 @@ class M1M3TScli : public FPGACliApp {
 public:
     M1M3TScli(const char* name, const char* description);
 
-    int mpu(command_vec cmds);
+    int mpuRegisters(command_vec cmds);
 
 protected:
     virtual FPGA* newFPGA(const char* dir) override;
@@ -76,12 +76,12 @@ public:
 };
 
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
-    addCommand("mpu-registers", std::bind(&M1M3TScli::mpu, this, std::placeholders::_1), "ss?", NEED_FPGA,
+    addCommand("mpu-registers", std::bind(&M1M3TScli::mpuRegisters, this, std::placeholders::_1), "ss?", NEED_FPGA,
                "<mpu> <register>..", "Reads MPU given MPU registers");
     addILC(std::make_shared<PrintThermalILC>());
 }
 
-int M1M3TScli::mpu(command_vec cmds) {
+int M1M3TScli::mpuRegisters(command_vec cmds) {
     uint16_t net = 1;
     uint16_t aux = 0;
     switch (cmds.size()) {
