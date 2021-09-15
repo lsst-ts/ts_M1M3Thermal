@@ -20,8 +20,6 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <ThermalFPGA.h>
-
 #ifdef SIMULATOR
 #include <SimulatedFPGA.h>
 #else

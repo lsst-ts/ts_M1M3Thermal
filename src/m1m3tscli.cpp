@@ -20,7 +20,13 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "ThermalFPGA.h"
+#ifdef SIMULATOR
+#include <SimulatedFPGA.h>
+#define FPGAClass SimulatedFPGA
+#else
+#include <ThermalFPGA.h>
+#define FPGAClass ThermalFPGA
+#endif
 
 #include <cRIO/ThermalILC.h>
 #include <cRIO/PrintILC.h>
@@ -40,7 +46,7 @@ class M1M3TScli : public FPGACliApp {
 public:
     M1M3TScli(const char* name, const char* description);
 
-    int setPower(command_vec cmds);
+    int mpu(command_vec cmds);
 
 protected:
     virtual FPGA* newFPGA(const char* dir) override;
@@ -56,9 +62,13 @@ protected:
                               float absoluteTemperature) override;
 };
 
-class PrintTSFPGA : public ThermalFPGA {
+class PrintTSFPGA : public FPGAClass {
 public:
+#ifdef SIMULATOR
+    PrintTSFPGA(const char*) : SimulatedFPGA() {}
+#else
     PrintTSFPGA(const char* dir) : ThermalFPGA(dir) {}
+#endif
 
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
@@ -66,14 +76,12 @@ public:
 };
 
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
-    addCommand("info", std::bind(&M1M3TScli::info, this, std::placeholders::_1), "s?", NEED_FPGA,
-               "<address>..", "Print ILC info");
-    addCommand("power", std::bind(&M1M3TScli::setPower, this, std::placeholders::_1), "i", NEED_FPGA, "<0|1>",
-               "Power off/on ILC bus");
+    addCommand("mpu-registers", std::bind(&M1M3TScli::mpu, this, std::placeholders::_1), "ss?", NEED_FPGA,
+               "<mpu> <register>..", "Reads MPU given MPU registers");
     addILC(std::make_shared<PrintThermalILC>());
 }
 
-int M1M3TScli::setPower(command_vec cmds) {
+int M1M3TScli::mpu(command_vec cmds) {
     uint16_t net = 1;
     uint16_t aux = 0;
     switch (cmds.size()) {
@@ -114,6 +122,8 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
             std::cerr << "Non-numeric address: " << c << std::endl;
             ret = -1;
         }
+        ret = 0;
+        return units;
     }
 
     if (ret == -2) {
@@ -150,16 +160,16 @@ void _printBuffer(std::string prefix, uint16_t* buf, size_t len) {
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     _printBuffer("C> ", data, length);
-    ThermalFPGA::writeCommandFIFO(data, length, timeout);
+    FPGAClass::writeCommandFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     _printBuffer("R> ", data, length);
-    ThermalFPGA::writeRequestFIFO(data, length, timeout);
+    FPGAClass::writeRequestFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    ThermalFPGA::readU16ResponseFIFO(data, length, timeout);
+    FPGAClass::readU16ResponseFIFO(data, length, timeout);
     _printBuffer("R< ", data, length);
 }
 
