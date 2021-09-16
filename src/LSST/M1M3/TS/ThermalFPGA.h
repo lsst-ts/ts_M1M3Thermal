@@ -41,6 +41,8 @@ public:
     void open() override;
     void close() override;
     void finalize() override;
+    void writeMPUFIFO(cRIO::MPU& mpu) override;
+    void readMPUFIFO(cRIO::MPU& mpu) override;
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;

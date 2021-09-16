@@ -31,6 +31,7 @@
 #include <cRIO/ThermalILC.h>
 #include <cRIO/PrintILC.h>
 #include <cRIO/FPGACliApp.h>
+#include <cRIO/MPU.h>
 
 #include <iostream>
 #include <iomanip>
@@ -51,6 +52,11 @@ public:
 protected:
     virtual FPGA* newFPGA(const char* dir) override;
     virtual ILCUnits getILCs(command_vec cmds) override;
+
+private:
+    MPU* getMPU(std::string name);
+
+    std::map<std::string, MPU> _mpu;
 };
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
@@ -70,36 +76,37 @@ public:
     PrintTSFPGA(const char* dir) : ThermalFPGA(dir) {}
 #endif
 
+    void writeMPUFIFO(MPU& mpu) override;
+    void readMPUFIFO(MPU& mpu) override;
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
 };
 
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
-    addCommand("mpu-registers", std::bind(&M1M3TScli::mpuRegisters, this, std::placeholders::_1), "ss?", NEED_FPGA,
-               "<mpu> <register>..", "Reads MPU given MPU registers");
+    addCommand("mpu-registers", std::bind(&M1M3TScli::mpuRegisters, this, std::placeholders::_1), "si?",
+               NEED_FPGA, "<mpu> <register>..", "Reads MPU given MPU registers");
     addILC(std::make_shared<PrintThermalILC>());
+
+    _mpu.emplace(std::piecewise_construct, std::make_tuple("vfd"), std::make_tuple(1, 10));
 }
 
 int M1M3TScli::mpuRegisters(command_vec cmds) {
-    uint16_t net = 1;
-    uint16_t aux = 0;
-    switch (cmds.size()) {
-        case 0:
-            break;
-        case 1:
-            net = aux = CliApp::onOff(cmds[0]);
-            break;
-        case 2:
-            net = CliApp::onOff(cmds[0]);
-            aux = CliApp::onOff(cmds[1]);
-            break;
-        default:
-            std::cerr << "Invalid number of arguments to power command." << std::endl;
-            return -1;
+    MPU* mpu = getMPU(cmds[0]);
+    if (mpu == NULL) {
+        std::cerr << "Invalid MPU device name " << cmds[0] << ". List of known devices: " << std::endl;
+        for (auto m : _mpu) {
+            std::cerr << "  * " << m.first << std::endl;
+        }
+        return -1;
     }
-    uint16_t pa[16] = {65, aux, 66, aux, 67, aux, 68, aux, 69, net, 70, net, 71, net, 72, net};
-    getFPGA()->writeCommandFIFO(pa, 16, 0);
+
+    for (size_t i = 1; i < cmds.size(); i++) {
+        mpu->readHoldingRegisters(stoi(cmds[i], nullptr, 0), 1);
+    }
+
+    getFPGA()->mpuCommands(*mpu);
+
     return 0;
 }
 
@@ -136,6 +143,19 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
     return units;
 }
 
+MPU* M1M3TScli::getMPU(std::string name) {
+    MPU* ret = NULL;
+    for (auto m : _mpu) {
+        if (strncmp(name.c_str(), m.first.c_str(), name.length()) == 0) {
+            if (ret) {
+                return NULL;
+            }
+            ret = &m.second;
+        }
+    }
+    return ret;
+}
+
 void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
                                            uint8_t fanRPM, float absoluteTemperature) {
     printBusAddress(address);
@@ -156,6 +176,16 @@ void _printBuffer(std::string prefix, uint16_t* buf, size_t len) {
         std::cout << std::hex << std::setfill('0') << std::setw(4) << buf[i] << " ";
     }
     std::cout << std::endl;
+}
+
+void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
+    _printBuffer("M> ", mpu.getBuffer(), mpu.getLength());
+    FPGAClass::writeMPUFIFO(mpu);
+}
+
+void PrintTSFPGA::readMPUFIFO(MPU& mpu) {
+    FPGAClass::readMPUFIFO(mpu);
+    _printBuffer("M< ", mpu.getBuffer(), mpu.getLength());
 }
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
