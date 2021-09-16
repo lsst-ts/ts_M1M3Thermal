@@ -54,9 +54,9 @@ protected:
     virtual ILCUnits getILCs(command_vec cmds) override;
 
 private:
-    MPU* getMPU(std::string name);
+    std::shared_ptr<MPU> getMPU(std::string name);
 
-    std::map<std::string, MPU> _mpu;
+    std::map<std::string, std::shared_ptr<MPU>> _mpu;
 };
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
@@ -88,11 +88,11 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                NEED_FPGA, "<mpu> <register>..", "Reads MPU given MPU registers");
     addILC(std::make_shared<PrintThermalILC>());
 
-    _mpu.emplace(std::piecewise_construct, std::make_tuple("vfd"), std::make_tuple(1, 10));
+    _mpu.emplace("vfd", std::make_shared<MPU>(1, 10));
 }
 
 int M1M3TScli::mpuRegisters(command_vec cmds) {
-    MPU* mpu = getMPU(cmds[0]);
+    std::shared_ptr<MPU> mpu = getMPU(cmds[0]);
     if (mpu == NULL) {
         std::cerr << "Invalid MPU device name " << cmds[0] << ". List of known devices: " << std::endl;
         for (auto m : _mpu) {
@@ -143,14 +143,14 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
     return units;
 }
 
-MPU* M1M3TScli::getMPU(std::string name) {
-    MPU* ret = NULL;
+std::shared_ptr<MPU> M1M3TScli::getMPU(std::string name) {
+    std::shared_ptr<MPU> ret = NULL;
     for (auto m : _mpu) {
         if (strncmp(name.c_str(), m.first.c_str(), name.length()) == 0) {
             if (ret) {
                 return NULL;
             }
-            ret = &m.second;
+            ret = m.second;
         }
     }
     return ret;
