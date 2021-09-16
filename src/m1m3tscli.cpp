@@ -93,7 +93,7 @@ int M1M3TScli::mpuRegisters(command_vec cmds) {
         printMPU();
         return -1;
     }
-    mpu->clear();
+    mpu->clearCommanded();
 
     std::vector<uint16_t> registers;
 
@@ -103,6 +103,7 @@ int M1M3TScli::mpuRegisters(command_vec cmds) {
 
     for (auto r : registers) {
         mpu->readHoldingRegisters(r, 1);
+        mpu->clear(true);
     }
 
     getFPGA()->mpuCommands(*mpu);
