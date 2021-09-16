@@ -34,7 +34,9 @@ using namespace LSST::M1M3::TS;
 SimulatedFPGA::SimulatedFPGA() : IFPGA(), _U16ResponseStatus(IDLE) { srandom(time(NULL)); }
 
 void SimulatedFPGA::writeMPUFIFO(MPU& mpu) {
-    auto buf = mpu.getBufferVector();
+    _mpuResponse.clear();
+
+    auto buf = mpu.getCommandVector();
     for (auto i = buf.begin(); i != buf.end(); i++) {
         switch (*i) {
             case MPUCommands::WRITE:
@@ -46,7 +48,9 @@ void SimulatedFPGA::writeMPUFIFO(MPU& mpu) {
     }
 }
 
-void SimulatedFPGA::readMPUFIFO(MPU& mpu) {}
+void SimulatedFPGA::readMPUFIFO(MPU& mpu) {
+    mpu.processResponse(_mpuResponse.getBuffer(), _mpuResponse.getLength());
+}
 
 void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     uint16_t* d = data;
@@ -161,7 +165,7 @@ void SimulatedFPGA::processMPURead(uint8_t address, uint16_t register_address, u
     _mpuResponse.write<uint8_t>(len * 2);
 
     for (int i = 0; i < len; i++) {
-        _mpuResponse.write<uint16_t>(i * 2);
+        _mpuResponse.write<uint16_t>(register_address + i);
     }
 
     _mpuResponse.writeCRC();
@@ -218,9 +222,12 @@ void SimulatedFPGA::_simulateMPU(uint16_t* data, size_t length) {
         uint8_t address = buf.read<uint8_t>();
         uint8_t func = buf.read<uint8_t>();
         switch (func) {
-            case 3:
-                processMPURead(address, buf.read<uint16_t>(), buf.read<uint16_t>());
+            case 3: {
+                uint16_t reg_add = buf.read<uint16_t>();
+                uint16_t reg_len = buf.read<uint16_t>();
+                processMPURead(address, reg_add, reg_len);
                 break;
+            }
             default:
                 SPDLOG_WARN("SimulatedFPGA::_simulateMPU unknow/unsupported function {0:04x} ({0:d})", func);
         }

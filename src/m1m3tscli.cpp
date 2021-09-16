@@ -52,11 +52,6 @@ public:
 protected:
     virtual FPGA* newFPGA(const char* dir) override;
     virtual ILCUnits getILCs(command_vec cmds) override;
-
-private:
-    std::shared_ptr<MPU> getMPU(std::string name);
-
-    std::map<std::string, std::shared_ptr<MPU>> _mpu;
 };
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
@@ -88,24 +83,35 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                NEED_FPGA, "<mpu> <register>..", "Reads MPU given MPU registers");
     addILC(std::make_shared<PrintThermalILC>());
 
-    _mpu.emplace("vfd", std::make_shared<MPU>(1, 10));
+    addMPU("vfd", std::make_shared<MPU>(1, 10));
 }
 
 int M1M3TScli::mpuRegisters(command_vec cmds) {
     std::shared_ptr<MPU> mpu = getMPU(cmds[0]);
     if (mpu == NULL) {
         std::cerr << "Invalid MPU device name " << cmds[0] << ". List of known devices: " << std::endl;
-        for (auto m : _mpu) {
-            std::cerr << "  * " << m.first << std::endl;
-        }
+        printMPU();
         return -1;
     }
+    mpu->clear();
+
+    std::vector<uint16_t> registers;
 
     for (size_t i = 1; i < cmds.size(); i++) {
-        mpu->readHoldingRegisters(stoi(cmds[i], nullptr, 0), 1);
+        registers.push_back(stoi(cmds[i], nullptr, 0));
+    }
+
+    for (auto r : registers) {
+        mpu->readHoldingRegisters(r, 1);
     }
 
     getFPGA()->mpuCommands(*mpu);
+
+    for (auto r : registers) {
+        uint16_t v = mpu->getRegister(r);
+        std::cout << std::dec << r << "(0x" << std::hex << r << "): " << std::dec << v << " (" << std::hex
+                  << v << ")" << std::endl;
+    }
 
     return 0;
 }
@@ -141,19 +147,6 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
         ret = 0;
     }
     return units;
-}
-
-std::shared_ptr<MPU> M1M3TScli::getMPU(std::string name) {
-    std::shared_ptr<MPU> ret = NULL;
-    for (auto m : _mpu) {
-        if (strncmp(name.c_str(), m.first.c_str(), name.length()) == 0) {
-            if (ret) {
-                return NULL;
-            }
-            ret = m.second;
-        }
-    }
-    return ret;
 }
 
 void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
