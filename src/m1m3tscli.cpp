@@ -110,8 +110,7 @@ int M1M3TScli::mpuRegisters(command_vec cmds) {
 
     for (auto r : registers) {
         uint16_t v = mpu->getRegister(r);
-        std::cout << std::dec << r << "(0x" << std::hex << r << "): " << std::dec << v << " (" << std::hex
-                  << v << ")" << std::endl;
+        std::cout << fmt::format("{0:>5d} ({0:04x}): {1:d} ({1:x})", r, v) << std::endl;
     }
 
     return 0;
