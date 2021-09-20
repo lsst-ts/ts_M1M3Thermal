@@ -23,7 +23,6 @@
 #include "SimulatedFPGA.h"
 #include "TSPublisher.h"
 
-#include <cRIO/ModbusBuffer.h>
 #include <cRIO/Timestamp.h>
 
 #include <cstring>
@@ -32,9 +31,25 @@
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
 
-SimulatedFPGA::SimulatedFPGA() : IFPGA(), _U16ResponseStatus(IDLE) {
-    response.simulateResponse(true);
-    srandom(time(NULL));
+SimulatedFPGA::SimulatedFPGA() : IFPGA(), _U16ResponseStatus(IDLE) { srandom(time(NULL)); }
+
+void SimulatedFPGA::writeMPUFIFO(MPU& mpu) {
+    _mpuResponse.clear();
+
+    auto buf = mpu.getCommandVector();
+    for (auto i = buf.begin(); i != buf.end(); i++) {
+        switch (*i) {
+            case MPUCommands::WRITE:
+                i++;
+                _simulateMPU(&(*(i + 1)), *i);
+                i += *i;
+                break;
+        }
+    }
+}
+
+void SimulatedFPGA::readMPUFIFO(MPU& mpu) {
+    mpu.processResponse(_mpuResponse.getBuffer(), _mpuResponse.getLength());
 }
 
 void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
@@ -75,12 +90,12 @@ void SimulatedFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t 
         case IDLE:
             break;
         case LEN:
-            *data = response.getLength();
+            *data = _response.getLength();
             _U16ResponseStatus = DATA;
             break;
         case DATA:
-            memcpy(data, response.getBuffer(), response.getLength() * 2);
-            response.clear();
+            memcpy(data, _response.getBuffer(), _response.getLength() * 2);
+            _response.clear();
             _U16ResponseStatus = IDLE;
             break;
     }
@@ -90,26 +105,26 @@ void SimulatedFPGA::processServerID(uint8_t address, uint64_t uniqueID, uint8_t 
                                     uint8_t networkNodeType, uint8_t ilcSelectedOptions,
                                     uint8_t networkNodeOptions, uint8_t majorRev, uint8_t minorRev,
                                     std::string firmwareName) {
-    // construct response in ILC
-    response.write<uint8_t>(address);
-    response.write<uint8_t>(17);
-    response.write<uint8_t>(12 + firmwareName.length());
+    // construct _response in ILC
+    _response.write<uint8_t>(address);
+    _response.write<uint8_t>(17);
+    _response.write<uint8_t>(12 + firmwareName.length());
 
     // uniqueID
-    response.writeBuffer(reinterpret_cast<uint8_t*>(&uniqueID), 6);
+    _response.writeBuffer(reinterpret_cast<uint8_t*>(&uniqueID), 6);
 
-    response.write<uint8_t>(ilcAppType);
-    response.write<uint8_t>(networkNodeType);
-    response.write<uint8_t>(ilcSelectedOptions);
-    response.write<uint8_t>(networkNodeOptions);
-    response.write<uint8_t>(majorRev);
-    response.write<uint8_t>(minorRev);
+    _response.write<uint8_t>(ilcAppType);
+    _response.write<uint8_t>(networkNodeType);
+    _response.write<uint8_t>(ilcSelectedOptions);
+    _response.write<uint8_t>(networkNodeOptions);
+    _response.write<uint8_t>(majorRev);
+    _response.write<uint8_t>(minorRev);
 
     for (auto c : firmwareName) {
-        response.write<uint8_t>(c);
+        _response.write<uint8_t>(c);
     }
 
-    response.writeCRC();
+    _response.writeCRC();
 }
 
 void SimulatedFPGA::processServerStatus(uint8_t address, uint8_t mode, uint16_t status, uint16_t faults) {}
@@ -122,13 +137,13 @@ void SimulatedFPGA::processResetServer(uint8_t address) {}
 
 void SimulatedFPGA::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
                                          uint8_t fanRPM, float absoluteTemperature) {
-    response.write<uint8_t>(address);
+    _response.write<uint8_t>(address);
     switch (status & 0xF0) {
         case 0x10:
-            response.write<uint8_t>(88);
+            _response.write<uint8_t>(88);
             break;
         case 0x20:
-            response.write<uint8_t>(89);
+            _response.write<uint8_t>(89);
             break;
         default:
             throw std::runtime_error("Invalid status in SimulatedFPGA::processThermalStatus");
@@ -136,12 +151,24 @@ void SimulatedFPGA::processThermalStatus(uint8_t address, uint8_t status, float 
 
     status |= getBroadcastCounter() << 4;
 
-    response.write<uint8_t>(status);
-    response.write<float>(differentialTemperature);
-    response.write<uint8_t>(fanRPM);
-    response.write<float>(absoluteTemperature);
+    _response.write<uint8_t>(status);
+    _response.write<float>(differentialTemperature);
+    _response.write<uint8_t>(fanRPM);
+    _response.write<float>(absoluteTemperature);
 
-    response.writeCRC();
+    _response.writeCRC();
+}
+
+void SimulatedFPGA::processMPURead(uint8_t address, uint16_t register_address, uint16_t len) {
+    _mpuResponse.write<uint8_t>(address);
+    _mpuResponse.write<uint8_t>(3);
+    _mpuResponse.write<uint8_t>(len * 2);
+
+    for (int i = 0; i < len; i++) {
+        _mpuResponse.write<uint16_t>(register_address + i);
+    }
+
+    _mpuResponse.writeCRC();
 }
 
 void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
@@ -151,9 +178,9 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
     // end of frame (FIFO::RX_ENDFRAME)
     // 8 bytes of end timestap (& FIFO::RX_TIMESTAMP)
 
-    response.writeFPGATimestamp(Timestamp::toFPGA(TSPublisher::getTimestamp()));
+    _response.writeFPGATimestamp(Timestamp::toFPGA(TSPublisher::getTimestamp()));
 
-    ModbusBuffer buf(data, length);
+    SimulatedILC buf(data, length);
     while (!buf.endOfBuffer()) {
         uint16_t p = buf.peek();
         if ((p & FIFO::CMD_MASK) != FIFO::WRITE) {
@@ -167,7 +194,7 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
         switch (func) {
             // info
             case 17:
-                // generate response
+                // generate _response
                 processServerID(address, 0x01020304 + address, 0x02, 0x02, 0x02, 0x00, 1, 2,
                                 "Test Thermal ILC");
                 break;
@@ -183,8 +210,27 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
                 SPDLOG_WARN("SimulatedFPGA::_simulateModbus unknown/unsupported function {0:04x} ({0:d})",
                             func);
         }
-        response.writeRxTimestamp(Timestamp::toFPGA(TSPublisher::getTimestamp()));
+        _response.writeRxTimestamp(Timestamp::toFPGA(TSPublisher::getTimestamp()));
 
-        response.writeRxEndFrame();
+        _response.writeRxEndFrame();
+    }
+}
+
+void SimulatedFPGA::_simulateMPU(uint16_t* data, size_t length) {
+    SimulatedMPU buf(data, length);
+    while (!buf.endOfBuffer()) {
+        uint8_t address = buf.read<uint8_t>();
+        uint8_t func = buf.read<uint8_t>();
+        switch (func) {
+            case 3: {
+                uint16_t reg_add = buf.read<uint16_t>();
+                uint16_t reg_len = buf.read<uint16_t>();
+                processMPURead(address, reg_add, reg_len);
+                break;
+            }
+            default:
+                SPDLOG_WARN("SimulatedFPGA::_simulateMPU unknow/unsupported function {0:04x} ({0:d})", func);
+        }
+        buf.checkCRC();
     }
 }

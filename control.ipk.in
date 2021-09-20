@@ -1,0 +1,10 @@
+Package: ts-M1M3thermal
+Version: @VERSION@
+Description: Telescope & Site (TS) M1M3 thermal (TS, Thermal System) daemon.
+Section: lsst/tssw
+Priority: optional
+Maintainer: Petr Kubánek <pkubanek@lsst.org>
+License: GPL-3.0+
+Architecture: x64
+Homepage: https://github.com/lsst-ts/ts_M1M3thermal
+Depends: OpenSpliceDDS

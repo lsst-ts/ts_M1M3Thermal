@@ -1,0 +1,73 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:        ts-M1M3thermal
+# Required-Start:  $network $remote_fs
+# Required-Stop:   $network $remote_fs
+# Default-Start:   2 3 4 5
+# Default-Stop:    6
+# Short-Description: Start TS VMS (Vibration Monitor System) daemon
+### END INIT INFO
+
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
+
+DAEMON=/usr/sbin/ts-M1M3thermald
+PIDFILE=/var/run/ts-M1M3thermald.pid
+
+# rcS contains TICKADJ
+test -r /etc/default/rcS && . /etc/default/rcS
+
+# Source function library.
+. /etc/init.d/functions
+
+# Source devices, export all variables
+set -a
+. /etc/default/ts-M1M3thermal
+set +a
+
+startdaemon(){
+	# make sure network is up and running
+	attemps=0
+	export LSST_DDS_IP=`ip route get 1 | awk '{print $7;exit}'`
+	while [ -z $LSST_DDS_IP ]; do
+		sleep 1
+		export LSST_DDS_IP=`ip route get 1 | awk '{print $7;exit}'`
+		let attemps+=1
+		if [ $attemps -gt 60 ]; then
+			logger -t M1M3thermal_start -p user.error "Timeouted waiting for interface"
+			exit 1
+		fi
+	done
+	logger -t M1M3thermal_start -p user.info "Starting with IP $LSST_DDS_IP"
+	echo -n "Starting TS M1M3 thermal:"
+	start-stop-daemon --start --oknodo --pidfile ${PIDFILE} --startas $DAEMON -- -p ${PIDFILE} -u m1m3:m1m3
+	echo "done"
+}
+stopdaemon(){
+	echo -n "Stopping TS M1M3 thermal:"
+	start-stop-daemon --stop --oknodo --remove-pidfile --retry 5 -p ${PIDFILE}
+	echo "done"
+}
+
+case "$1" in
+  start)
+	startdaemon
+	;;
+  stop)
+  	stopdaemon
+	;;
+  restart)
+	stopdaemon
+	startdaemon
+	;;
+  status)
+	status $DAEMON
+	exit $?
+	;;
+  *)
+	echo "Usage: ts-M1M3thermal { start | stop | status | restart }" >&2
+	exit 1
+	;;
+esac
+
+exit 0

@@ -23,7 +23,7 @@ node {
 
     def SALUSER_HOME = "/home/saluser"
     def BRANCH = (env.CHANGE_BRANCH != null) ? env.CHANGE_BRANCH : env.BRANCH_NAME
-    def SAME_CRIO_BRANCH = ["develop"]
+    def SAME_CRIO_BRANCH = ["master"]
 
     stage('Cloning Dockerfile')
     {
@@ -42,7 +42,7 @@ node {
     stage('Cloning sources')
     {
         dir("ts_cRIOcpp") {
-            git branch: (BRANCH in SAME_CRIO_BRANCH) ? BRANCH : "master", url: 'https://github.com/lsst-ts/ts_cRIOcpp'
+            git branch: (BRANCH in SAME_CRIO_BRANCH) ? BRANCH : "develop", url: 'https://github.com/lsst-ts/ts_cRIOcpp'
         }
         dir("ts_m1m3thermal") {
             checkout scm

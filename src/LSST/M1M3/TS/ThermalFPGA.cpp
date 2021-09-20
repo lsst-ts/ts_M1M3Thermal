@@ -68,6 +68,10 @@ void ThermalFPGA::finalize() {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_Finalize());
 }
 
+void ThermalFPGA::writeMPUFIFO(MPU& mpu) {}
+
+void ThermalFPGA::readMPUFIFO(MPU& mpu) {}
+
 void ThermalFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU16(_session, NiFpga_M1M3SupportFPGA_HostToTargetFifoU16_CommandFIFO, data,

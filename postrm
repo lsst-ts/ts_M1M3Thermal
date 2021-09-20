@@ -1,0 +1,3 @@
+#!/bin/sh
+userdel m1m3
+update-rc.d -f ts-M1M3thermal remove

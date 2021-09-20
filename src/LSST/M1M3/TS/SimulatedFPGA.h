@@ -22,7 +22,8 @@
 
 #include <IFPGA.h>
 #include <cRIO/NiError.h>
-#include <cRIO/ModbusBuffer.h>
+#include <cRIO/SimulatedILC.h>
+#include <cRIO/SimulatedMPU.h>
 #include <cRIO/ThermalILC.h>
 
 namespace LSST {
@@ -35,11 +36,13 @@ namespace TS {
 class SimulatedFPGA : public IFPGA, public LSST::cRIO::ThermalILC {
 public:
     SimulatedFPGA();
-    virtual ~SimulatedFPGA(){};
-    void initialize() override{};
-    void open() override{};
-    void close() override{};
-    void finalize() override{};
+    virtual ~SimulatedFPGA() {}
+    void initialize() override {}
+    void open() override {}
+    void close() override {}
+    void finalize() override {}
+    void writeMPUFIFO(cRIO::MPU& mpu) override;
+    void readMPUFIFO(cRIO::MPU& mpu) override;
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
@@ -62,10 +65,14 @@ protected:
     void processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
                               float absoluteTemperature) override;
 
+    void processMPURead(uint8_t address, uint16_t register_address, uint16_t len);
+
 private:
-    LSST::cRIO::ModbusBuffer response;
+    LSST::cRIO::SimulatedILC _response;
+    LSST::cRIO::SimulatedMPU _mpuResponse;
 
     void _simulateModbus(uint16_t* data, size_t length);
+    void _simulateMPU(uint16_t* data, size_t length);
 
     enum { IDLE, LEN, DATA } _U16ResponseStatus;
 };
