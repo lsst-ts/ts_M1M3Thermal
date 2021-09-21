@@ -33,9 +33,8 @@ namespace LSST {
 namespace M1M3 {
 namespace TS {
 
-ThermalFPGA::ThermalFPGA(const char* bitfileDir) : IFPGA() {
+ThermalFPGA::ThermalFPGA() : IFPGA() {
     SPDLOG_DEBUG("ThermalFPGA: ThermalFPGA()");
-    _bitfileDir = bitfileDir;
     _session = 0;
 }
 
@@ -48,7 +47,7 @@ void ThermalFPGA::initialize() {
 
 void ThermalFPGA::open() {
     SPDLOG_DEBUG("ThermalFPGA: open()");
-    NiOpen(_bitfileDir, NiFpga_ts_M1M3ThermalFPGA, "RIO0", 0, &(_session));
+    NiOpen("/var/lib/ts-M1M3thermal", NiFpga_ts_M1M3ThermalFPGA, "RIO0", 0, &(_session));
     NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Abort", NiFpga_Abort(_session));
     NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Download", NiFpga_Download(_session));
     NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Reset", NiFpga_Reset(_session));
@@ -89,10 +88,11 @@ void ThermalFPGA::readMPUFIFO(MPU& mpu) {
                  NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
                                     &req, 1, -1, NULL));
 
-    uint8_t len;
+    uint16_t len;
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
-                                   &len, 1, -1, NULL));
+                                   reinterpret_cast<uint8_t*>(&len), 2, 1000, NULL));
+    len = ntohs(len);
     uint8_t data[len];
     uint16_t u16_data[len];
 

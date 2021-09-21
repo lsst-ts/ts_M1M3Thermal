@@ -35,7 +35,7 @@ namespace TS {
  */
 class ThermalFPGA : public IFPGA {
 public:
-    ThermalFPGA(const char* bitfileDir);
+    ThermalFPGA();
     virtual ~ThermalFPGA();
     void initialize() override;
     void open() override;
@@ -50,7 +50,6 @@ public:
     void ackIrqs(uint32_t irqs) override;
 
 private:
-    const char* _bitfileDir;
     uint32_t _session;
 
     std::map<size_t, NiFpga_IrqContext> _contexes;

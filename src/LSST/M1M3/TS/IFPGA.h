@@ -44,6 +44,8 @@ public:
     IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
     virtual ~IFPGA() {}
 
+    static IFPGA& get();
+
     uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
     uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }
     uint32_t getIrq(uint8_t bus) override { return NiFpga_Irq_1; }

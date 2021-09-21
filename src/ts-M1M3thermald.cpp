@@ -186,7 +186,7 @@ int main(int argc, char* const argv[]) {
 #ifdef SIMULATOR
     SimulatedFPGA* fpga = new SimulatedFPGA();
 #else
-    ThermalFPGA* fpga = new ThermalFPGA("Bitfiles");
+    ThermalFPGA* fpga = new ThermalFPGA();
 #endif
 
     TSApplication::instance().setFPGA(fpga);
