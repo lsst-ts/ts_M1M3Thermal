@@ -1,5 +1,5 @@
 /*
- * Abstract FPGA interface.
+ * Pump VFD telemetry & control.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,39 +20,24 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __TS_IFPGA__
-#define __TS_IFPGA__
+#include <PumpVFD.h>
 
-#include <cRIO/FPGA.h>
-#include <NiFpga.h>
+using namespace LSST::cRIO;
+using namespace LSST::M1M3::TS;
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
+PumpVFD::PumpVFD(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) {}
 
-namespace FPGAAddress {
-constexpr uint16_t MODBUS_A_RX = 21;
-constexpr uint16_t MODBUS_A_TX = 25;
-constexpr uint16_t HEARTBEAT = 62;
-}  // namespace FPGAAddress
-
-/**
- * Abstract FPGA Interface. Provides common parent for real and simulated FPGA.
- */
-class IFPGA : public cRIO::FPGA {
-public:
-    IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
-    virtual ~IFPGA() {}
-
-    uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
-    uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }
-    uint32_t getIrq(uint8_t bus) override { return NiFpga_Irq_1; }
-
-    void setHeartbeat(bool heartbeat);
-};
-
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
-
-#endif  // !__TS_IFPGA__
+const char *PumpVFD::getDriveError(uint16_t code) {
+    switch (code) {
+        case 0:
+            return "No Fault";
+        case 2:
+            return "Auxiliary Input";
+        case 3:
+            return "Power Loss";
+        case 4:
+            return "Undervoltage";
+        default:
+            return "Unknown error";
+    }
+}

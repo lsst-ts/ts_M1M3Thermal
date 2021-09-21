@@ -21,7 +21,7 @@
  */
 
 #include "ThermalFPGA.h"
-#include "NiFpga_M1M3SupportFPGA.h"
+#include "NiFpga_ts_M1M3ThermalFPGA.h"
 
 #include <cRIO/NiError.h>
 
@@ -48,7 +48,7 @@ void ThermalFPGA::initialize() {
 
 void ThermalFPGA::open() {
     SPDLOG_DEBUG("ThermalFPGA: open()");
-    NiOpen(_bitfileDir, NiFpga_M1M3SupportFPGA, "RIO0", 0, &(_session));
+    NiOpen(_bitfileDir, NiFpga_ts_M1M3ThermalFPGA, "RIO0", 0, &(_session));
     NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Abort", NiFpga_Abort(_session));
     NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Download", NiFpga_Download(_session));
     NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Reset", NiFpga_Reset(_session));
@@ -68,26 +68,59 @@ void ThermalFPGA::finalize() {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_Finalize());
 }
 
-void ThermalFPGA::writeMPUFIFO(MPU& mpu) {}
+void ThermalFPGA::writeMPUFIFO(MPU& mpu) {
+    auto buf = mpu.getCommandVector();
+    uint8_t bus = mpu.getBus();
+    uint8_t len = buf.size();
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
+                                    &bus, 1, -1, NULL));
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
+                                    &len, 1, -1, NULL));
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
+                                    buf.data(), len, -1, NULL));
+}
 
-void ThermalFPGA::readMPUFIFO(MPU& mpu) {}
+void ThermalFPGA::readMPUFIFO(MPU& mpu) {
+    uint8_t req = mpu.getBus() + 100;
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
+                                    &req, 1, -1, NULL));
+
+    uint8_t len;
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
+                                   &len, 1, -1, NULL));
+    uint8_t data[len];
+    uint16_t u16_data[len];
+
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
+                                   data, len, -1, NULL));
+    for (int i = 0; i < len; i++) {
+        u16_data[i] = data[i];
+    }
+    mpu.processResponse(u16_data, len);
+}
 
 void ThermalFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_WriteFifoU16(_session, NiFpga_M1M3SupportFPGA_HostToTargetFifoU16_CommandFIFO, data,
-                                     length, timeout, NULL));
+                 NiFpga_WriteFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO,
+                                     data, length, timeout, NULL));
 }
 
 void ThermalFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_WriteFifoU16(_session, NiFpga_M1M3SupportFPGA_HostToTargetFifoU16_RequestFIFO, data,
-                                     length, timeout, NULL));
+                 NiFpga_WriteFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO,
+                                     data, length, timeout, NULL));
 }
 
 void ThermalFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_ReadFifoU16(_session, NiFpga_M1M3SupportFPGA_TargetToHostFifoU16_U16ResponseFIFO,
-                                    data, length, timeout, NULL));
+                 NiFpga_ReadFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO, data,
+                                    length, timeout, NULL));
 }
 
 void ThermalFPGA::waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered) {

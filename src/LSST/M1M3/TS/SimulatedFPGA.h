@@ -72,7 +72,7 @@ private:
     LSST::cRIO::SimulatedMPU _mpuResponse;
 
     void _simulateModbus(uint16_t* data, size_t length);
-    void _simulateMPU(uint16_t* data, size_t length);
+    void _simulateMPU(uint8_t* data, size_t length);
 
     enum { IDLE, LEN, DATA } _U16ResponseStatus;
 };

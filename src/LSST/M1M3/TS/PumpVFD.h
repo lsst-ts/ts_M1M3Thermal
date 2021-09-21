@@ -1,5 +1,5 @@
 /*
- * Abstract FPGA interface.
+ * Pump VFD telemetry & control.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,39 +20,44 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __TS_IFPGA__
-#define __TS_IFPGA__
+#ifndef __TS_PUMPVFD__
+#define __TS_PUMPVFD__
 
-#include <cRIO/FPGA.h>
-#include <NiFpga.h>
+#include <cRIO/MPU.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 
-namespace FPGAAddress {
-constexpr uint16_t MODBUS_A_RX = 21;
-constexpr uint16_t MODBUS_A_TX = 25;
-constexpr uint16_t HEARTBEAT = 62;
-}  // namespace FPGAAddress
-
 /**
- * Abstract FPGA Interface. Provides common parent for real and simulated FPGA.
+ * Glycol pump VFD (Variable Frequency Drive) control.
+ * [Documentation](https://confluence.lsstcorp.org/display/LTS/Datasheets?preview=/154697856/154697879/VFD%20Users%20Guide.pdf).
  */
-class IFPGA : public cRIO::FPGA {
+class PumpVFD : public cRIO::MPU {
 public:
-    IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
-    virtual ~IFPGA() {}
+    PumpVFD(uint8_t bus, uint8_t mpu_address);
 
-    uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
-    uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }
-    uint32_t getIrq(uint8_t bus) override { return NiFpga_Irq_1; }
+    void readParameters() { readHoldingRegisters(1, 50); }
 
-    void setHeartbeat(bool heartbeat);
+    /**
+     * Reads VFD registers.
+     *
+     * Register   | Content
+     * ---------- | -----------------
+     * 0x2101     | Drive Error Code
+     * 0x2102     | Frequency Command
+     * 0x2103     | Output Frequency
+     * 0x2104     | Output Current
+     * 0x2105     | DC-BUS Voltage
+     * 0x2106     | Output Voltage
+     */
+    void update() { readHoldingRegisters(0x2101, 6); }
+
+    static const char* getDriveError(uint16_t code);
 };
 
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !__TS_IFPGA__
+#endif  // !__TS_PUMPVFD__

@@ -33,8 +33,8 @@ CRIO_IP = 10.0.0.15
 deploy: M1M3ThermalCsC
 	@echo '[SCP] $^'
 	${co}scp $^ admin@${CRIO_IP}:
-	@echo '[SCP] Bitfiles/NiFpga_M1M3SupportFPGA.lvbitx'
-	${co}scp Bitfiles/NiFpga_M1M3SupportFPGA.lvbitx admin@${CRIO_IP}:Bitfiles
+	@echo '[SCP] Bitfiles/NiFpga_ts_M1M3ThermalFPGA.lvbitx
+	${co}scp Bitfiles/NiFpga_ts_M1M3ThermalFPGA.lvbitx admin@${CRIO_IP}:Bitfiles
 
 tests: tests/Makefile tests/*.cpp
 	@${MAKE} -C tests
