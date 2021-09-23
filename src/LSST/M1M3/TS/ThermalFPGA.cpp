@@ -119,8 +119,8 @@ void ThermalFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeo
 
 void ThermalFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_ReadFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU16_U16ResponseFIFO, data,
-                                    length, timeout, NULL));
+                 NiFpga_ReadFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU16_U16ResponseFIFO,
+                                    data, length, timeout, NULL));
 }
 
 void ThermalFPGA::waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered) {
