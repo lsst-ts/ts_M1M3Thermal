@@ -24,7 +24,7 @@
 #define __TS_IFPGA__
 
 #include <cRIO/FPGA.h>
-#include <NiFpga_M1M3SupportFPGA.h>
+#include <NiFpga.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -37,12 +37,14 @@ constexpr uint16_t HEARTBEAT = 62;
 }  // namespace FPGAAddress
 
 /**
- * Abstract FPGA Interface. Provides common parent for real and simulated FPGA. Singleton.
+ * Abstract FPGA Interface. Provides common parent for real and simulated FPGA.
  */
 class IFPGA : public cRIO::FPGA {
 public:
     IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
     virtual ~IFPGA() {}
+
+    static IFPGA& get();
 
     uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
     uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }

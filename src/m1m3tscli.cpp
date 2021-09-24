@@ -66,9 +66,9 @@ protected:
 class PrintTSFPGA : public FPGAClass {
 public:
 #ifdef SIMULATOR
-    PrintTSFPGA(const char*) : SimulatedFPGA() {}
+    PrintTSFPGA() : SimulatedFPGA() {}
 #else
-    PrintTSFPGA(const char* dir) : ThermalFPGA(dir) {}
+    PrintTSFPGA() : ThermalFPGA() {}
 #endif
 
     void writeMPUFIFO(MPU& mpu) override;
@@ -116,7 +116,7 @@ int M1M3TScli::mpuRegisters(command_vec cmds) {
     return 0;
 }
 
-FPGA* M1M3TScli::newFPGA(const char* dir) { return new PrintTSFPGA(dir); }
+FPGA* M1M3TScli::newFPGA(const char* dir) { return new PrintTSFPGA(); }
 
 ILCUnits M1M3TScli::getILCs(command_vec cmds) {
     ILCUnits units;

@@ -22,7 +22,23 @@
 
 #include "IFPGA.h"
 
+#ifdef SIMULATOR
+#include <SimulatedFPGA.h>
+#else
+#include <ThermalFPGA.h>
+#endif
+
 using namespace LSST::M1M3::TS;
+
+IFPGA& IFPGA::get() {
+#ifdef SIMULATOR
+    static SimulatedFPGA simulatedfpga;
+    return simulatedfpga;
+#else
+    static ThermalFPGA thermalfpga;
+    return thermalfpga;
+#endif
+}
 
 void IFPGA::setHeartbeat(bool heartbeat) {
     uint16_t buf[2];

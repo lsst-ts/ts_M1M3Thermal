@@ -216,8 +216,12 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
     }
 }
 
-void SimulatedFPGA::_simulateMPU(uint16_t* data, size_t length) {
-    SimulatedMPU buf(data, length);
+void SimulatedFPGA::_simulateMPU(uint8_t* data, size_t length) {
+    uint16_t u16_data[length];
+    for (size_t i = 0; i < length; i++) {
+        u16_data[i] = data[i];
+    }
+    SimulatedMPU buf(u16_data, length);
     while (!buf.endOfBuffer()) {
         uint8_t address = buf.read<uint8_t>();
         uint8_t func = buf.read<uint8_t>();
