@@ -56,7 +56,7 @@ protected:
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
 public:
-    PrintThermalILC() : ThermalILC(1), PrintILC(1) {}
+    PrintThermalILC(uint8_t bus) : ILC(bus), ThermalILC(bus), PrintILC(bus) {}
 
 protected:
     void processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
@@ -81,9 +81,10 @@ public:
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
     addCommand("mpu-registers", std::bind(&M1M3TScli::mpuRegisters, this, std::placeholders::_1), "si?",
                NEED_FPGA, "<mpu> <register>..", "Reads MPU given MPU registers");
-    addILC(std::make_shared<PrintThermalILC>());
+    addILC(std::make_shared<PrintThermalILC>(1));
 
-    addMPU("vfd", std::make_shared<MPU>(1, 10));
+    addMPU("vfd", std::make_shared<MPU>(1, 100));
+    addMPU("flow", std::make_shared<MPU>(2, 10));
 }
 
 int M1M3TScli::mpuRegisters(command_vec cmds) {
@@ -159,7 +160,19 @@ void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, floa
 
 M1M3TScli cli("M1M3TS", "M1M3 Thermal System Command Line Interface");
 
-void _printBuffer(std::string prefix, uint16_t* buf, size_t len) {
+void _printBufferU8(std::string prefix, uint8_t* buf, size_t len) {
+    if (cli.getDebugLevel() == 0) {
+        return;
+    }
+
+    std::cout << prefix;
+    for (size_t i = 0; i < len; i++) {
+        std::cout << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(buf[i]) << " ";
+    }
+    std::cout << std::endl;
+}
+
+void _printBufferU16(std::string prefix, uint16_t* buf, size_t len) {
     if (cli.getDebugLevel() == 0) {
         return;
     }
@@ -172,28 +185,28 @@ void _printBuffer(std::string prefix, uint16_t* buf, size_t len) {
 }
 
 void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
-    _printBuffer("M> ", mpu.getBuffer(), mpu.getLength());
+    _printBufferU8("M> ", mpu.getCommands(), mpu.getCommandVector().size());
     FPGAClass::writeMPUFIFO(mpu);
 }
 
 void PrintTSFPGA::readMPUFIFO(MPU& mpu) {
     FPGAClass::readMPUFIFO(mpu);
-    _printBuffer("M< ", mpu.getBuffer(), mpu.getLength());
+    _printBufferU16("M< ", mpu.getBuffer(), mpu.getLength());
 }
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    _printBuffer("C> ", data, length);
+    _printBufferU16("C> ", data, length);
     FPGAClass::writeCommandFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    _printBuffer("R> ", data, length);
+    _printBufferU16("R> ", data, length);
     FPGAClass::writeRequestFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU16ResponseFIFO(data, length, timeout);
-    _printBuffer("R< ", data, length);
+    _printBufferU16("R< ", data, length);
 }
 
 int main(int argc, char* const argv[]) { return cli.run(argc, argv); }
