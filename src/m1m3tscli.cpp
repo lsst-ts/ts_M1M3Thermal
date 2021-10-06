@@ -88,7 +88,7 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
     addILC(std::make_shared<PrintThermalILC>(1));
 
     addMPU("vfd", std::make_shared<MPU>(1, 100));
-    addMPU("flow", std::make_shared<MPU>(2, 10));
+    addMPU("flow", std::make_shared<MPU>(2, 1));
 }
 
 int M1M3TScli::mpuRegisters(command_vec cmds) {
@@ -107,7 +107,7 @@ int M1M3TScli::mpuRegisters(command_vec cmds) {
     }
 
     for (auto r : registers) {
-        mpu->readHoldingRegisters(r, 1);
+        mpu->readHoldingRegisters(r, 1, 255);
         mpu->clear(true);
     }
 
