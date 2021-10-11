@@ -23,7 +23,7 @@
 #include <MPU/FlowMeter.h>
 #include <endian.h>
 
-using namespace LSST::M1M3::TS::MPU;
+using namespace LSST::M1M3::TS;
 
 void FlowMeter::poll() {
     readHoldingRegisters(300, 28);

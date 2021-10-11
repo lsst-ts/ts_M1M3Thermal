@@ -33,6 +33,8 @@
 #include <cRIO/FPGACliApp.h>
 #include <cRIO/MPU.h>
 
+#include <MPU/FlowMeter.h>
+
 #include <iostream>
 #include <iomanip>
 
@@ -49,10 +51,14 @@ public:
 
     int mpuRegisters(command_vec cmds);
     int tryRead(command_vec cmds);
+    int printFlowMeter(command_vec cmds);
 
 protected:
     virtual FPGA* newFPGA(const char* dir) override;
     virtual ILCUnits getILCs(command_vec cmds) override;
+
+private:
+    std::shared_ptr<FlowMeter> flowMeter;
 };
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
@@ -85,10 +91,15 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
     addCommand("try-read", std::bind(&M1M3TScli::tryRead, this, std::placeholders::_1), "si?", NEED_FPGA,
                "<mpu> <register>..", "Try all modbus address to read");
 
+    addCommand("flow", std::bind(&M1M3TScli::printFlowMeter, this, std::placeholders::_1), "", NEED_FPGA,
+               NULL, "Reads FlowMeter values");
+
     addILC(std::make_shared<PrintThermalILC>(1));
 
     addMPU("vfd", std::make_shared<MPU>(1, 100));
-    addMPU("flow", std::make_shared<MPU>(2, 1));
+
+    flowMeter = std::make_shared<FlowMeter>(2, 1);
+    addMPU("flow", flowMeter);
 }
 
 int M1M3TScli::mpuRegisters(command_vec cmds) {
@@ -155,6 +166,24 @@ int M1M3TScli::tryRead(command_vec cmds) {
             std::cerr << "Not " << static_cast<int>(a) << std::endl;
         }
     }
+
+    return 0;
+}
+
+int M1M3TScli::printFlowMeter(command_vec cmds) {
+    flowMeter->clearCommanded();
+
+    flowMeter->poll();
+
+    getFPGA()->mpuCommands(*flowMeter);
+
+    std::cout << std::setfill(' ') << std::setw(20) << "Signal Strength: " << flowMeter->getSignalStrength() << std::endl
+     << std::setw(20) << "Flow Rate: " << flowMeter->getFlowRate() << std::endl
+     << std::setw(20) << "Net Totalizer: " << flowMeter->getNetTotalizer() << std::endl
+     << std::setw(20) << "Positive Totalizer: " << flowMeter->getPositiveTotalizer() << std::endl
+     << std::setw(20) << "Negative Totalizer: " << flowMeter->getNegativeTotalizer() << std::endl
+     << std::setw(20) << "Temperature 1: " << flowMeter->getTemperature1() << std::endl
+     << std::setw(20) << "Temperature 2: " << flowMeter->getTemperature2() << std::endl;
 
     return 0;
 }

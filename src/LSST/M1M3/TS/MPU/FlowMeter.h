@@ -25,7 +25,6 @@
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace MPU {
 
 /**
  * Reads FlowMeter values.
@@ -48,7 +47,6 @@ private:
     double getDoubleValue(uint16_t reg);
 };
 
-}
 }
 }
 }
