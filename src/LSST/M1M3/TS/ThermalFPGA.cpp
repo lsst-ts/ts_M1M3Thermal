@@ -22,8 +22,6 @@
 
 #include "ThermalFPGA.h"
 #include "NiFpga_ts_M1M3ThermalFPGA.h"
-#include <iostream>
-#include <iomanip>
 
 #include <cRIO/NiError.h>
 
@@ -73,7 +71,6 @@ void ThermalFPGA::writeMPUFIFO(MPU& mpu) {
     auto buf = mpu.getCommandVector();
     uint8_t bus = mpu.getBus();
     uint8_t len = buf.size();
-    std::cout << "writeMPUFIFO " << std::dec << static_cast<int>(bus) << " " << static_cast<int>(len) << std::endl;
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
                                     &bus, 1, -1, NULL));
@@ -87,7 +84,6 @@ void ThermalFPGA::writeMPUFIFO(MPU& mpu) {
 
 void ThermalFPGA::readMPUFIFO(MPU& mpu) {
     uint8_t req = mpu.getBus() + 100;
-    std::cout << "writeRead " << std::dec << static_cast<int>(req) << std::endl;
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
                                     &req, 1, -1, NULL));
@@ -97,19 +93,16 @@ void ThermalFPGA::readMPUFIFO(MPU& mpu) {
                  NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
                                    reinterpret_cast<uint8_t*>(&len), 2, 1000, NULL));
     len = ntohs(len);
-    std::cout << "len " << static_cast<int>(len) << std::endl;
     uint8_t data[len];
-    uint16_t u16_data[len];
 
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
                                    data, len, -1, NULL));
-    std::cout << "Data";
+
+    uint16_t u16_data[len];
     for (int i = 0; i < len; i++) {
         u16_data[i] = data[i];
-        std::cout << " " << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(data[i]);
     }
-    std::cout << std::endl;
     mpu.processResponse(u16_data, len);
 }
 
