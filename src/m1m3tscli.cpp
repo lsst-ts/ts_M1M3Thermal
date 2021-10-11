@@ -182,8 +182,8 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
      << std::setw(20) << "Net Totalizer: " << flowMeter->getNetTotalizer() << std::endl
      << std::setw(20) << "Positive Totalizer: " << flowMeter->getPositiveTotalizer() << std::endl
      << std::setw(20) << "Negative Totalizer: " << flowMeter->getNegativeTotalizer() << std::endl
-     << std::setw(20) << "Temperature 1: " << flowMeter->getTemperature1() << std::endl
-     << std::setw(20) << "Temperature 2: " << flowMeter->getTemperature2() << std::endl;
+     << std::setw(20) << "Temperature 1: " << flowMeter->getTemperature1() << " \u00b0C" << std::endl
+     << std::setw(20) << "Temperature 2: " << flowMeter->getTemperature2() << " \u00b0C" << std::endl;
 
     return 0;
 }
