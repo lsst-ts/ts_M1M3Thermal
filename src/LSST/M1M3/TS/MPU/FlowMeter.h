@@ -32,7 +32,7 @@ namespace TS {
 class FlowMeter : public cRIO::MPU {
 public:
     FlowMeter(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) {}
-    
+
     void poll();
 
     double getSignalStrength() { return getDoubleValue(300); }
@@ -40,13 +40,13 @@ public:
     double getNetTotalizer() { return getDoubleValue(308); }
     double getPositiveTotalizer() { return getDoubleValue(312); }
     double getNegativeTotalizer() { return getDoubleValue(316); }
-    double getTemperature1 () { return getDoubleValue(320); }
-    double getTemperature2 () { return getDoubleValue(324); }
+    double getTemperature1() { return getDoubleValue(320); }
+    double getTemperature2() { return getDoubleValue(324); }
 
 private:
     double getDoubleValue(uint16_t reg);
 };
 
-}
-}
-}
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST
