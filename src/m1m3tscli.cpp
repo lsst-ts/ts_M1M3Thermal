@@ -193,7 +193,7 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
 
 int M1M3TScli::mixingValve(command_vec cmds) {
     if (cmds.size() == 1) {
-       dynamic_cast<IFPGA*>(getFPGA())->setMixingValvePosition(std::stof(cmds[0]));
+        dynamic_cast<IFPGA*>(getFPGA())->setMixingValvePosition(std::stof(cmds[0]));
     }
     std::cout << "Mixing valve: " << dynamic_cast<IFPGA*>(getFPGA())->getMixingValvePosition() << std::endl;
     return 0;

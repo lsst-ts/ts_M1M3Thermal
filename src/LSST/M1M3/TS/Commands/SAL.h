@@ -43,6 +43,8 @@ SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), standby);
 
 SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), exitControl);
 
+SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setMixingValve);
+
 }  // namespace Commands
 }  // namespace TS
 }  // namespace M1M3

@@ -42,9 +42,9 @@ IFPGA& IFPGA::get() {
 #endif
 }
 
-float IFPGA::getMixingValvePosition () {
+float IFPGA::getMixingValvePosition() {
     uint16_t buf = FPGAAddress::MIXING_VALVE_POSITION;
-    writeRequestFIFO(&buf, 1, 10);
+    writeRequestFIFO(&buf, 1, 1);
     float ret;
     readSGLResponseFIFO(&ret, 1, 750);
     return ret;
@@ -54,6 +54,11 @@ void IFPGA::setMixingValvePosition(float position) {
     uint16_t buf[3];
     buf[0] = FPGAAddress::MIXING_VALVE_COMMAND;
     memcpy(buf + 1, &position, sizeof(float));
+
+    float t = buf[2];
+    buf[2] = buf[1];
+    buf[1] = t;
+
     writeCommandFIFO(buf, 3, 0);
 }
 

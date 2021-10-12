@@ -48,7 +48,7 @@ public:
 
     static IFPGA& get();
 
-    virtual void readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) = 0;
+    virtual void readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) = 0;
 
     uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
     uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }

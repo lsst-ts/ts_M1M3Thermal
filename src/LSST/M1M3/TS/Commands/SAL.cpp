@@ -20,6 +20,8 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <IFPGA.h>
+
 #include <Commands/SAL.h>
 #include <Events/SummaryState.h>
 #include <cRIO/ControllerThread.h>
@@ -64,5 +66,17 @@ void SAL_standby::execute() {
 
 void SAL_exitControl::execute() {
     LSST::cRIO::ControllerThread::setExitRequested();
+    ackComplete();
+}
+
+bool SAL_setMixingValve::validate() {
+    if (params.mixingValveTarget < 0 || params.mixingValveTarget > 100) {
+        return false;
+    }
+    return true;
+}
+
+void SAL_setMixingValve::execute() {
+    IFPGA::get().setMixingValvePosition(params.mixingValveTarget);
     ackComplete();
 }
