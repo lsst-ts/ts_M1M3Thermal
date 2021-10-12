@@ -27,6 +27,7 @@
 
 #include "Events/EnabledILC.h"
 #include "Telemetry/ThermalData.h"
+#include "Telemetry/MixingValve.h"
 
 #include <cRIO/ThermalILC.h>
 
@@ -44,9 +45,12 @@ void Update::execute() {
         }
     }
 
-    TSApplication::fpga()->ilcCommands(*TSApplication::ilc());
+    IFPGA::get().ilcCommands(*TSApplication::ilc());
 
     Telemetry::ThermalData::instance().send();
+
+    Telemetry::MixingValve::instance().valvePosition = IFPGA::get().getMixingValvePosition();
+    Telemetry::MixingValve::instance().send();
 
     Events::EnabledILC::instance().send();
 
