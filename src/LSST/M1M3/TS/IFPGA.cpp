@@ -22,6 +22,8 @@
 
 #include "IFPGA.h"
 
+#include <string.h>
+
 #ifdef SIMULATOR
 #include <SimulatedFPGA.h>
 #else
@@ -38,6 +40,21 @@ IFPGA& IFPGA::get() {
     static ThermalFPGA thermalfpga;
     return thermalfpga;
 #endif
+}
+
+float IFPGA::getMixingValvePosition () {
+    uint16_t buf = FPGAAddress::MIXING_VALVE_POSITION;
+    writeRequestFIFO(&buf, 1, 10);
+    float ret;
+    readSGLResponseFIFO(&ret, 1, 750);
+    return ret;
+}
+
+void IFPGA::setMixingValvePosition(float position) {
+    uint16_t buf[3];
+    buf[0] = FPGAAddress::MIXING_VALVE_COMMAND;
+    memcpy(buf + 1, &position, sizeof(float));
+    writeCommandFIFO(buf, 3, 0);
 }
 
 void IFPGA::setHeartbeat(bool heartbeat) {

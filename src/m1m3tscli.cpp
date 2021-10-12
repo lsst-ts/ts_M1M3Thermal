@@ -52,6 +52,7 @@ public:
     int mpuRegisters(command_vec cmds);
     int tryRead(command_vec cmds);
     int printFlowMeter(command_vec cmds);
+    int mixingValve(command_vec cmds);
 
 protected:
     virtual FPGA* newFPGA(const char* dir) override;
@@ -86,13 +87,14 @@ public:
 };
 
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
-    addCommand("mpu-registers", std::bind(&M1M3TScli::mpuRegisters, this, std::placeholders::_1), "si?",
+    addCommand("mpu-registers", std::bind(&M1M3TScli::mpuRegisters, this, std::placeholders::_1), "SI?",
                NEED_FPGA, "<mpu> <register>..", "Reads MPU given MPU registers");
     addCommand("try-read", std::bind(&M1M3TScli::tryRead, this, std::placeholders::_1), "si?", NEED_FPGA,
                "<mpu> <register>..", "Try all modbus address to read");
-
     addCommand("flow", std::bind(&M1M3TScli::printFlowMeter, this, std::placeholders::_1), "", NEED_FPGA,
                NULL, "Reads FlowMeter values");
+    addCommand("mixing-valve", std::bind(&M1M3TScli::mixingValve, this, std::placeholders::_1), "d",
+               NEED_FPGA, "[valve postion]", "Reads and sets mixing valve positon");
 
     addILC(std::make_shared<PrintThermalILC>(1));
 
@@ -186,7 +188,14 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
               << std::setw(20) << "Temperature 1: " << flowMeter->getTemperature1() << " \u00b0C" << std::endl
               << std::setw(20) << "Temperature 2: " << flowMeter->getTemperature2() << " \u00b0C"
               << std::endl;
+    return 0;
+}
 
+int M1M3TScli::mixingValve(command_vec cmds) {
+    if (cmds.size() == 1) {
+       dynamic_cast<IFPGA*>(getFPGA())->setMixingValvePosition(std::stof(cmds[0]));
+    }
+    std::cout << "Mixing valve: " << dynamic_cast<IFPGA*>(getFPGA())->getMixingValvePosition() << std::endl;
     return 0;
 }
 

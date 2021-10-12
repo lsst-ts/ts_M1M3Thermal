@@ -43,13 +43,27 @@ typedef enum
 
 typedef enum
 {
+<<<<<<< HEAD
    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO = 5,
+=======
+   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoSgl_SGLResponseFIFO = 3,
+} NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoSgl;
+
+typedef enum
+{
+   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO = 6,
+>>>>>>> mixin commands
 } NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8;
 
 typedef enum
 {
+<<<<<<< HEAD
    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO = 6,
    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO = 3,
+=======
+   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO = 7,
+   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO = 4,
+>>>>>>> mixin commands
 } NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16;
 
 typedef enum

@@ -45,6 +45,7 @@ public:
     void readMPUFIFO(cRIO::MPU& mpu) override;
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
+    void readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) override;
     void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered = NULL) override;
     void ackIrqs(uint32_t irqs) override;
