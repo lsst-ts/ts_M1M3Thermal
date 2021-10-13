@@ -23,15 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-<<<<<<< HEAD
-<<<<<<< HEAD
-static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "48A21683F9E7BC3930AD75693605B139";
-=======
-static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "8F96D8B7F5A9C34D86A544F49B618F6F";
->>>>>>> mixing valve commands
-=======
 static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "F17C981F169AF3D8BFF349FEEEBBC706";
->>>>>>> leaner bitfiles
 
 #if NiFpga_Cpp
 extern "C"
@@ -41,10 +33,6 @@ extern "C"
 typedef enum
 {
    NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO = 4,
-<<<<<<< HEAD
-   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_U8ResponseFIFO = 0,
-=======
->>>>>>> mixing valve commands
 } NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8;
 
 typedef enum
@@ -54,40 +42,18 @@ typedef enum
 
 typedef enum
 {
-<<<<<<< HEAD
-<<<<<<< HEAD
-   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO = 5,
-=======
-   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoSgl_SGLResponseFIFO = 3,
-=======
    NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoSgl_SGLResponseFIFO = 2,
->>>>>>> mixing valve commands
 } NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoSgl;
 
 typedef enum
 {
-<<<<<<< HEAD
-   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO = 6,
->>>>>>> mixin commands
-=======
    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO = 5,
->>>>>>> mixing valve commands
 } NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8;
 
 typedef enum
 {
-<<<<<<< HEAD
-<<<<<<< HEAD
    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO = 6,
    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO = 3,
-=======
-   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO = 7,
-   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO = 4,
->>>>>>> mixin commands
-=======
-   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO = 6,
-   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO = 3,
->>>>>>> mixing valve commands
 } NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16;
 
 typedef enum
