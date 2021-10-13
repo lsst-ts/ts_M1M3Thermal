@@ -24,10 +24,14 @@
  * The signature of the FPGA bitfile.
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "48A21683F9E7BC3930AD75693605B139";
 =======
 static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "8F96D8B7F5A9C34D86A544F49B618F6F";
 >>>>>>> mixing valve commands
+=======
+static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "F17C981F169AF3D8BFF349FEEEBBC706";
+>>>>>>> leaner bitfiles
 
 #if NiFpga_Cpp
 extern "C"

@@ -54,11 +54,6 @@ void IFPGA::setMixingValvePosition(float position) {
     uint16_t buf[3];
     buf[0] = FPGAAddress::MIXING_VALVE_COMMAND;
     memcpy(buf + 1, &position, sizeof(float));
-
-    float t = buf[2];
-    buf[2] = buf[1];
-    buf[1] = t;
-
     writeCommandFIFO(buf, 3, 0);
 }
 
