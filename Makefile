@@ -19,6 +19,10 @@ m1m3tscli: src/m1m3tscli.cpp.o src/libM1M3TS.a
 	@echo '[LD ] $@'
 	${co}$(CPP) $(LIBS_FLAGS) -o $@ $^ $(LIBS) ../ts_cRIOcpp/lib/libcRIOcpp.a -lreadline
 
+direct: src/direct.cpp.o src/libM1M3TS.a
+	@echo '[LD ] $@'
+	${co}$(CPP) $(LIBS_FLAGS) -o $@ $^ $(LIBS) ../ts_cRIOcpp/lib/libcRIOcpp.a -lreadline
+
 # Other Targets
 clean:
 	@$(foreach file,M1M3ThermalCsC src/m1m3thermalcsc.cpp.o doc, echo '[RM ] ${file}'; $(RM) -r $(file);)

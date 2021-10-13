@@ -94,11 +94,12 @@ void ThermalFPGA::readMPUFIFO(MPU& mpu) {
                                    reinterpret_cast<uint8_t*>(&len), 2, 1000, NULL));
     len = ntohs(len);
     uint8_t data[len];
-    uint16_t u16_data[len];
 
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
                                    data, len, -1, NULL));
+
+    uint16_t u16_data[len];
     for (int i = 0; i < len; i++) {
         u16_data[i] = data[i];
     }

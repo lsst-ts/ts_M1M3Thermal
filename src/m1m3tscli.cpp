@@ -33,6 +33,8 @@
 #include <cRIO/FPGACliApp.h>
 #include <cRIO/MPU.h>
 
+#include <MPU/FlowMeter.h>
+
 #include <iostream>
 #include <iomanip>
 
@@ -48,15 +50,20 @@ public:
     M1M3TScli(const char* name, const char* description);
 
     int mpuRegisters(command_vec cmds);
+    int tryRead(command_vec cmds);
+    int printFlowMeter(command_vec cmds);
 
 protected:
     virtual FPGA* newFPGA(const char* dir) override;
     virtual ILCUnits getILCs(command_vec cmds) override;
+
+private:
+    std::shared_ptr<FlowMeter> flowMeter;
 };
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
 public:
-    PrintThermalILC() : ThermalILC(1), PrintILC(1) {}
+    PrintThermalILC(uint8_t bus) : ILC(bus), ThermalILC(bus), PrintILC(bus) {}
 
 protected:
     void processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
@@ -81,9 +88,18 @@ public:
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
     addCommand("mpu-registers", std::bind(&M1M3TScli::mpuRegisters, this, std::placeholders::_1), "si?",
                NEED_FPGA, "<mpu> <register>..", "Reads MPU given MPU registers");
-    addILC(std::make_shared<PrintThermalILC>());
+    addCommand("try-read", std::bind(&M1M3TScli::tryRead, this, std::placeholders::_1), "si?", NEED_FPGA,
+               "<mpu> <register>..", "Try all modbus address to read");
 
-    addMPU("vfd", std::make_shared<MPU>(1, 10));
+    addCommand("flow", std::bind(&M1M3TScli::printFlowMeter, this, std::placeholders::_1), "", NEED_FPGA,
+               NULL, "Reads FlowMeter values");
+
+    addILC(std::make_shared<PrintThermalILC>(1));
+
+    addMPU("vfd", std::make_shared<MPU>(1, 100));
+
+    flowMeter = std::make_shared<FlowMeter>(2, 1);
+    addMPU("flow", flowMeter);
 }
 
 int M1M3TScli::mpuRegisters(command_vec cmds) {
@@ -102,7 +118,7 @@ int M1M3TScli::mpuRegisters(command_vec cmds) {
     }
 
     for (auto r : registers) {
-        mpu->readHoldingRegisters(r, 1);
+        mpu->readHoldingRegisters(r, 1, 255);
         mpu->clear(true);
     }
 
@@ -112,6 +128,64 @@ int M1M3TScli::mpuRegisters(command_vec cmds) {
         uint16_t v = mpu->getRegister(r);
         std::cout << fmt::format("{0:>5d} ({0:04x}): {1:d} ({1:x})", r, v) << std::endl;
     }
+
+    return 0;
+}
+
+int M1M3TScli::tryRead(command_vec cmds) {
+    std::shared_ptr<MPU> mpu = getMPU(cmds[0]);
+    if (mpu == NULL) {
+        std::cerr << "Invalid MPU device name " << cmds[0] << ". List of known devices: " << std::endl;
+        printMPU();
+        return -1;
+    }
+
+    for (uint8_t a = 1; a < 255; a++) {
+        mpu->clearCommanded();
+
+        mpu->setAddress(a);
+
+        std::vector<uint16_t> registers;
+
+        for (size_t i = 1; i < cmds.size(); i++) {
+            registers.push_back(stoi(cmds[i], nullptr, 0));
+        }
+
+        for (auto r : registers) {
+            mpu->readHoldingRegisters(r, 1);
+            mpu->clear(true);
+        }
+
+        try {
+            getFPGA()->mpuCommands(*mpu);
+            for (auto r : registers) {
+                uint16_t v = mpu->getRegister(r);
+                std::cout << fmt::format("{0:>5d} ({0:04x}): {1:d} ({1:x})", r, v) << std::endl;
+            }
+        } catch (std::runtime_error) {
+            std::cerr << "Not " << static_cast<int>(a) << std::endl;
+        }
+    }
+
+    return 0;
+}
+
+int M1M3TScli::printFlowMeter(command_vec cmds) {
+    flowMeter->clearCommanded();
+
+    flowMeter->poll();
+
+    getFPGA()->mpuCommands(*flowMeter);
+
+    std::cout << std::setfill(' ') << std::setw(20) << "Signal Strength: " << flowMeter->getSignalStrength()
+              << std::endl
+              << std::setw(20) << "Flow Rate: " << flowMeter->getFlowRate() << std::endl
+              << std::setw(20) << "Net Totalizer: " << flowMeter->getNetTotalizer() << std::endl
+              << std::setw(20) << "Positive Totalizer: " << flowMeter->getPositiveTotalizer() << std::endl
+              << std::setw(20) << "Negative Totalizer: " << flowMeter->getNegativeTotalizer() << std::endl
+              << std::setw(20) << "Temperature 1: " << flowMeter->getTemperature1() << " \u00b0C" << std::endl
+              << std::setw(20) << "Temperature 2: " << flowMeter->getTemperature2() << " \u00b0C"
+              << std::endl;
 
     return 0;
 }
@@ -159,7 +233,19 @@ void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, floa
 
 M1M3TScli cli("M1M3TS", "M1M3 Thermal System Command Line Interface");
 
-void _printBuffer(std::string prefix, uint16_t* buf, size_t len) {
+void _printBufferU8(std::string prefix, uint8_t* buf, size_t len) {
+    if (cli.getDebugLevel() == 0) {
+        return;
+    }
+
+    std::cout << prefix;
+    for (size_t i = 0; i < len; i++) {
+        std::cout << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(buf[i]) << " ";
+    }
+    std::cout << std::endl;
+}
+
+void _printBufferU16(std::string prefix, uint16_t* buf, size_t len) {
     if (cli.getDebugLevel() == 0) {
         return;
     }
@@ -172,28 +258,28 @@ void _printBuffer(std::string prefix, uint16_t* buf, size_t len) {
 }
 
 void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
-    _printBuffer("M> ", mpu.getBuffer(), mpu.getLength());
+    _printBufferU8("M> ", mpu.getCommands(), mpu.getCommandVector().size());
     FPGAClass::writeMPUFIFO(mpu);
 }
 
 void PrintTSFPGA::readMPUFIFO(MPU& mpu) {
     FPGAClass::readMPUFIFO(mpu);
-    _printBuffer("M< ", mpu.getBuffer(), mpu.getLength());
+    _printBufferU16("M< ", mpu.getBuffer(), mpu.getLength());
 }
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    _printBuffer("C> ", data, length);
+    _printBufferU16("C> ", data, length);
     FPGAClass::writeCommandFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    _printBuffer("R> ", data, length);
+    _printBufferU16("R> ", data, length);
     FPGAClass::writeRequestFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU16ResponseFIFO(data, length, timeout);
-    _printBuffer("R< ", data, length);
+    _printBufferU16("R< ", data, length);
 }
 
 int main(int argc, char* const argv[]) { return cli.run(argc, argv); }
