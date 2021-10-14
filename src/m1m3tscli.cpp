@@ -107,6 +107,9 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
             },
             "Report thermal status");
 
+    addILCCommand("thermal-status", [](ILCUnit u) { std::dynamic_pointer_cast<PrintThermalILC>(u.first)->reportThermalStatus(u.second); },
+               "Report thermal status");
+
     addILC(std::make_shared<PrintThermalILC>(1));
 
     addMPU("vfd", std::make_shared<MPU>(1, 100));
