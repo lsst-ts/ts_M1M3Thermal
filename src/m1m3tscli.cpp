@@ -224,20 +224,28 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
     int ret = -2;
 
     for (auto c : cmds) {
-        try {
-            int address = std::stoi(c);
-            if (address <= 0 || address > NUM_TS_ILC) {
-                std::cerr << "Invalid address " << c << std::endl;
-                ret = -1;
-                continue;
+        size_t range = c.find('-');
+        if (range != std::string::npos) {
+            int start = std::stoi(c.substr(0, range));
+            int end = std::stoi(c.substr(range + 1));
+            for (int address = start; address <= end; address++) {
+                units.push_back(ILCUnit(getILC(0), address));
             }
-            units.push_back(ILCUnit(getILC(0), address));
-        } catch (std::logic_error& e) {
-            std::cerr << "Non-numeric address: " << c << std::endl;
-            ret = -1;
+        } else {
+            try {
+                int address = std::stoi(c);
+                if (address <= 0 || address > NUM_TS_ILC) {
+                    std::cerr << "Invalid address " << c << std::endl;
+                    ret = -1;
+                    continue;
+                }
+                units.push_back(ILCUnit(getILC(0), address));
+            } catch (std::logic_error& e) {
+                std::cerr << "Non-numeric address: " << c << std::endl;
+                ret = -1;
+            }
         }
         ret = 0;
-        return units;
     }
 
     if (ret == -2) {
