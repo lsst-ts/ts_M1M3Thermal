@@ -37,6 +37,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <memory>
 
 #include <spdlog/async.h>
 #include <spdlog/spdlog.h>
@@ -98,6 +99,9 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                NEED_FPGA, "[valve postion]", "Reads and sets mixing valve positon");
     addCommand("pump-on", std::bind(&M1M3TScli::pumpOnOff, this, std::placeholders::_1), "b",
                NEED_FPGA, "[on|off]", "Command cooland pump on/off");
+
+    addILCCommand("thermal-status", [](ILCUnit u) { std::dynamic_pointer_cast<PrintThermalILC>(u.first)->reportThermalStatus(u.second); },
+               "Report thermal status");
 
     addILC(std::make_shared<PrintThermalILC>(1));
 
@@ -167,7 +171,7 @@ int M1M3TScli::tryRead(command_vec cmds) {
                 uint16_t v = mpu->getRegister(r);
                 std::cout << fmt::format("{0:>5d} ({0:04x}): {1:d} ({1:x})", r, v) << std::endl;
             }
-        } catch (std::runtime_error) {
+        } catch (std::runtime_error& er) {
             std::cerr << "Not " << static_cast<int>(a) << std::endl;
         }
     }
