@@ -33,9 +33,7 @@ namespace TS {
 
 class TSApplication : public cRIO::Singleton<TSApplication> {
 public:
-    TSApplication(token) {
-        _ilc = NULL;
-    }
+    TSApplication(token) { _ilc = NULL; }
 
     void setILC(SALThermalILC* ilc) { _ilc = ilc; }
 

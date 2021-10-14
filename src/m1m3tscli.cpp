@@ -97,11 +97,15 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                NULL, "Reads FlowMeter values");
     addCommand("mixing-valve", std::bind(&M1M3TScli::mixingValve, this, std::placeholders::_1), "d",
                NEED_FPGA, "[valve postion]", "Reads and sets mixing valve positon");
-    addCommand("pump-on", std::bind(&M1M3TScli::pumpOnOff, this, std::placeholders::_1), "b",
-               NEED_FPGA, "[on|off]", "Command cooland pump on/off");
+    addCommand("pump-on", std::bind(&M1M3TScli::pumpOnOff, this, std::placeholders::_1), "b", NEED_FPGA,
+               "[on|off]", "Command cooland pump on/off");
 
-    addILCCommand("thermal-status", [](ILCUnit u) { std::dynamic_pointer_cast<PrintThermalILC>(u.first)->reportThermalStatus(u.second); },
-               "Report thermal status");
+    addILCCommand(
+            "thermal-status",
+            [](ILCUnit u) {
+                std::dynamic_pointer_cast<PrintThermalILC>(u.first)->reportThermalStatus(u.second);
+            },
+            "Report thermal status");
 
     addILC(std::make_shared<PrintThermalILC>(1));
 
