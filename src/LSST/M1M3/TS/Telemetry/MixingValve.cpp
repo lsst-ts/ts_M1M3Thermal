@@ -30,9 +30,7 @@
 using namespace LSST::M1M3::TS;
 using namespace LSST::M1M3::TS::Telemetry;
 
-MixingValve::MixingValve(token) {
-    valvePosition = NAN;
-}
+MixingValve::MixingValve(token) { valvePosition = NAN; }
 
 void MixingValve::send() {
     salReturn ret = TSPublisher::SAL()->putSample_mixingValve(this);
