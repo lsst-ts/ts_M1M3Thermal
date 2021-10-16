@@ -28,6 +28,8 @@
 
 #include <cRIO/ControllerThread.h>
 #include <OuterLoopClockThread.h>
+#include <Settings/Alias.h>
+#include <Settings/Controller.h>
 
 #include <TSSubscriber.h>
 #include <SALThermalILC.h>
@@ -79,7 +81,9 @@ private:
 SALSinkMacro(MTM1M3TS);
 
 void M1M3thermald::init() {
-    SPDLOG_INFO("Main: Initializing M1M3TS SAL");
+    SPDLOG_INFO("Initializing Aliases");
+
+    SPDLOG_INFO("Initializing M1M3TS SAL");
     _m1m3tsSAL = std::make_shared<SAL_MTM1M3TS>();
     _m1m3tsSAL->setDebugLevel(getDebugLevelSAL());
 
