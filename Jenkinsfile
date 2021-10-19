@@ -24,20 +24,7 @@ node {
     def SALUSER_HOME = "/home/saluser"
     def BRANCH = (env.CHANGE_BRANCH != null) ? env.CHANGE_BRANCH : env.BRANCH_NAME
     def SAME_CRIO_BRANCH = ["master", "tickets/DM-31838", "tickets/DM-32240"]
-
-    stage('Cloning Dockerfile')
-    {
-        sh "printenv"
-
-        dir("ts_Dockerfiles") {
-            git branch: (BRANCH == "master" ? "master" : "develop"), url: 'https://github.com/lsst-ts/ts_Dockerfiles'
-        }
-    }
-
-    stage('Building dev container')
-    {
-        M1M3sim = docker.build("lsstts/mtm1m3_sim:" + env.BRANCH_NAME.replace("/", "_"), (params.noCache ? "--no-cache " : " ") + "--target lsstts-cpp-dev --build-arg XML_BRANCH=HEAD ts_Dockerfiles/mtm1m3_sim")
-    }
+    def XML_BRANCH = BRANCH in ["master", "tickets/DM-32240"] ? BRANCH : "develop"
 
     stage('Cloning sources')
     {
@@ -47,6 +34,11 @@ node {
         dir("ts_m1m3thermal") {
             checkout scm
         }
+    }
+
+    stage('Building dev container')
+    {
+        M1M3sim = docker.build("lsstts/mtm1m3_sim:" + env.BRANCH_NAME.replace("/", "_"), (params.noCache ? "--no-cache " : " ") + " --build-arg XML_BRANCH=$XML_BRANCH ts_m1m3thermal")
     }
 
     stage("Running tests")
@@ -65,6 +57,7 @@ node {
                     source $SALUSER_HOME/.setup_salobj.sh
     
                     export PATH=\$CONDA_PREFIX/bin:$PATH
+                    export PKG_CONFIG_PATH="\$CONDA_PREFIX/lib/pkgconfig"
                     cd $WORKSPACE/ts_cRIOcpp
                     make
     
