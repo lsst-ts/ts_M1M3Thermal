@@ -35,6 +35,8 @@ constexpr uint16_t MIXING_VALVE_POSITION = 9;
 constexpr uint16_t MIXING_VALVE_COMMAND = 17;
 constexpr uint16_t MODBUS_A_RX = 21;
 constexpr uint16_t MODBUS_A_TX = 25;
+constexpr uint16_t SLOT4_DIS = 29;
+constexpr uint16_t FCU_ON = 61;
 constexpr uint16_t HEARTBEAT = 62;
 constexpr uint16_t COOLANT_PUMP_ON = 63;
 }  // namespace FPGAAddress
@@ -57,6 +59,9 @@ public:
 
     float getMixingValvePosition();
     void setMixingValvePosition(float position);
+
+    void setFCUPower(bool on);
+    void setPumpPower(bool on);
 
     void setHeartbeat(bool heartbeat);
 };

@@ -54,6 +54,7 @@ public:
     int tryRead(command_vec cmds);
     int printFlowMeter(command_vec cmds);
     int mixingValve(command_vec cmds);
+    int fcuOnOff(command_vec cmds);
     int pumpOnOff(command_vec cmds);
 
 protected:
@@ -97,6 +98,8 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                NULL, "Reads FlowMeter values");
     addCommand("mixing-valve", std::bind(&M1M3TScli::mixingValve, this, std::placeholders::_1), "d",
                NEED_FPGA, "[valve postion]", "Reads and sets mixing valve positon");
+    addCommand("fcu-on", std::bind(&M1M3TScli::fcuOnOff, this, std::placeholders::_1), "b", NEED_FPGA,
+               "[on|off]", "Command FCU power on/off");
     addCommand("pump-on", std::bind(&M1M3TScli::pumpOnOff, this, std::placeholders::_1), "b", NEED_FPGA,
                "[on|off]", "Command cooland pump on/off");
 
@@ -210,12 +213,17 @@ int M1M3TScli::mixingValve(command_vec cmds) {
     return 0;
 }
 
+int M1M3TScli::fcuOnOff(command_vec cmds) {
+    if (cmds.size() == 1) {
+        dynamic_cast<IFPGA*>(getFPGA())->setFCUPower(onOff(cmds[0]));
+        std::cout << "Turned FCU power " << cmds[0] << std::endl;
+    }
+    return 0;
+}
+
 int M1M3TScli::pumpOnOff(command_vec cmds) {
     if (cmds.size() == 1) {
-        uint16_t buf[2];
-        buf[0] = FPGAAddress::COOLANT_PUMP_ON;
-        buf[1] = onOff(cmds[0]);
-        getFPGA()->writeCommandFIFO(buf, 2, 10);
+        dynamic_cast<IFPGA*>(getFPGA())->setPumpPower(onOff(cmds[0]));
         std::cout << "Turned pump " << cmds[0] << std::endl;
     }
     return 0;
