@@ -65,13 +65,13 @@ ts-M1M3thermal_$(VERSION)_x64.ipk: ts-M1M3thermald m1m3tscli
 	${co}mkdir -p ipk/data/usr/sbin
 	${co}mkdir -p ipk/data/etc/init.d
 	${co}mkdir -p ipk/data/etc/default
-	${co}mkdir -p ipk/data/var/lib/ts-M1M3thermal
+	${co}mkdir -p ipk/data/var/lib/M1M3TS
 	${co}mkdir -p ipk/control
 	${co}cp ts-M1M3thermald ipk/data/usr/sbin/ts-M1M3thermald
 	${co}cp m1m3tscli ipk/data/usr/sbin/m1m3tscli
 	${co}cp init ipk/data/etc/init.d/ts-M1M3thermal
 	${co}cp default_ts-M1M3thermal ipk/data/etc/default/ts-M1M3thermal
-	${co}cp -r SettingFiles/* ipk/data/var/lib/ts-M1M3thermal
+	${co}cp -r SettingFiles/* ipk/data/var/lib/M1M3TS
 	${co}cp -r Bitfiles/* ipk/data/var/lib/ts-M1M3thermal
 	${co}sed s?@VERSION@?$(VERSION)?g control.ipk.in > ipk/control/control
 	${co}cp postinst prerm postrm ipk/control

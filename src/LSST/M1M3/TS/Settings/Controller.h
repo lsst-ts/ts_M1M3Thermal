@@ -25,8 +25,9 @@
 #define _TS_Settings_Controller_h
 
 #include <cRIO/Singleton.h>
+#include <cRIO/Settings/Path.h>
+#include <cRIO/Settings/Alias.h>
 
-#include <Settings/Alias.h>
 #include <Settings/Thermal.h>
 
 namespace LSST {
@@ -41,19 +42,17 @@ class Controller : public cRIO::Singleton<Controller> {
 public:
     Controller(token) {}
 
-    void setRoot(const char* configRoot) {
-        _configRoot = configRoot;
-        _aliases.load(_configRoot + "/Base/AliasApplicationSettings.yaml");
-    }
-
     void load(const std::string& label) {
-        std::string settingsRoot = _configRoot + _aliases.getPath(label);
+        _aliases.load(cRIO::Settings::Path::getFilePath("/Base/AliasApplicationSettings.yaml"));
+
+        std::string settingsRoot = cRIO::Settings::Path::getFilePath(_aliases.getPath(label));
+
         Thermal::instance().load(settingsRoot + "/FCU.yaml");
     }
 
 private:
     std::string _configRoot;
-    Settings::Alias _aliases;
+    cRIO::Settings::Alias _aliases;
 };
 
 }  // namespace Settings

@@ -28,7 +28,7 @@
 
 #include <cRIO/ControllerThread.h>
 #include <OuterLoopClockThread.h>
-#include <Settings/Alias.h>
+#include <cRIO/Settings/Path.h>
 #include <Settings/Controller.h>
 
 #include <TSSubscriber.h>
@@ -57,12 +57,11 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/daily_file_sink.h"
 
-using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
 
 using namespace std::chrono_literals;
 
-class M1M3thermald : public CSC {
+class M1M3thermald : public LSST::cRIO::CSC {
 public:
     M1M3thermald(const char* name, const char* description) : CSC(name, description) {}
 
@@ -82,6 +81,7 @@ SALSinkMacro(MTM1M3TS);
 
 void M1M3thermald::init() {
     SPDLOG_INFO("Initializing Aliases");
+    LSST::cRIO::Settings::Path::setRootPath(getConfigRoot());
 
     SPDLOG_INFO("Initializing M1M3TS SAL");
     _m1m3tsSAL = std::make_shared<SAL_MTM1M3TS>();
@@ -104,17 +104,17 @@ void M1M3thermald::init() {
     TSPublisher::instance().setLogLevel(getSpdLogLogLevel() * 10);
 
     SPDLOG_INFO("Starting controller thread");
-    ControllerThread::instance().start();
+    LSST::cRIO::ControllerThread::instance().start();
     addThread(new OuterLoopClockThread());
 
     SPDLOG_INFO("Creating subscriber");
     addThread(new TSSubscriber(_m1m3tsSAL));
 
-    ControllerThread::instance().enqueue(new Commands::EnterControl());
+    LSST::cRIO::ControllerThread::instance().enqueue(new Commands::EnterControl());
 }
 
 void M1M3thermald::done() {
-    ControllerThread::instance().stop();
+    LSST::cRIO::ControllerThread::instance().stop();
 
     SPDLOG_INFO("Shutting down M1M3thermald");
     removeSink();
@@ -127,7 +127,7 @@ void M1M3thermald::done() {
 
 int M1M3thermald::runLoop() {
     std::this_thread::sleep_for(20ms);
-    return ControllerThread::exitRequested() ? 0 : 1;
+    return LSST::cRIO::ControllerThread::exitRequested() ? 0 : 1;
 }
 
 #if 0
@@ -197,7 +197,7 @@ int main(int argc, char* const argv[]) {
 
     try {
         csc.run(fpga);
-    } catch (NiError& nie) {
+    } catch (LSST::cRIO::NiError& nie) {
         SPDLOG_CRITICAL("Main: Error initializing ThermalFPGA: {}", nie.what());
     }
 

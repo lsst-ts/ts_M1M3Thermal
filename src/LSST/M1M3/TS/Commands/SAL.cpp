@@ -40,7 +40,7 @@ bool SAL_start::validate() {
 }
 
 void SAL_start::execute() {
-    SPDLOG_INFO("Starting");
+    SPDLOG_INFO("Starting, settings={}", params.settingsToApply);
     Controller::instance().load(params.settingsToApply);
     SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
