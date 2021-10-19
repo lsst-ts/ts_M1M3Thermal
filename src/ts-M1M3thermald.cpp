@@ -80,7 +80,7 @@ private:
 SALSinkMacro(MTM1M3TS);
 
 void M1M3thermald::init() {
-    SPDLOG_INFO("Initializing Aliases");
+    SPDLOG_INFO("Setting root path {}", getConfigRoot());
     LSST::cRIO::Settings::Path::setRootPath(getConfigRoot());
 
     SPDLOG_INFO("Initializing M1M3TS SAL");
