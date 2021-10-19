@@ -43,7 +43,7 @@ public:
     Controller(token) {}
 
     void load(const std::string& label) {
-        _aliases.load(cRIO::Settings::Path::getFilePath("/Base/AliasApplicationSettings.yaml"));
+        _aliases.load(cRIO::Settings::Path::getFilePath("Base/AliasApplicationSettings.yaml"));
 
         std::string settingsRoot = cRIO::Settings::Path::getFilePath(_aliases.getPath(label));
 
