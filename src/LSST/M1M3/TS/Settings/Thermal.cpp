@@ -41,7 +41,7 @@ void Thermal::load(const std::string &filename) {
 
         for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
             enabledFCU[i] =
-                    std::find(disabledIndices.begin(), disabledIndices.end(), i) == disabledIndices.end();
+                    std::find(disabledIndices.begin(), disabledIndices.end(), i + 1) == disabledIndices.end();
             Events::EnabledILC::instance().setEnabled(i, enabledFCU[i]);
         }
     } catch (YAML::Exception &ex) {

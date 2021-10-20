@@ -76,10 +76,7 @@ void SALThermalILC::processThermalStatus(uint8_t address, uint8_t status, float 
                                               absoluteTemperature);
 }
 
-uint8_t SALThermalILC::_address2ILCIndex(uint8_t address) {
-    // TODO verify that's true
-    return address - 1;
-}
+uint8_t SALThermalILC::_address2ILCIndex(uint8_t address) { return address - 1; }
 
 }  // namespace TS
 }  // namespace M1M3

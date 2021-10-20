@@ -51,7 +51,6 @@ public:
     }
 
 private:
-    std::string _configRoot;
     cRIO::Settings::Alias _aliases;
 };
 

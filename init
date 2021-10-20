@@ -40,7 +40,7 @@ startdaemon(){
 	done
 	logger -t M1M3thermal_start -p user.info "Starting with IP $LSST_DDS_IP"
 	echo -n "Starting TS M1M3 thermal:"
-	start-stop-daemon --start --oknodo --pidfile ${PIDFILE} --startas $DAEMON -- -c /var/lib/ts-M1M3thermal -p ${PIDFILE} -u m1m3:m1m3
+	start-stop-daemon --start --oknodo --pidfile ${PIDFILE} --startas $DAEMON -- -p ${PIDFILE} -u m1m3:m1m3
 	echo "done"
 }
 stopdaemon(){
