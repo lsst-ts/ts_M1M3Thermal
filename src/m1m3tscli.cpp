@@ -56,6 +56,7 @@ public:
     int mixingValve(command_vec cmds);
     int fcuOnOff(command_vec cmds);
     int pumpOnOff(command_vec cmds);
+    int thermalDemand(command_vec cmds);
 
 protected:
     virtual FPGA* newFPGA(const char* dir) override;
@@ -102,6 +103,9 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                "[on|off]", "Command FCU power on/off");
     addCommand("pump-on", std::bind(&M1M3TScli::pumpOnOff, this, std::placeholders::_1), "b", NEED_FPGA,
                "[on|off]", "Command cooland pump on/off");
+
+    addCommand("thermal-demand", std::bind(&M1M3TScli::thermalDemand, this, std::placeholders::_1), "iis?",
+               NEED_FPGA, "<heater PWM> <fan RPM> <ILC..>", "Sets FCU heater and fan");
 
     addILCCommand(
             "thermal-status",
@@ -231,6 +235,20 @@ int M1M3TScli::pumpOnOff(command_vec cmds) {
 
 FPGA* M1M3TScli::newFPGA(const char* dir) { return new PrintTSFPGA(); }
 
+int M1M3TScli::thermalDemand(command_vec cmds) {
+    uint8_t heater = std::stoi(cmds[0]);
+    uint8_t fan = std::stoi(cmds[1]);
+    cmds.erase(cmds.begin(), cmds.begin() + 2);
+
+    clearILCs();
+    ILCUnits ilcs = getILCs(cmds);
+    for (auto u : ilcs) {
+        std::dynamic_pointer_cast<PrintThermalILC>(u.first)->setThermalDemand(u.second, heater, fan);
+    }
+    getFPGA()->ilcCommands(*getILC(0));
+    return 0;
+}
+
 ILCUnits M1M3TScli::getILCs(command_vec cmds) {
     ILCUnits units;
     int ret = -2;
@@ -273,9 +291,11 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
 void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
                                            uint8_t fanRPM, float absoluteTemperature) {
     printBusAddress(address);
-    std::cout << "Thermal status: " << std::to_string(status) << std::endl
+    std::cout << "Thermal status: 0x" << std::setfill('0') << std::setw(2) << std::hex
+              << static_cast<int>(status) << std::endl
               << "Differential temperature: " << std::to_string(differentialTemperature) << std::endl
-              << "Fan RPM: " << std::to_string(fanRPM) << std::endl;
+              << "Fan RPM: " << std::to_string(fanRPM) << std::endl
+              << "Absolute temperature: " << std::to_string(absoluteTemperature) << std::endl;
 }
 
 M1M3TScli cli("M1M3TS", "M1M3 Thermal System Command Line Interface");
