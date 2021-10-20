@@ -25,6 +25,7 @@
 
 #include <cRIO/Command.h>
 #include <SAL_MTM1M3TS.h>
+#include <TSPublisher.h>
 
 #include <Events/SummaryState.h>
 
@@ -36,6 +37,8 @@ namespace Commands {
 class EnterControl : public cRIO::Command {
 public:
     void execute() override {
+        SPDLOG_DEBUG("EnterControl");
+        TSPublisher::instance().logSoftwareVersions();
         Events::SummaryState::setState(MTM1M3TS::MTM1M3TS_shared_SummaryStates_StandbyState);
     }
 };

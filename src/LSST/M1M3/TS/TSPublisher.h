@@ -41,6 +41,8 @@ public:
 
     void setLogLevel(int newLevel);
 
+    void logSoftwareVersions();
+
     static double getTimestamp() { return instance()._m1m3TSSAL->getCurrentTime(); }
 
 private:
