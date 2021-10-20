@@ -88,6 +88,7 @@ public:
     void readMPUFIFO(MPU& mpu) override;
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
+    void readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) override;
     void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
 };
 
@@ -353,9 +354,14 @@ void PrintTSFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeo
     FPGAClass::writeRequestFIFO(data, length, timeout);
 }
 
+void PrintTSFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) {
+    FPGAClass::readU8ResponseFIFO(data, length, timeout);
+    _printBufferU8("R8< ", data, length);
+}
+
 void PrintTSFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU16ResponseFIFO(data, length, timeout);
-    _printBufferU16("R< ", data, length);
+    _printBufferU16("R16< ", data, length);
 }
 
 int main(int argc, char* const argv[]) { return cli.run(argc, argv); }
