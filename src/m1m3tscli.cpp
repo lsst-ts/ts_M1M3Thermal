@@ -255,7 +255,55 @@ int M1M3TScli::thermalDemand(command_vec cmds) {
 
 int M1M3TScli::slot4(command_vec) {
     uint32_t dis = dynamic_cast<IFPGA*>(getFPGA())->getSlot4DIs();
-    std::cout << "Slot4: 0x" << std::hex << std::setfill('0') << std::setw(4) << dis << std::endl;
+    std::cout << "Slot4: 0x" << std::hex << std::setfill('0') << std::setw(4) << dis << std::endl
+              << std::setfill(' ') << std::endl;
+
+    const char* names[32] = {
+            "PS 14 Status",                   // DI0
+            "PS 15 Status",                   // DI1
+            "PS 16 Status",                   // DI2
+            "Ctrls Redundancy Status",        // DI3
+            "Fan Coils Diffuser Status",      // DI4
+            "AC Power CB15 Status",           // DI5
+            "Utility outlet CB18 Status",     // DI6
+            "Coolant pump OL status",         // DI7
+            NULL,                             // DI8
+            NULL,                             // DI9
+            NULL,                             // DI10
+            NULL,                             // DI11
+            NULL,                             // DI12
+            NULL,                             // DI13
+            NULL,                             // DI14
+            NULL,                             // DI15
+            "FC heaters off interlock",       // DI16
+            "Coolant pump off interlock",     // DI17
+            "GIS HB loss interlock",          // DI18
+            "mixing valve closed interlock",  // DI19
+            "Support System HB loss",         // DI20
+            "Cell door open interlock",       // DI21
+            "GIS earthquake interlock",       // DI22
+            "Coolant pump e-stop interlock",  // DI23
+            "Cabinet Over Temp interlock",    // DI24
+            NULL,                             // DI25
+            NULL,                             // DI26
+            NULL,                             // DI27
+            NULL,                             // DI28
+            NULL,                             // DI29
+            NULL,                             // DI30
+            NULL,                             // DI31
+    };
+
+    uint32_t b = 1;
+
+    for (int i = 0; i < 32; i++, b <<= 1) {
+        if (names[i]) {
+            std::cout << std::right << std::setw(30) << names[i] << ": " << (dis & b ? "On" : "Off")
+                      << std::endl;
+        }
+    }
+
+    std::cout << std::endl;
+
     return 0;
 }
 
