@@ -51,7 +51,6 @@ public:
     M1M3TScli(const char* name, const char* description);
 
     int mpuRegisters(command_vec cmds);
-    int tryRead(command_vec cmds);
     int printFlowMeter(command_vec cmds);
     int mixingValve(command_vec cmds);
     int fcuOnOff(command_vec cmds);
@@ -95,8 +94,6 @@ public:
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
     addCommand("mpu-registers", std::bind(&M1M3TScli::mpuRegisters, this, std::placeholders::_1), "SI?",
                NEED_FPGA, "<mpu> <register>..", "Reads MPU given MPU registers");
-    addCommand("try-read", std::bind(&M1M3TScli::tryRead, this, std::placeholders::_1), "si?", NEED_FPGA,
-               "<mpu> <register>..", "Try all modbus address to read");
     addCommand("flow", std::bind(&M1M3TScli::printFlowMeter, this, std::placeholders::_1), "", NEED_FPGA,
                NULL, "Reads FlowMeter values");
     addCommand("mixing-valve", std::bind(&M1M3TScli::mixingValve, this, std::placeholders::_1), "d",
@@ -151,44 +148,6 @@ int M1M3TScli::mpuRegisters(command_vec cmds) {
     for (auto r : registers) {
         uint16_t v = mpu->getRegister(r);
         std::cout << fmt::format("{0:>5d} ({0:04x}): {1:d} ({1:x})", r, v) << std::endl;
-    }
-
-    return 0;
-}
-
-int M1M3TScli::tryRead(command_vec cmds) {
-    std::shared_ptr<MPU> mpu = getMPU(cmds[0]);
-    if (mpu == NULL) {
-        std::cerr << "Invalid MPU device name " << cmds[0] << ". List of known devices: " << std::endl;
-        printMPU();
-        return -1;
-    }
-
-    for (uint8_t a = 1; a < 255; a++) {
-        mpu->clearCommanded();
-
-        mpu->setAddress(a);
-
-        std::vector<uint16_t> registers;
-
-        for (size_t i = 1; i < cmds.size(); i++) {
-            registers.push_back(stoi(cmds[i], nullptr, 0));
-        }
-
-        for (auto r : registers) {
-            mpu->readHoldingRegisters(r, 1);
-            mpu->clear(true);
-        }
-
-        try {
-            getFPGA()->mpuCommands(*mpu);
-            for (auto r : registers) {
-                uint16_t v = mpu->getRegister(r);
-                std::cout << fmt::format("{0:>5d} ({0:04x}): {1:d} ({1:x})", r, v) << std::endl;
-            }
-        } catch (std::runtime_error& er) {
-            std::cerr << "Not " << static_cast<int>(a) << std::endl;
-        }
     }
 
     return 0;
