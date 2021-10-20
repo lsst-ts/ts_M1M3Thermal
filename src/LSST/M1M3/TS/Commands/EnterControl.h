@@ -39,6 +39,7 @@ public:
     void execute() override {
         SPDLOG_DEBUG("EnterControl");
         TSPublisher::instance().logSoftwareVersions();
+        TSPublisher::instance().logSimulationMode();
         Events::SummaryState::setState(MTM1M3TS::MTM1M3TS_shared_SummaryStates_StandbyState);
     }
 };

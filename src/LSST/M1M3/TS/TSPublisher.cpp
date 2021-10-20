@@ -41,6 +41,7 @@ void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
     _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_logLevel");
     _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_summaryState");
     _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_softwareVersions");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_simulationMode");
 
     _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_thermalInfo");
 
@@ -63,4 +64,14 @@ void TSPublisher::logSoftwareVersions() {
     versions.cscVersion = VERSION;
     versions.subsystemVersions = "";
     _m1m3TSSAL->logEvent_softwareVersions(&versions, 0);
+}
+
+void TSPublisher::logSimulationMode() {
+    MTM1M3TS_logevent_simulationModeC simulation;
+#ifdef SIMULATOR
+    simulation.mode = 1;
+#else
+    simulation.mode = 0;
+#endif
+    _m1m3TSSAL->logEvent_simulationMode(&simulation, 0);
 }
