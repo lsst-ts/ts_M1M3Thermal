@@ -57,6 +57,14 @@ void IFPGA::setMixingValvePosition(float position) {
     writeCommandFIFO(buf, 3, 0);
 }
 
+uint32_t IFPGA::getSlot4DIs() {
+    uint16_t buf = FPGAAddress::SLOT4_DIS;
+    writeRequestFIFO(&buf, 1, 1);
+    uint32_t ret;
+    readU8ResponseFIFO(reinterpret_cast<uint8_t*>(&ret), 4, 10);
+    return ret;
+}
+
 void IFPGA::setFCUPower(bool on) {
     uint16_t buf[2];
     buf[0] = FPGAAddress::FCU_ON;

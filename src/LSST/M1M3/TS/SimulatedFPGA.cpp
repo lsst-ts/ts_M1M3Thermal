@@ -91,6 +91,12 @@ void SimulatedFPGA::readSGLResponseFIFO(float* data, size_t length, uint32_t tim
     }
 }
 
+void SimulatedFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) {
+    for (size_t i = 0; i < length; i++) {
+        data[i] = 255 * (random() / RAND_MAX);
+    }
+}
+
 void SimulatedFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     switch (_U16ResponseStatus) {
         case IDLE:

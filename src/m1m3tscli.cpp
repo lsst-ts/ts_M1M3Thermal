@@ -57,6 +57,7 @@ public:
     int fcuOnOff(command_vec cmds);
     int pumpOnOff(command_vec cmds);
     int thermalDemand(command_vec cmds);
+    int slot4(command_vec);
 
 protected:
     virtual FPGA* newFPGA(const char* dir) override;
@@ -106,6 +107,8 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
 
     addCommand("thermal-demand", std::bind(&M1M3TScli::thermalDemand, this, std::placeholders::_1), "iis?",
                NEED_FPGA, "<heater PWM> <fan RPM> <ILC..>", "Sets FCU heater and fan");
+    addCommand("slot4", std::bind(&M1M3TScli::slot4, this, std::placeholders::_1), "", NEED_FPGA, NULL,
+               "Reads slot 4 intputs");
 
     addILCCommand(
             "thermal-status",
@@ -246,6 +249,12 @@ int M1M3TScli::thermalDemand(command_vec cmds) {
         std::dynamic_pointer_cast<PrintThermalILC>(u.first)->setThermalDemand(u.second, heater, fan);
     }
     getFPGA()->ilcCommands(*getILC(0));
+    return 0;
+}
+
+int M1M3TScli::slot4(command_vec) {
+    uint32_t dis = dynamic_cast<IFPGA*>(getFPGA())->getSlot4DIs();
+    std::cout << "Slot4: 0x" << std::hex << std::setfill('0') << std::setw(4) << dis << std::endl;
     return 0;
 }
 

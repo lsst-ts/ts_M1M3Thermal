@@ -124,6 +124,12 @@ void ThermalFPGA::readSGLResponseFIFO(float* data, size_t length, uint32_t timeo
                                     data, length, timeout, NULL));
 }
 
+void ThermalFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) {
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_U8ResponseFIFO,
+                                   data, length, timeout, NULL));
+}
+
 void ThermalFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU16_U16ResponseFIFO,
