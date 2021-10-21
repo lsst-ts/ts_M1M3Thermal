@@ -73,6 +73,10 @@ private:
     LSST::cRIO::SimulatedILC _response;
     LSST::cRIO::SimulatedMPU _mpuResponse;
 
+    uint8_t _mode[cRIO::NUM_TS_ILC];
+    uint8_t _heaterPWM[cRIO::NUM_TS_ILC];
+    uint8_t _fanRPM[cRIO::NUM_TS_ILC];
+
     void _simulateModbus(uint16_t* data, size_t length);
     void _simulateMPU(uint8_t* data, size_t length);
 
