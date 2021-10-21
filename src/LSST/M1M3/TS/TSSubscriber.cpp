@@ -50,6 +50,7 @@ TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
     ADD_SAL_COMMAND(disable);
     ADD_SAL_COMMAND(standby);
     ADD_SAL_COMMAND(exitControl);
+    ADD_SAL_COMMAND(setMixingValve);
 
     _commands["setLogLevel"] = [m1m3tsSAL]() {
         MTM1M3TS_command_setLogLevelC data;

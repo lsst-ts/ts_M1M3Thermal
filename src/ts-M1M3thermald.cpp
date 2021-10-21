@@ -111,6 +111,8 @@ void M1M3thermald::init() {
     addThread(new TSSubscriber(_m1m3tsSAL));
 
     LSST::cRIO::ControllerThread::instance().enqueue(new Commands::EnterControl());
+
+    daemonOK();
 }
 
 void M1M3thermald::done() {
@@ -130,80 +132,16 @@ int M1M3thermald::runLoop() {
     return LSST::cRIO::ControllerThread::exitRequested() ? 0 : 1;
 }
 
-#if 0
-void runFPGAs(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
-    SPDLOG_INFO("Main: Creating subscriber");
-    M1M3SSSubscriber::get().setSAL(m1m3SAL, mtMountSAL);
-    SPDLOG_INFO("Main: Creating subscriber thread");
-    SubscriberThread subscriberThread;
-    SPDLOG_INFO("Main: Creating outer loop clock thread");
-    OuterLoopClockThread outerLoopClockThread;
-    SPDLOG_INFO("Main: Creating pps thread");
-    PPSThread ppsThread;
-    SPDLOG_INFO("Main: Queuing EnterControl command");
-    ControllerThread::get().enqueue(CommandFactory::create(Commands::EnterControlCommand));
-
-    try {
-        SPDLOG_INFO("Main: Starting pps thread");
-        std::thread pps([&ppsThread] { ppsThread.run(); });
-        std::this_thread::sleep_for(1500ms);
-        SPDLOG_INFO("Main: Starting subscriber thread");
-        std::thread subscriber([&subscriberThread] { subscriberThread.run(); });
-        SPDLOG_INFO("Main: Starting controller thread");
-        std::thread controller([] { ControllerThread::get().run(); });
-        SPDLOG_INFO("Main: Starting outer loop clock thread");
-        std::thread outerLoopClock([&outerLoopClockThread] { outerLoopClockThread.run(); });
-
-        SPDLOG_INFO("Main: Waiting for ExitControl");
-        Model::get().waitForExitControl();
-        SPDLOG_INFO("Main: ExitControl received");
-
-        SPDLOG_INFO("Main: Stopping pps thread");
-        ppsThread.stop();
-        SPDLOG_INFO("Main: Stopping subscriber thread");
-        subscriberThread.stop();
-        SPDLOG_INFO("Main: Stopping controller thread");
-        ControllerThread::get().stop();
-        SPDLOG_INFO("Main: Stopping outer loop clock thread");
-        outerLoopClockThread.stop();
-        std::this_thread::sleep_for(100ms);
-        SPDLOG_INFO("Main: Joining pps thread");
-        pps.join();
-        SPDLOG_INFO("Main: Joining subscriber thread");
-        subscriber.join();
-        SPDLOG_INFO("Main: Joining controller thread");
-        controller.join();
-        SPDLOG_INFO("Main: Joining outer loop clock thread");
-        outerLoopClock.join();
-    } catch (std::exception& ex) {
-        SPDLOG_CRITICAL("Error starting.stopping or joining threads: {)", ex.what());
-        exit(1);
-    }
-}
-#endif
-
 int main(int argc, char* const argv[]) {
     M1M3thermald csc("M1M3TS", "M1M3 Thermal System CSC");
 
     csc.processArgs(argc, argv);
 
-#ifdef SIMULATOR
-    SimulatedFPGA* fpga = new SimulatedFPGA();
-#else
-    ThermalFPGA* fpga = new ThermalFPGA();
-#endif
-
-    TSApplication::instance().setFPGA(fpga);
-
     try {
-        csc.run(fpga);
+        csc.run(&IFPGA::get());
     } catch (LSST::cRIO::NiError& nie) {
         SPDLOG_CRITICAL("Main: Error initializing ThermalFPGA: {}", nie.what());
     }
-
-    delete fpga;
-
-    SPDLOG_INFO("Main: Shutdown complete");
 
     return 0;
 }

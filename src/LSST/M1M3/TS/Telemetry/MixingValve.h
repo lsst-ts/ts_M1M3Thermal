@@ -1,5 +1,5 @@
 /*
- * SAL commands
+ * MixingValve telemetry handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,34 +20,30 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Command_SAL
-#define _TS_Command_SAL
+#ifndef _TS_MixingVale_
+#define _TS_MixingVale_
 
-#include <TSPublisher.h>
 #include <SAL_MTM1M3TS.h>
-
-#include <cRIO/SAL/Command.h>
+#include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace Commands {
+namespace Telemetry {
 
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), start);
+class MixingValve final : public MTM1M3TS_mixingValveC, public cRIO::Singleton<MixingValve> {
+public:
+    MixingValve(token);
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), enable);
+    /**
+     * Sends updates through SAL/DDS.
+     */
+    void send();
+};
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), disable);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), standby);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), exitControl);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setMixingValve);
-
-}  // namespace Commands
+}  // namespace Telemetry
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //! _TS_Command_SAL
+#endif  // !_TS_MixingVale_

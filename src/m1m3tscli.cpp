@@ -37,6 +37,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <memory>
 
 #include <spdlog/async.h>
 #include <spdlog/spdlog.h>
@@ -52,6 +53,8 @@ public:
     int mpuRegisters(command_vec cmds);
     int tryRead(command_vec cmds);
     int printFlowMeter(command_vec cmds);
+    int mixingValve(command_vec cmds);
+    int pumpOnOff(command_vec cmds);
 
 protected:
     virtual FPGA* newFPGA(const char* dir) override;
@@ -86,13 +89,23 @@ public:
 };
 
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
-    addCommand("mpu-registers", std::bind(&M1M3TScli::mpuRegisters, this, std::placeholders::_1), "si?",
+    addCommand("mpu-registers", std::bind(&M1M3TScli::mpuRegisters, this, std::placeholders::_1), "SI?",
                NEED_FPGA, "<mpu> <register>..", "Reads MPU given MPU registers");
     addCommand("try-read", std::bind(&M1M3TScli::tryRead, this, std::placeholders::_1), "si?", NEED_FPGA,
                "<mpu> <register>..", "Try all modbus address to read");
-
     addCommand("flow", std::bind(&M1M3TScli::printFlowMeter, this, std::placeholders::_1), "", NEED_FPGA,
                NULL, "Reads FlowMeter values");
+    addCommand("mixing-valve", std::bind(&M1M3TScli::mixingValve, this, std::placeholders::_1), "d",
+               NEED_FPGA, "[valve postion]", "Reads and sets mixing valve positon");
+    addCommand("pump-on", std::bind(&M1M3TScli::pumpOnOff, this, std::placeholders::_1), "b", NEED_FPGA,
+               "[on|off]", "Command cooland pump on/off");
+
+    addILCCommand(
+            "thermal-status",
+            [](ILCUnit u) {
+                std::dynamic_pointer_cast<PrintThermalILC>(u.first)->reportThermalStatus(u.second);
+            },
+            "Report thermal status");
 
     addILC(std::make_shared<PrintThermalILC>(1));
 
@@ -162,7 +175,7 @@ int M1M3TScli::tryRead(command_vec cmds) {
                 uint16_t v = mpu->getRegister(r);
                 std::cout << fmt::format("{0:>5d} ({0:04x}): {1:d} ({1:x})", r, v) << std::endl;
             }
-        } catch (std::runtime_error) {
+        } catch (std::runtime_error& er) {
             std::cerr << "Not " << static_cast<int>(a) << std::endl;
         }
     }
@@ -186,7 +199,25 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
               << std::setw(20) << "Temperature 1: " << flowMeter->getTemperature1() << " \u00b0C" << std::endl
               << std::setw(20) << "Temperature 2: " << flowMeter->getTemperature2() << " \u00b0C"
               << std::endl;
+    return 0;
+}
 
+int M1M3TScli::mixingValve(command_vec cmds) {
+    if (cmds.size() == 1) {
+        dynamic_cast<IFPGA*>(getFPGA())->setMixingValvePosition(std::stof(cmds[0]));
+    }
+    std::cout << "Mixing valve: " << dynamic_cast<IFPGA*>(getFPGA())->getMixingValvePosition() << std::endl;
+    return 0;
+}
+
+int M1M3TScli::pumpOnOff(command_vec cmds) {
+    if (cmds.size() == 1) {
+        uint16_t buf[2];
+        buf[0] = FPGAAddress::COOLANT_PUMP_ON;
+        buf[1] = onOff(cmds[0]);
+        getFPGA()->writeCommandFIFO(buf, 2, 10);
+        std::cout << "Turned pump " << cmds[0] << std::endl;
+    }
     return 0;
 }
 
@@ -197,20 +228,28 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
     int ret = -2;
 
     for (auto c : cmds) {
-        try {
-            int address = std::stoi(c);
-            if (address <= 0 || address > NUM_TS_ILC) {
-                std::cerr << "Invalid address " << c << std::endl;
-                ret = -1;
-                continue;
+        size_t range = c.find('-');
+        if (range != std::string::npos) {
+            int start = std::stoi(c.substr(0, range));
+            int end = std::stoi(c.substr(range + 1));
+            for (int address = start; address <= end; address++) {
+                units.push_back(ILCUnit(getILC(0), address));
             }
-            units.push_back(ILCUnit(getILC(0), address));
-        } catch (std::logic_error& e) {
-            std::cerr << "Non-numeric address: " << c << std::endl;
-            ret = -1;
+        } else {
+            try {
+                int address = std::stoi(c);
+                if (address <= 0 || address > NUM_TS_ILC) {
+                    std::cerr << "Invalid address " << c << std::endl;
+                    ret = -1;
+                    continue;
+                }
+                units.push_back(ILCUnit(getILC(0), address));
+            } catch (std::logic_error& e) {
+                std::cerr << "Non-numeric address: " << c << std::endl;
+                ret = -1;
+            }
         }
         ret = 0;
-        return units;
     }
 
     if (ret == -2) {

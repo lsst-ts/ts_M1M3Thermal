@@ -34,7 +34,6 @@ using namespace LSST::M1M3::TS;
 void OuterLoopClockThread::run() {
     SPDLOG_INFO("OuterLoopClockThread: Run");
     std::unique_lock<std::mutex> lock(runMutex);
-    cRIO::ControllerThread::instance().enqueue(new Commands::Update());
     while (keepRunning) {
         runCondition.wait_for(lock, 20ms);
         if (Events::SummaryState::instance().active()) {

@@ -31,9 +31,12 @@ namespace M1M3 {
 namespace TS {
 
 namespace FPGAAddress {
+constexpr uint16_t MIXING_VALVE_POSITION = 9;
+constexpr uint16_t MIXING_VALVE_COMMAND = 17;
 constexpr uint16_t MODBUS_A_RX = 21;
 constexpr uint16_t MODBUS_A_TX = 25;
 constexpr uint16_t HEARTBEAT = 62;
+constexpr uint16_t COOLANT_PUMP_ON = 63;
 }  // namespace FPGAAddress
 
 /**
@@ -46,9 +49,14 @@ public:
 
     static IFPGA& get();
 
+    virtual void readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) = 0;
+
     uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
     uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }
     uint32_t getIrq(uint8_t bus) override { return NiFpga_Irq_1; }
+
+    float getMixingValvePosition();
+    void setMixingValvePosition(float position);
 
     void setHeartbeat(bool heartbeat);
 };

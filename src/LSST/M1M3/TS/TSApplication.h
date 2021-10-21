@@ -33,20 +33,13 @@ namespace TS {
 
 class TSApplication : public cRIO::Singleton<TSApplication> {
 public:
-    TSApplication(token) {
-        _fpga = NULL;
-        _ilc = NULL;
-    }
-
-    void setFPGA(IFPGA* fpga) { _fpga = fpga; }
+    TSApplication(token) { _ilc = NULL; }
 
     void setILC(SALThermalILC* ilc) { _ilc = ilc; }
 
-    static IFPGA* fpga() { return instance()._fpga; }
     static SALThermalILC* ilc() { return instance()._ilc; }
 
 private:
-    IFPGA* _fpga;
     SALThermalILC* _ilc;
 };
 

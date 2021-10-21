@@ -21,7 +21,7 @@
  */
 
 #include <cRIO/ThermalILC.h>
-#include <TSApplication.h>
+#include <IFPGA.h>
 #include <TSPublisher.h>
 #include <Events/Heartbeat.h>
 
@@ -42,7 +42,7 @@ void Heartbeat::tryToggle() {
 
     heartbeat = !(heartbeat);
 
-    TSApplication::fpga()->setHeartbeat(heartbeat);
+    IFPGA::get().setHeartbeat(heartbeat);
 
     salReturn ret = TSPublisher::SAL()->putSample_logevent_heartbeat(this);
     if (ret != SAL__OK) {
