@@ -87,7 +87,7 @@ void SimulatedFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t tim
 
 void SimulatedFPGA::readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) {
     for (size_t i = 0; i < length; i++) {
-        data[i] = i + random() / RAND_MAX;
+        data[i] = i + random() / (float)RAND_MAX;
     }
 }
 
