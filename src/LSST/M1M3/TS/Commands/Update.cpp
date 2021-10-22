@@ -26,7 +26,6 @@
 #include "TSApplication.h"
 
 #include "Events/EnabledILC.h"
-#include "Settings/MixingValve.h"
 #include "Telemetry/ThermalData.h"
 #include "Telemetry/MixingValve.h"
 
@@ -50,10 +49,7 @@ void Update::execute() {
 
     Telemetry::ThermalData::instance().send();
 
-    Telemetry::MixingValve::instance().rawValvePosition = IFPGA::get().getMixingValvePosition();
-    Telemetry::MixingValve::instance().valvePosition = Settings::MixingValve::instance().positionToPercents(
-            Telemetry::MixingValve::instance().rawValvePosition);
-    Telemetry::MixingValve::instance().send();
+    Telemetry::MixingValve::instance().sendPosition(IFPGA::get().getMixingValvePosition());
 
     Events::EnabledILC::instance().send();
 
