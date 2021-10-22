@@ -37,7 +37,8 @@ namespace Settings {
 class MixingValve : public cRIO::Singleton<MixingValve>, MTM1M3TS_logevent_mixingValveSettingsC {
 public:
     MixingValve(token) {
-        commandingFullyOpen = NAN;
+        commandingFullyClosed = NAN;
+        commandingFullyOpened = NAN;
         positionFeedbackFullyOpen = NAN;
     }
 

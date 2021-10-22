@@ -41,7 +41,7 @@ void Update::execute() {
     for (int address = 1; address <= LSST::cRIO::NUM_TS_ILC; address++) {
         if (Events::EnabledILC::instance().isEnabled(address)) {
             TSApplication::ilc()->reportServerID(address);
-            TSApplication::ilc()->reportThermalStatus(address);
+            //TSApplication::ilc()->reportThermalStatus(address);
         }
     }
 
