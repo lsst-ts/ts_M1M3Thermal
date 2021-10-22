@@ -38,7 +38,7 @@ public:
     /**
      * Sends updates through SAL/DDS.
      */
-    void send();
+    void sendPosition(float position);
 };
 
 }  // namespace Telemetry
