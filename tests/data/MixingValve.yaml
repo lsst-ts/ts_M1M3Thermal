@@ -1,0 +1,7 @@
+# units are mA (milliamperes)
+Commanding:
+  FullyOpen: 20
+
+# units are V (Volts)
+PositionFeedback:
+  FullyOpen: 9.75
