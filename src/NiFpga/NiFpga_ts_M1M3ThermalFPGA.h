@@ -23,7 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "F17C981F169AF3D8BFF349FEEEBBC706";
+static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "2095926253809C0D31A52CB654AFAD29";
 
 #if NiFpga_Cpp
 extern "C"
@@ -32,33 +32,34 @@ extern "C"
 
 typedef enum
 {
-   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO = 4,
+   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO = 5,
+   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_U8ResponseFIFO = 0,
 } NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8;
 
 typedef enum
 {
-   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU16_U16ResponseFIFO = 0,
+   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU16_U16ResponseFIFO = 1,
 } NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU16;
 
 typedef enum
 {
-   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoSgl_SGLResponseFIFO = 2,
+   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoSgl_SGLResponseFIFO = 3,
 } NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoSgl;
 
 typedef enum
 {
-   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO = 5,
+   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO = 6,
 } NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8;
 
 typedef enum
 {
-   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO = 6,
-   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO = 3,
+   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO = 7,
+   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO = 4,
 } NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16;
 
 typedef enum
 {
-   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU64_TimestampControlFIFO = 1,
+   NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU64_TimestampControlFIFO = 2,
 } NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU64;
 
 
