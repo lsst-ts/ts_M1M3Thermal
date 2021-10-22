@@ -1,6 +1,7 @@
 # units are mA (milliamperes)
 Commanding:
-  FullyOpen: 20
+  FullyClosed: 4
+  FullyOpened: 20
 
 # units are V (Volts)
 PositionFeedback:

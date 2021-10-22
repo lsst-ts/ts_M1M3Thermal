@@ -34,7 +34,8 @@ void MixingValve::load(const std::string &filename) {
     try {
         YAML::Node doc = YAML::LoadFile(filename);
 
-        commandingFullyOpen = doc["Commanding"]["FullyOpen"].as<float>();
+        commandingFullyClosed = doc["Commanding"]["FullyClosed"].as<float>();
+        commandingFullyOpened = doc["Commanding"]["FullyOpened"].as<float>();
 
         positionFeedbackFullyOpen = doc["PositionFeedback"]["FullyOpen"].as<float>();
     } catch (YAML::Exception &ex) {
@@ -43,7 +44,8 @@ void MixingValve::load(const std::string &filename) {
 }
 
 float MixingValve::percentsToCommanded(float target) {
-    return (commandingFullyOpen / 1000.0f) * (target / 100.0f);
+    return commandingFullyClosed / 1000.0f +
+           ((commandingFullyOpened - commandingFullyClosed) / 1000.0f) * (target / 100.0f);
 }
 
 float MixingValve::positionToPercents(float position) {
