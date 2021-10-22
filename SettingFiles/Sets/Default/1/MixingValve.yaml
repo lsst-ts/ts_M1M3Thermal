@@ -5,4 +5,5 @@ Commanding:
 
 # units are V (Volts)
 PositionFeedback:
-  FullyOpen: 9.64
+  FullyClosed: 0.03
+  FullyOpened: 9.64

@@ -28,6 +28,13 @@
 
 using namespace LSST::M1M3::TS::Settings;
 
+MixingValve::MixingValve(token) {
+    commandingFullyClosed = NAN;
+    commandingFullyOpened = NAN;
+    positionFeedbackFullyClosed = NAN;
+    positionFeedbackFullyOpened = NAN;
+}
+
 void MixingValve::load(const std::string &filename) {
     SPDLOG_DEBUG("MixingValve::load(\"{}\")", filename);
 
@@ -37,7 +44,8 @@ void MixingValve::load(const std::string &filename) {
         commandingFullyClosed = doc["Commanding"]["FullyClosed"].as<float>();
         commandingFullyOpened = doc["Commanding"]["FullyOpened"].as<float>();
 
-        positionFeedbackFullyOpen = doc["PositionFeedback"]["FullyOpen"].as<float>();
+        positionFeedbackFullyClosed = doc["PositionFeedback"]["FullyClosed"].as<float>();
+        positionFeedbackFullyOpened = doc["PositionFeedback"]["FullyOpened"].as<float>();
     } catch (YAML::Exception &ex) {
         throw std::runtime_error(fmt::format("YAML Loading {}: {}", filename, ex.what()));
     }
@@ -49,6 +57,7 @@ float MixingValve::percentsToCommanded(float target) {
 }
 
 float MixingValve::positionToPercents(float position) {
-    float ret = 100.0f * (position / positionFeedbackFullyOpen);
+    float ret = 100.0f * ((position - positionFeedbackFullyClosed) /
+                          (positionFeedbackFullyOpened - positionFeedbackFullyClosed));
     return std::max(0.0f, std::min(100.0f, ret));
 }
