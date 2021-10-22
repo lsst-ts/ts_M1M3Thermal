@@ -42,7 +42,9 @@ void MixingValve::load(const std::string &filename) {
     }
 }
 
-float MixingValve::percentsToCommanded(float target) { return commandingFullyOpen * target / 100.0f; }
+float MixingValve::percentsToCommanded(float target) {
+    return (commandingFullyOpen / 1000.0f) * (target / 100.0f);
+}
 
 float MixingValve::positionToPercents(float position) {
     float ret = 100.0f * (position / positionFeedbackFullyOpen);

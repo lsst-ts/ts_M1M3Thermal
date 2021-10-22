@@ -32,4 +32,7 @@ TEST_CASE("Test conversions", "[MixingValveSettings]") {
 
     REQUIRE(MixingValve::instance().positionToPercents(10) == 100);
     REQUIRE(MixingValve::instance().positionToPercents(-1) == 0);
+
+    REQUIRE(MixingValve::instance().percentsToCommanded(100) == 0.020f);
+    REQUIRE(MixingValve::instance().percentsToCommanded(50) == 0.010f);
 }

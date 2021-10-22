@@ -25,6 +25,7 @@
 #include <Commands/SAL.h>
 #include <Events/SummaryState.h>
 #include <cRIO/ControllerThread.h>
+#include <Settings/MixingValve.h>
 #include <Settings/Controller.h>
 
 #include <spdlog/spdlog.h>
@@ -77,6 +78,7 @@ bool SAL_setMixingValve::validate() {
 }
 
 void SAL_setMixingValve::execute() {
-    IFPGA::get().setMixingValvePosition(params.mixingValveTarget);
+    IFPGA::get().setMixingValvePosition(
+            MixingValve::instance().percentsToCommanded(params.mixingValveTarget));
     ackComplete();
 }
