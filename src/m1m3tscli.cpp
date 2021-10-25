@@ -96,9 +96,9 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
     addCommand("flow", std::bind(&M1M3TScli::printFlowMeter, this, std::placeholders::_1), "", NEED_FPGA,
                NULL, "Reads FlowMeter values");
     addCommand("mixing-valve", std::bind(&M1M3TScli::mixingValve, this, std::placeholders::_1), "d",
-               NEED_FPGA, "[valve postion]", "Reads and sets mixing valve positon");
+               NEED_FPGA, "[valve position (mA)]", "Reads and sets mixing valve position");
     addCommand("pump-on", std::bind(&M1M3TScli::pumpOnOff, this, std::placeholders::_1), "b", NEED_FPGA,
-               "[on|off]", "Command cooland pump on/off");
+               "[on|off]", "Command coolant pump on/off");
 
     addILCCommand(
             "thermal-status",
@@ -204,9 +204,10 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
 
 int M1M3TScli::mixingValve(command_vec cmds) {
     if (cmds.size() == 1) {
-        dynamic_cast<IFPGA*>(getFPGA())->setMixingValvePosition(std::stof(cmds[0]));
+        dynamic_cast<IFPGA*>(getFPGA())->setMixingValvePosition(std::stof(cmds[0]) / 1000.0f);
     }
-    std::cout << "Mixing valve: " << dynamic_cast<IFPGA*>(getFPGA())->getMixingValvePosition() << std::endl;
+    std::cout << "Mixing valve: " << std::fixed << std::setprecision(3)
+              << dynamic_cast<IFPGA*>(getFPGA())->getMixingValvePosition() << " V" << std::endl;
     return 0;
 }
 

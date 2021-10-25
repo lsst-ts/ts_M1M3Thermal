@@ -38,6 +38,7 @@ using namespace LSST::M1M3::TS::Commands;
 void Update::execute() {
     SPDLOG_TRACE("Commands::Update execute");
     TSApplication::ilc()->clear();
+#if 0
     for (int address = 1; address <= LSST::cRIO::NUM_TS_ILC; address++) {
         if (Events::EnabledILC::instance().isEnabled(address)) {
             TSApplication::ilc()->reportServerID(address);
@@ -48,6 +49,7 @@ void Update::execute() {
     IFPGA::get().ilcCommands(*TSApplication::ilc());
 
     Telemetry::ThermalData::instance().send();
+#endif
 
     Telemetry::MixingValve::instance().sendPosition(IFPGA::get().getMixingValvePosition());
 
