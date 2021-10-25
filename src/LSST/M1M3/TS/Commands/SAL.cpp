@@ -96,6 +96,6 @@ bool SAL_setMixingValve::validate() {
 
 void SAL_setMixingValve::execute() {
     IFPGA::get().setMixingValvePosition(
-            MixingValve::instance().percentsToCommanded(params.mixingValveTarget));
+            Settings::MixingValve::instance().percentsToCommanded(params.mixingValveTarget));
     ackComplete();
 }
