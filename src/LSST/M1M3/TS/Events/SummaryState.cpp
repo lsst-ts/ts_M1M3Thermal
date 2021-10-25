@@ -49,6 +49,11 @@ bool SummaryState::active() {
            summaryState == MTM1M3TS_shared_SummaryStates_EnabledState;
 }
 
+bool SummaryState::enabled() {
+    std::lock_guard<std::mutex> lockG(_stateMutex);
+    return summaryState == MTM1M3TS_shared_SummaryStates_EnabledState;
+}
+
 void SummaryState::_switchState(int newState) {
     std::lock_guard<std::mutex> lockG(_stateMutex);
     SPDLOG_TRACE("SummaryState::_switchState from {} to {}", summaryState, newState);

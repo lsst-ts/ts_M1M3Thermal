@@ -21,11 +21,12 @@
  */
 
 #include "Commands/Update.h"
-#include "Events/EnabledILC.h"
-#include "Events/Heartbeat.h"
 #include "TSApplication.h"
 
 #include "Events/EnabledILC.h"
+#include "Events/Heartbeat.h"
+#include "Events/SummaryState.h"
+
 #include "Telemetry/ThermalData.h"
 #include "Telemetry/MixingValve.h"
 
@@ -38,18 +39,18 @@ using namespace LSST::M1M3::TS::Commands;
 void Update::execute() {
     SPDLOG_TRACE("Commands::Update execute");
     TSApplication::ilc()->clear();
-#if 0
-    for (int address = 1; address <= LSST::cRIO::NUM_TS_ILC; address++) {
-        if (Events::EnabledILC::instance().isEnabled(address)) {
-            TSApplication::ilc()->reportServerID(address);
+
+    TSApplication::instance().callFunctionOnIlcs([](uint8_t address) -> void {
+        if (Events::SummaryState::instance().enabled()) {
             TSApplication::ilc()->reportThermalStatus(address);
+        } else {
+            TSApplication::ilc()->reportServerStatus(address);
         }
-    }
+    });
 
     IFPGA::get().ilcCommands(*TSApplication::ilc());
 
     Telemetry::ThermalData::instance().send();
-#endif
 
     Telemetry::MixingValve::instance().sendPosition(IFPGA::get().getMixingValvePosition());
 

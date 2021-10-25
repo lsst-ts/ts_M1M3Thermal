@@ -1,5 +1,5 @@
 /*
- * EnterControl command.
+ * Application global variables.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,33 +20,16 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Command_EnterControl_
-#define _TS_Command_ENterControl_
+#include "TSApplication.h"
 
-#include <cRIO/Command.h>
-#include <SAL_MTM1M3TS.h>
-#include <TSPublisher.h>
+#include <Events/EnabledILC.h>
 
-#include <Events/SummaryState.h>
+using namespace LSST::M1M3::TS;
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Commands {
-
-class EnterControl : public cRIO::Command {
-public:
-    void execute() override {
-        SPDLOG_DEBUG("EnterControl");
-        TSPublisher::instance().logSoftwareVersions();
-        TSPublisher::instance().logSimulationMode();
-        Events::SummaryState::setState(MTM1M3TS::MTM1M3TS_shared_SummaryStates_StandbyState);
+void TSApplication::callFunctionOnIlcs(std::function<void(uint8_t)> func) {
+    for (int address = 1; address <= LSST::cRIO::NUM_TS_ILC; address++) {
+        if (Events::EnabledILC::instance().isEnabled(address - 1)) {
+            func(address);
+        }
     }
-};
-
-}  // namespace Commands
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
-
-#endif  // !_TS_Command_EnterControl_
+}

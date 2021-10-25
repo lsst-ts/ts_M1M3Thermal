@@ -21,6 +21,7 @@
  */
 
 #include <IFPGA.h>
+#include <TSApplication.h>
 
 #include <Commands/SAL.h>
 #include <Events/SummaryState.h>
@@ -30,10 +31,18 @@
 
 #include <spdlog/spdlog.h>
 
-using namespace LSST::M1M3::TS::Settings;
+using namespace LSST::cRIO;
+using namespace LSST::M1M3::TS;
 using namespace LSST::M1M3::TS::Commands;
-using namespace LSST::M1M3::TS::Events;
 using namespace MTM1M3TS;
+
+void changeAllILCsMode(uint16_t mode) {
+    TSApplication::ilc()->clear();
+    TSApplication::instance().callFunctionOnIlcs(
+            [mode](uint8_t address) -> void { TSApplication::ilc()->changeILCMode(address, mode); });
+
+    IFPGA::get().ilcCommands(*TSApplication::ilc());
+}
 
 bool SAL_start::validate() {
     if (params.settingsToApply.empty()) {
@@ -44,24 +53,32 @@ bool SAL_start::validate() {
 
 void SAL_start::execute() {
     SPDLOG_INFO("Starting, settings={}", params.settingsToApply);
-    Controller::instance().load(params.settingsToApply);
-    SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
+    Settings::Controller::instance().load(params.settingsToApply);
+
+    changeAllILCsMode(ILC::ILCMode::Disabled);
+
+    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
     SPDLOG_INFO("Started");
 }
 
 void SAL_enable::execute() {
-    SummaryState::setState(MTM1M3TS_shared_SummaryStates_EnabledState);
+    changeAllILCsMode(ILC::ILCMode::Enabled);
+
+    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_EnabledState);
     ackComplete();
 }
 
 void SAL_disable::execute() {
-    SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
+    changeAllILCsMode(ILC::ILCMode::Disabled);
+    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
 }
 
 void SAL_standby::execute() {
-    SummaryState::setState(MTM1M3TS_shared_SummaryStates_StandbyState);
+    changeAllILCsMode(ILC::ILCMode::ClearFaults);
+    changeAllILCsMode(ILC::ILCMode::Standby);
+    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_StandbyState);
     ackComplete();
 }
 
@@ -79,6 +96,6 @@ bool SAL_setMixingValve::validate() {
 
 void SAL_setMixingValve::execute() {
     IFPGA::get().setMixingValvePosition(
-            MixingValve::instance().percentsToCommanded(params.mixingValveTarget));
+            Settings::MixingValve::instance().percentsToCommanded(params.mixingValveTarget));
     ackComplete();
 }

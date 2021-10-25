@@ -36,15 +36,31 @@ namespace M1M3 {
 namespace TS {
 namespace Events {
 
+/**
+ * State handling class. Inherits SAL/DDS summary state structure, adds
+ * multi-thread safety for state changes.
+ */
 class SummaryState final : MTM1M3TS_logevent_summaryStateC, public cRIO::Singleton<SummaryState> {
 public:
     SummaryState(token);
 
     /**
+     * Returns true if summary state is disabled or enabled (e.g. not standby or fault).
+     *
+     * @return true if state is DISABLED or ENABLED
      *
      * @multithreading safe
      */
     bool active();
+
+    /**
+     * Returns true if summary state is enabled.
+     *
+     * @return true if state == ENABLED
+     *
+     * @multithreading safe
+     */
+    bool enabled();
 
     /**
      *
