@@ -21,6 +21,7 @@
  */
 
 #include <cRIO/ThermalILC.h>
+#include <Settings/MixingValve.h>
 #include <TSPublisher.h>
 #include <Telemetry/MixingValve.h>
 #include <spdlog/spdlog.h>
@@ -30,9 +31,12 @@
 using namespace LSST::M1M3::TS;
 using namespace LSST::M1M3::TS::Telemetry;
 
-MixingValve::MixingValve(token) { valvePosition = NAN; }
+MixingValve::MixingValve(token) { rawValvePosition = NAN; }
 
-void MixingValve::send() {
+void MixingValve::sendPosition(float position) {
+    rawValvePosition = position;
+    valvePosition = Settings::MixingValve::instance().positionToPercents(position);
+
     salReturn ret = TSPublisher::SAL()->putSample_mixingValve(this);
     if (ret != SAL__OK) {
         SPDLOG_WARN("Cannot send mixingValve: {}", ret);

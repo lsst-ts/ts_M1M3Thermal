@@ -23,8 +23,8 @@ node {
 
     def SALUSER_HOME = "/home/saluser"
     def BRANCH = (env.CHANGE_BRANCH != null) ? env.CHANGE_BRANCH : env.BRANCH_NAME
-    def SAME_CRIO_BRANCH = ["master", "tickets/DM-31838", "tickets/DM-32146", "tickets/DM-32240"]
-    def XML_BRANCH = BRANCH in ["master", "tickets/DM-32146", "tickets/DM-32240"] ? BRANCH : "develop"
+    def SAME_CRIO_BRANCH = ["master", "tickets/DM-31838", "tickets/DM-32240"]
+    def XML_BRANCH = BRANCH in ["master", "tickets/DM-32240", "tickets/DM-32296"] ? BRANCH : "develop"
 
     stage('Cloning sources')
     {

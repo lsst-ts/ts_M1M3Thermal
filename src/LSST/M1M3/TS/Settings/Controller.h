@@ -28,6 +28,7 @@
 #include <cRIO/Settings/Path.h>
 #include <cRIO/Settings/Alias.h>
 
+#include <Settings/MixingValve.h>
 #include <Settings/Thermal.h>
 
 namespace LSST {
@@ -47,6 +48,7 @@ public:
 
         std::string settingsRoot = cRIO::Settings::Path::getFilePath(_aliases.getPath(label));
 
+        MixingValve::instance().load(settingsRoot + "/MixingValve.yaml");
         Thermal::instance().load(settingsRoot + "/FCU.yaml");
     }
 

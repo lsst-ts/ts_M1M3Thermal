@@ -52,8 +52,7 @@ void Update::execute() {
 
     Telemetry::ThermalData::instance().send();
 
-    Telemetry::MixingValve::instance().valvePosition = IFPGA::get().getMixingValvePosition();
-    Telemetry::MixingValve::instance().send();
+    Telemetry::MixingValve::instance().sendPosition(IFPGA::get().getMixingValvePosition());
 
     Events::EnabledILC::instance().send();
 
