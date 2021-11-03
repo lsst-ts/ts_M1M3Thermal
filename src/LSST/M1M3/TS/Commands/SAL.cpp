@@ -89,14 +89,14 @@ void SAL_exitControl::execute() {
 }
 
 bool SAL_setEngineeringMode::validate() {
-    if (Events::SummaryState::enabled() == false) {
+    if (Events::SummaryState::instance().enabled() == false) {
         return false;
     }
     return true;
 }
 
 void SAL_setEngineeringMode::execute() {
-    Events::EngineegingMode::setEngineeringMode(params.enableEngineeringMode);
+    Events::EngineeringMode::instance().setEnabled(params.enableEngineeringMode);
     ackComplete();
 }
 

@@ -27,7 +27,7 @@
 using namespace LSST::M1M3::TS;
 using namespace LSST::M1M3::TS::Events;
 
-EngineeringMode::EngineeringMode(token) : engineeringMode(false) {}
+EngineeringMode::EngineeringMode(token) { engineeringMode = false; }
 
 void EngineeringMode::setEnabled(bool newState) {
     if (engineeringMode != newState) {

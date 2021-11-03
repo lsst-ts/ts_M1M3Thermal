@@ -20,8 +20,8 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Event_EnabledILCILC_
-#define _TS_Event_EnabledILCILC_
+#ifndef _TS_Event_EngineeringMode_
+#define _TS_Event_EngineeringMode_
 
 #include <SAL_MTM1M3TS.h>
 #include <cRIO/Singleton.h>
@@ -31,7 +31,7 @@ namespace M1M3 {
 namespace TS {
 namespace Events {
 
-class EngineeringMode final : MTM1M3TS_logevent_engineeringMode, public cRIO::Singleton<EngineeringMode> {
+class EngineeringMode final : MTM1M3TS_logevent_engineeringModeC, public cRIO::Singleton<EngineeringMode> {
 public:
     EngineeringMode(token);
 
@@ -56,4 +56,4 @@ private:
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !_TS_Event_EnabledILCILC_
+#endif  // !_TS_Event_EngineeringMode_
