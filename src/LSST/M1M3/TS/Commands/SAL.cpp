@@ -25,6 +25,7 @@
 
 #include <Commands/SAL.h>
 #include <Events/SummaryState.h>
+#include <Events/EngineeringMode.h>
 #include <cRIO/ControllerThread.h>
 #include <Settings/MixingValve.h>
 #include <Settings/Controller.h>
@@ -84,6 +85,18 @@ void SAL_standby::execute() {
 
 void SAL_exitControl::execute() {
     LSST::cRIO::ControllerThread::setExitRequested();
+    ackComplete();
+}
+
+bool SAL_setEngineeringMode::validate() {
+    if (Events::SummaryState::enabled() == false) {
+        return false;
+    }
+    return true;
+}
+
+void SAL_setEngineeringMode::execute() {
+    Events::EngineegingMode::setEngineeringMode(params.enableEngineeringMode);
     ackComplete();
 }
 
