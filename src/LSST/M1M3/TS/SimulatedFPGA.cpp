@@ -236,12 +236,12 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
                 processChangeILCMode(address, buf.read<uint16_t>());
                 break;
             case 88:
+                _heaterPWM[address - 1] = buf.read<uint8_t>();
+                _fanRPM[address - 1] = buf.read<uint8_t>();
                 processThermalStatus(address, 0x10 | 0, 15.0 * random() / float(RAND_MAX),
                                      _fanRPM[address - 1], 20 * random() / float(RAND_MAX));
                 break;
             case 89:
-                _heaterPWM[address - 1] = buf.read<uint8_t>();
-                _fanRPM[address - 1] = buf.read<uint8_t>();
                 processThermalStatus(address, 0x20 | 0, 15.0 * random() / float(RAND_MAX),
                                      _fanRPM[address - 1], 20 * random() / float(RAND_MAX));
                 break;
