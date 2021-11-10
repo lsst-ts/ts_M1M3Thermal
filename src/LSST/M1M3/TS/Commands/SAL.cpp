@@ -65,6 +65,7 @@ void SAL_start::execute() {
 
 void SAL_enable::execute() {
     changeAllILCsMode(ILC::ILCMode::Enabled);
+    IFPGA::get().setFCUPower(true);
 
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_EnabledState);
     ackComplete();
@@ -73,6 +74,8 @@ void SAL_enable::execute() {
 
 void SAL_disable::execute() {
     changeAllILCsMode(ILC::ILCMode::Disabled);
+    IFPGA::get().setFCUPower(false);
+
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
 }
@@ -110,7 +113,7 @@ void SAL_heaterFanDemand::execute() {
     TSApplication::ilc()->broadcastThermalDemand(params.heaterPWM, params.fanRPM);
     IFPGA::get().ilcCommands(*TSApplication::ilc());
     ackComplete();
-    SPDLOG_INFO("Changed heater and FAN demand");
+    SPDLOG_INFO("Changed heaters and fans demand");
 }
 
 bool SAL_setMixingValve::validate() {
