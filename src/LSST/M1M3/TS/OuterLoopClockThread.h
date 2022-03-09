@@ -31,7 +31,7 @@ namespace TS {
 
 class OuterLoopClockThread : public cRIO::Thread {
 protected:
-    void run() override;
+    void run(std::unique_lock<std::mutex>& lock) override;
 };
 
 }  // namespace TS

@@ -27,7 +27,7 @@ libM1M3TS.a: $(OBJS)
 	${co}$(AR) rs $@ $^
 
 clean:
-	@$(foreach file,$(OBJS) $(C_DEPS) $(CPP_DEPS) libM1M3SS.a $(shell find -name '*.d'), echo '[RM ] ${file}'; $(RM) -r $(file);)
+	@$(foreach file,$(OBJS) $(C_DEPS) $(CPP_DEPS) libM1M3TS.a $(shell find -name '*.d'), echo '[RM ] ${file}'; $(RM) -r $(file);)
 
 clang-format:
 	@$(foreach file,$(shell find LSST -name '*.cpp' -o -name '*.h'), echo '[FRM] ${file}'; clang-format -i $(file);)

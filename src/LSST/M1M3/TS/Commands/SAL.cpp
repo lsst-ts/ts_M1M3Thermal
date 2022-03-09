@@ -45,15 +45,15 @@ void changeAllILCsMode(uint16_t mode) {
 }
 
 bool SAL_start::validate() {
-    if (params.settingsToApply.empty()) {
+    if (params.configurationOverride.empty()) {
         return false;
     }
     return true;
 }
 
 void SAL_start::execute() {
-    SPDLOG_INFO("Starting, settings={}", params.settingsToApply);
-    Settings::Controller::instance().load(params.settingsToApply);
+    SPDLOG_INFO("Starting, settings={}", params.configurationOverride);
+    Settings::Controller::instance().load(params.configurationOverride);
 
     changeAllILCsMode(ILC::ILCMode::Disabled);
 

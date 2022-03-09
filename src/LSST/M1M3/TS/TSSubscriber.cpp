@@ -87,10 +87,10 @@ TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
 
 TSSubscriber::~TSSubscriber() {}
 
-void TSSubscriber::run() {
+void TSSubscriber::run(std::unique_lock<std::mutex> &lock) {
     while (keepRunning) {
         tryCommands();
-        std::this_thread::sleep_for(100us);
+        runCondition.wait_for(lock, 100us);
     }
 }
 
