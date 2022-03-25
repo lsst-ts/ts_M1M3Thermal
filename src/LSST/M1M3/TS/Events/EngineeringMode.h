@@ -1,5 +1,5 @@
 /*
- * SAL commands
+ * EnabledILC event handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,38 +20,40 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Command_SAL
-#define _TS_Command_SAL
+#ifndef _TS_Event_EngineeringMode_
+#define _TS_Event_EngineeringMode_
 
-#include <TSPublisher.h>
 #include <SAL_MTM1M3TS.h>
-
-#include <cRIO/SAL/Command.h>
+#include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace Commands {
+namespace Events {
 
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), start);
+class EngineeringMode final : MTM1M3TS_logevent_engineeringModeC, public cRIO::Singleton<EngineeringMode> {
+public:
+    EngineeringMode(token);
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), enable);
+    /**
+     * Enabled / disable ILC.
+     */
+    void setEnabled(bool newState);
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), disable);
+    bool isEnabled();
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), standby);
+    /**
+     * Sends updates through SAL/DDS.
+     */
+    void send();
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), exitControl);
+private:
+    bool _updated;
+};
 
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setEngineeringMode);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), heaterFanDemand);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setMixingValve);
-
-}  // namespace Commands
+}  // namespace Events
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //! _TS_Command_SAL
+#endif  // !_TS_Event_EngineeringMode_

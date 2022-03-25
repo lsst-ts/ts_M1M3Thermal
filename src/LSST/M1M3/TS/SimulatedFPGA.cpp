@@ -32,6 +32,7 @@ using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
 
 SimulatedFPGA::SimulatedFPGA() : IFPGA(), _U16ResponseStatus(IDLE) {
+    _broadcastCounter = 0;
     srandom(time(NULL));
     for (int i = 0; i < NUM_TS_ILC; i++) {
         _mode[i] = ILC::ILCMode::Standby;
@@ -222,37 +223,54 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
 
         uint8_t address = buf.read<uint8_t>();
         uint8_t func = buf.read<uint8_t>();
-        switch (func) {
-            // info
-            case 17:
-                // generate _response
-                processServerID(address, 0x01020304 + address, 0x02, 0x02, 0x02, 0x00, 1, 2,
-                                "Test Thermal ILC");
-                break;
-            case 18:
-                processServerStatus(address, _mode[address - 1], 0, 0);
-                break;
-            case 65:
-                processChangeILCMode(address, buf.read<uint16_t>());
-                break;
-            case 88:
-                processThermalStatus(address, 0x10 | 0, 15.0 * random() / float(RAND_MAX),
-                                     _fanRPM[address - 1], 20 * random() / float(RAND_MAX));
-                break;
-            case 89:
-                _heaterPWM[address - 1] = buf.read<uint8_t>();
-                _fanRPM[address - 1] = buf.read<uint8_t>();
-                processThermalStatus(address, 0x20 | 0, 15.0 * random() / float(RAND_MAX),
-                                     _fanRPM[address - 1], 20 * random() / float(RAND_MAX));
-                break;
-            default:
-                SPDLOG_WARN("SimulatedFPGA::_simulateModbus unknown/unsupported function {0:04x} ({0:d})",
-                            func);
+        // broadcasts addresses
+        if (address >= 248 && address <= 250) {
+            _broadcastCounter = buf.read<uint8_t>();
+            switch (func) {
+                // Modbus functions - please see ILC protocol document for details
+                case 88:
+                    for (int i = 0; i < NUM_TS_ILC; i++) {
+                        _heaterPWM[i] = buf.read<uint8_t>();
+                        _fanRPM[i] = buf.read<uint8_t>();
+                    }
+                    break;
+                default:
+                    SPDLOG_WARN("Broadcast function {} is not being simulated", func);
+            }
+        } else {
+            switch (func) {
+                // Modbus functions - please see ILC protocol document for details
+                case 17:
+                    // generate _response
+                    processServerID(address, 0x01020304 + address, 0x02, 0x02, 0x02, 0x00, 1, 2,
+                                    "Test Thermal ILC");
+                    break;
+                case 18:
+                    processServerStatus(address, _mode[address - 1], 0, 0);
+                    break;
+                case 65:
+                    processChangeILCMode(address, buf.read<uint16_t>());
+                    break;
+                case 88:
+                    _heaterPWM[address - 1] = buf.read<uint8_t>();
+                    _fanRPM[address - 1] = buf.read<uint8_t>();
+                    processThermalStatus(address, 0x10 | _broadcastCounter, 15.0 * random() / float(RAND_MAX),
+                                         _fanRPM[address - 1], 20 * random() / float(RAND_MAX));
+                    break;
+                case 89:
+                    processThermalStatus(address, 0x20 | _broadcastCounter, 15.0 * random() / float(RAND_MAX),
+                                         _fanRPM[address - 1], 20 * random() / float(RAND_MAX));
+                    break;
+                default:
+                    SPDLOG_WARN("SimulatedFPGA::_simulateModbus unknown/unsupported function {0:04x} ({0:d})",
+                                func);
+            }
+
+            _response.writeRxTimestamp(Timestamp::toFPGA(TSPublisher::getTimestamp()));
+
+            _response.writeRxEndFrame();
         }
         buf.checkCRC();
-        _response.writeRxTimestamp(Timestamp::toFPGA(TSPublisher::getTimestamp()));
-
-        _response.writeRxEndFrame();
     }
 }
 

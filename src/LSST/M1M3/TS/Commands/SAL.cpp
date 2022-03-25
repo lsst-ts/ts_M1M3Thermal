@@ -25,6 +25,7 @@
 
 #include <Commands/SAL.h>
 #include <Events/SummaryState.h>
+#include <Events/EngineeringMode.h>
 #include <cRIO/ControllerThread.h>
 #include <Settings/MixingValve.h>
 #include <Settings/Controller.h>
@@ -64,13 +65,17 @@ void SAL_start::execute() {
 
 void SAL_enable::execute() {
     changeAllILCsMode(ILC::ILCMode::Enabled);
+    IFPGA::get().setFCUPower(true);
 
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_EnabledState);
     ackComplete();
+    SPDLOG_INFO("Enabled");
 }
 
 void SAL_disable::execute() {
     changeAllILCsMode(ILC::ILCMode::Disabled);
+    IFPGA::get().setFCUPower(false);
+
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
 }
@@ -80,11 +85,35 @@ void SAL_standby::execute() {
     changeAllILCsMode(ILC::ILCMode::Standby);
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_StandbyState);
     ackComplete();
+    SPDLOG_INFO("Standby");
 }
 
 void SAL_exitControl::execute() {
     LSST::cRIO::ControllerThread::setExitRequested();
     ackComplete();
+}
+
+bool SAL_setEngineeringMode::validate() {
+    if (Events::SummaryState::instance().enabled() == false) {
+        return false;
+    }
+    return true;
+}
+
+void SAL_setEngineeringMode::execute() {
+    Events::EngineeringMode::instance().setEnabled(params.enableEngineeringMode);
+    ackComplete();
+    SPDLOG_INFO("{} Engineering Mode", params.enableEngineeringMode ? "Entered" : "Exited");
+}
+
+bool SAL_heaterFanDemand::validate() { return Events::EngineeringMode::instance().isEnabled(); }
+
+void SAL_heaterFanDemand::execute() {
+    TSApplication::ilc()->clear();
+    TSApplication::ilc()->broadcastThermalDemand(params.heaterPWM, params.fanRPM);
+    IFPGA::get().ilcCommands(*TSApplication::ilc());
+    ackComplete();
+    SPDLOG_INFO("Changed heaters and fans demand");
 }
 
 bool SAL_setMixingValve::validate() {
@@ -98,4 +127,5 @@ void SAL_setMixingValve::execute() {
     IFPGA::get().setMixingValvePosition(
             Settings::MixingValve::instance().percentsToCommanded(params.mixingValveTarget));
     ackComplete();
+    SPDLOG_INFO("Changed mixing valve to {}", params.mixingValveTarget);
 }

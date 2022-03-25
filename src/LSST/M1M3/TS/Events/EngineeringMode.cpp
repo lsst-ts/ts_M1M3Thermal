@@ -1,5 +1,5 @@
 /*
- * SAL commands
+ * EngineeringMode event.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,38 +20,31 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Command_SAL
-#define _TS_Command_SAL
-
 #include <TSPublisher.h>
-#include <SAL_MTM1M3TS.h>
+#include <Events/EngineeringMode.h>
+#include <spdlog/spdlog.h>
 
-#include <cRIO/SAL/Command.h>
+using namespace LSST::M1M3::TS;
+using namespace LSST::M1M3::TS::Events;
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Commands {
+EngineeringMode::EngineeringMode(token) {
+    engineeringMode = false;
+    send();
+}
 
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), start);
+void EngineeringMode::setEnabled(bool newState) {
+    if (engineeringMode != newState) {
+        engineeringMode = newState;
+        send();
+    }
+}
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), enable);
+bool EngineeringMode::isEnabled() { return engineeringMode; }
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), disable);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), standby);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), exitControl);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setEngineeringMode);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), heaterFanDemand);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setMixingValve);
-
-}  // namespace Commands
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
-
-#endif  //! _TS_Command_SAL
+void EngineeringMode::send() {
+    salReturn ret = TSPublisher::SAL()->putSample_logevent_engineeringMode(this);
+    if (ret != SAL__OK) {
+        SPDLOG_WARN("Cannot send engineeringMode: {}", ret);
+        return;
+    }
+}

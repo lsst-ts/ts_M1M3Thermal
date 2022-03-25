@@ -70,6 +70,7 @@ protected:
     void processMPURead(uint8_t address, uint16_t register_address, uint16_t len);
 
 private:
+    uint8_t _broadcastCounter;
     LSST::cRIO::SimulatedILC _response;
     LSST::cRIO::SimulatedMPU _mpuResponse;
 
