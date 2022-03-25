@@ -47,7 +47,7 @@ public:
     virtual ~TSSubscriber();
 
 protected:
-    void run() override;
+    void run(std::unique_lock<std::mutex>& lock) override;
 
 private:
     std::vector<std::string> _events;

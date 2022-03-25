@@ -1,4 +1,4 @@
-FROM lsstts/develop-env:develop
+FROM lsstts/develop-env:c0024.007
 
 USER root
 RUN yum -y install catch-devel boost169-devel make readline-devel
@@ -8,7 +8,7 @@ USER saluser
 ARG XML_BRANCH
 
 WORKDIR /home/saluser/repos/ts_xml
-RUN git pull && git checkout $XML_BRANCH && git pull
+RUN git fetch && git checkout $XML_BRANCH && git pull
 
 WORKDIR /home/saluser
 RUN source .setup.sh \
