@@ -223,10 +223,11 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
 
         uint8_t address = buf.read<uint8_t>();
         uint8_t func = buf.read<uint8_t>();
-        // broadcasts..
+        // broadcasts addresses
         if (address >= 248 && address <= 250) {
             _broadcastCounter = buf.read<uint8_t>();
             switch (func) {
+                // Modbus functions - please see ILC protocol document for details
                 case 88:
                     for (int i = 0; i < NUM_TS_ILC; i++) {
                         _heaterPWM[i] = buf.read<uint8_t>();
@@ -238,7 +239,7 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
             }
         } else {
             switch (func) {
-                // info
+                // Modbus functions - please see ILC protocol document for details
                 case 17:
                     // generate _response
                     processServerID(address, 0x01020304 + address, 0x02, 0x02, 0x02, 0x00, 1, 2,
