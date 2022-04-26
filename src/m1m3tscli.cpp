@@ -339,6 +339,21 @@ void _printBufferU16(std::string prefix, uint16_t* buf, size_t len) {
     for (size_t i = 0; i < len; i++) {
         std::cout << std::hex << std::setfill('0') << std::setw(4) << buf[i] << " ";
     }
+    if (cli.getDebugLevel() > 1) {
+        std::cout << std::endl << prefix;
+        for (size_t i = 0; i < len; i++) {
+            uint16_t d = buf[i];
+            uint16_t v = 0x00ff & (d >> 1);
+            // read/write data
+            if ((d & 0xf000) == 0x1000) {
+                std::cout << "W " << std::hex << std::setfill('0') << std::setw(2) << v << " ";
+            } else if ((d & 0xf000) == 0x9000) {
+                std::cout << "R " << std::hex << std::setfill('0') << std::setw(2) << v << " ";
+            } else {
+                std::cout << "X    ";
+            }
+        }
+    }
     std::cout << std::endl;
 }
 
