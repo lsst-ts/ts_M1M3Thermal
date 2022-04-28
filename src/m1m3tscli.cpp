@@ -324,9 +324,9 @@ void _printBufferU8(std::string prefix, uint8_t* buf, size_t len) {
     }
 
     std::cout << prefix;
-    for (size_t i = 0; i < len; i++) {
-        std::cout << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(buf[i]) << " ";
-    }
+
+    CliApp::printHexBuffer(buf, len);
+
     std::cout << std::endl;
 }
 
@@ -336,55 +336,44 @@ void _printBufferU16(std::string prefix, uint16_t* buf, size_t len) {
     }
 
     std::cout << prefix;
-    for (size_t i = 0; i < len; i++) {
-        std::cout << std::hex << std::setfill('0') << std::setw(4) << buf[i] << " ";
-    }
-    if (cli.getDebugLevel() > 1) {
+
+    CliApp::printHexBuffer(buf, len);
+
+    if (cli.getDebugLevel() > 1 && len > 1) {
         std::cout << std::endl << prefix;
-        for (size_t i = 0; i < len; i++) {
-            uint16_t d = buf[i];
-            uint16_t v = 0x00ff & (d >> 1);
-            // read/write data
-            if ((d & 0xf000) == 0x1000) {
-                std::cout << "W " << std::hex << std::setfill('0') << std::setw(2) << v << " ";
-            } else if ((d & 0xf000) == 0x9000) {
-                std::cout << "R " << std::hex << std::setfill('0') << std::setw(2) << v << " ";
-            } else {
-                std::cout << "X    ";
-            }
-        }
+        CliApp::printDecodedBuffer(buf, len);
     }
     std::cout << std::endl;
 }
 
 void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
-    _printBufferU8("M> ", mpu.getCommands(), mpu.getCommandVector().size());
+    _printBufferU8("M>", mpu.getCommands(), mpu.getCommandVector().size());
     FPGAClass::writeMPUFIFO(mpu);
 }
 
 void PrintTSFPGA::readMPUFIFO(MPU& mpu) {
     FPGAClass::readMPUFIFO(mpu);
-    _printBufferU16("M< ", mpu.getBuffer(), mpu.getLength());
+    _printBufferU16("M<", mpu.getBuffer(), mpu.getLength());
 }
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    _printBufferU16("C> ", data, length);
+    _printBufferU16("C>", data, length);
     FPGAClass::writeCommandFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    _printBufferU16("R> ", data, length);
+    _printBufferU16("R>", data, length);
     FPGAClass::writeRequestFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU8ResponseFIFO(data, length, timeout);
-    _printBufferU8("R8< ", data, length);
+    _printBufferU8("R8<", data, length);
 }
 
 void PrintTSFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU16ResponseFIFO(data, length, timeout);
-    _printBufferU16("R16< ", data, length);
+    _printBufferU16("R16<", data, length);
 }
 
 int main(int argc, char* const argv[]) { return cli.run(argc, argv); }
