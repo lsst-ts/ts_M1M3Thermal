@@ -24,7 +24,12 @@ SAL_CPPFLAGS += $(shell pkg-config yaml-cpp --cflags) -I${OSPL_HOME}/include -I$
 CRIO_DIR ?= ../ts_cRIOcpp
 CRIO_CFLAGS := -I${CRIO_DIR}/include
 
-LIBS := $(shell pkg-config yaml-cpp --libs) -ldl ${SAL_WORK_DIR}/lib/libSAL_MTM1M3TS.a -ldcpssacpp -ldcpsgapi -lddsuser -lddskernel -lpthread -lddsserialization -lddsconfparser -lddsconf -lddsdatabase -lddsutil -lddsos
+ifdef SIMULATOR
+  LIBS := $(shell pkg-config yaml-cpp --libs) -ldl ${SAL_WORK_DIR}/lib/libSAL_MTM1M3TS.a -ldcpssacpp -ldcpsgapi -lddsuser -lddskernel -lpthread -lddsserialization -lddsconfparser -lddsconf -lddsdatabase -lddsutil -lddsos
+else
+  LIBS := $(shell pkg-config yaml-cpp --libs) -ldl ${SAL_WORK_DIR}/lib/libSAL_MTM1M3TS.a -lpthread
+  SAL_LIBS := -ldcpssacpp -ldcpsgapi -lddsuser -lddskernel -lddsserialization -lddsconfparser -lddsconf -lddsdatabase -lddsutil -lddsos
+endif
 
 LIBS_FLAGS += -L"${SAL_WORK_DIR}/lib" -L"${OSPL_HOME}/lib" -L"${LSST_SDK_INSTALL}/lib"
 
