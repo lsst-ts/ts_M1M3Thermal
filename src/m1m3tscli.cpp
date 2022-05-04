@@ -56,6 +56,7 @@ public:
     int fcuOnOff(command_vec cmds);
     int pumpOnOff(command_vec cmds);
     int thermalDemand(command_vec cmds);
+    int temperatureDebug(command_vec cmds);
     int slot4(command_vec);
 
 protected:
@@ -107,6 +108,8 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                NEED_FPGA, "<heater PWM> <fan RPM> <ILC..>", "Sets FCU heater and fan");
     addCommand("slot4", std::bind(&M1M3TScli::slot4, this, std::placeholders::_1), "", NEED_FPGA, NULL,
                "Reads slot 4 inputs");
+    addCommand("temperature-debug", std::bind(&M1M3TScli::temperatureDebug, this, std::placeholders::_1), "",
+               NEED_FPGA, NULL, "Output last Glycol thermocouple line");
 
     addILCCommand(
             "thermal-status",
@@ -210,6 +213,29 @@ int M1M3TScli::thermalDemand(command_vec cmds) {
         std::dynamic_pointer_cast<PrintThermalILC>(u.first)->setThermalDemand(u.second, heater, fan);
     }
     getFPGA()->ilcCommands(*getILC(0));
+    return 0;
+}
+
+int M1M3TScli::temperatureDebug(command_vec) {
+    std::vector<int> addrs;
+
+    auto callAddr = [this](int a) {
+        getFPGA()->writeRequestFIFO(a, 0);
+        uint16_t len;
+        dynamic_cast<IFPGA*>(getFPGA())->readU8ResponseFIFO(reinterpret_cast<uint8_t*>(&len), 2, 110);
+        len = ntohs(len);
+        if (len > 0) {
+            uint8_t data[len + 1];
+            dynamic_cast<IFPGA*>(getFPGA())->readU8ResponseFIFO(data, len, 10);
+
+            data[len] = '\0';
+            std::cout << "String out: " << data << std::endl;
+        }
+    };
+
+    callAddr(77);
+    callAddr(78);
+
     return 0;
 }
 
