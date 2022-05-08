@@ -56,6 +56,8 @@ public:
     int fcuOnOff(command_vec cmds);
     int pumpOnOff(command_vec cmds);
     int thermalDemand(command_vec cmds);
+    int glycolTemperature(command_vec cmds);
+    int glycolDebug(command_vec cmds);
     int slot4(command_vec);
 
 protected:
@@ -114,6 +116,11 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                 std::dynamic_pointer_cast<PrintThermalILC>(u.first)->reportThermalStatus(u.second);
             },
             "Report thermal status");
+
+    addCommand("glycol-temperature", std::bind(&M1M3TScli::glycolTemperature, this, std::placeholders::_1),
+               "", NEED_FPGA, NULL, "Primts glycol temperature values");
+    addCommand("glycol-debug", std::bind(&M1M3TScli::glycolDebug, this, std::placeholders::_1), "", NEED_FPGA,
+               NULL, "Output last Glycol thermocouple line");
 
     addILC(std::make_shared<PrintThermalILC>(1));
 
@@ -210,6 +217,45 @@ int M1M3TScli::thermalDemand(command_vec cmds) {
         std::dynamic_pointer_cast<PrintThermalILC>(u.first)->setThermalDemand(u.second, heater, fan);
     }
     getFPGA()->ilcCommands(*getILC(0));
+    return 0;
+}
+
+int M1M3TScli::glycolTemperature(command_vec) {
+    getFPGA()->writeRequestFIFO(79, 0);
+
+    float temp[8];
+    dynamic_cast<IFPGA*>(getFPGA())->readSGLResponseFIFO(temp, 8, 150);
+
+    const char* names[8] = {"Above Mirror",          "Inside Cell 1",        "Inside Cell 2",
+                            "Inside Cell 3",         "MTA Coolant Supply",   "MTA Coolant Return",
+                            "Mirror Coolant Supply", "Mirror Coolant Return"};
+    for (int i = 0; i < 8; i++) {
+        std::cout << std::right << std::setw(30) << names[i] << ": " << std::setw(6) << std::fixed
+                  << std::setprecision(2) << temp[i] << std::endl;
+    }
+    return 0;
+}
+
+int M1M3TScli::glycolDebug(command_vec) {
+    std::vector<int> addrs;
+
+    auto callAddr = [this](int a) {
+        getFPGA()->writeRequestFIFO(a, 0);
+        uint16_t len;
+        dynamic_cast<IFPGA*>(getFPGA())->readU8ResponseFIFO(reinterpret_cast<uint8_t*>(&len), 2, 150);
+        len = ntohs(len);
+        if (len > 0) {
+            uint8_t data[len + 1];
+            dynamic_cast<IFPGA*>(getFPGA())->readU8ResponseFIFO(data, len, 10);
+
+            data[len] = '\0';
+            std::cout << "String out: " << data << std::endl;
+        }
+    };
+
+    callAddr(77);
+    callAddr(78);
+
     return 0;
 }
 

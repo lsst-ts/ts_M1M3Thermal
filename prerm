@@ -1,2 +1,3 @@
 #!/bin/sh
 /etc/init.d/ts-M1M3thermal stop
+exit 0

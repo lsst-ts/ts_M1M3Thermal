@@ -38,6 +38,8 @@ using namespace LSST::M1M3::TS::Commands;
 
 void Update::execute() {
     SPDLOG_TRACE("Commands::Update execute");
+
+    // FCU telemetry
     TSApplication::ilc()->clear();
 
     TSApplication::instance().callFunctionOnIlcs([](uint8_t address) -> void {
