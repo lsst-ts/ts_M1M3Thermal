@@ -75,6 +75,9 @@ void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t tim
             case FPGAAddress::HEARTBEAT:
                 d += 2;
                 break;
+            case FPGAAddress::GLYCOLTEMP_TEMPERATURES:
+                d++;
+                break;
             // modbus software trigger
             case 252:
                 d++;

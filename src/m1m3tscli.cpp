@@ -221,7 +221,7 @@ int M1M3TScli::thermalDemand(command_vec cmds) {
 }
 
 int M1M3TScli::glycolTemperature(command_vec) {
-    getFPGA()->writeRequestFIFO(79, 0);
+    getFPGA()->writeRequestFIFO(FPGAAddress::GLYCOLTEMP_TEMPERATURES, 0);
 
     float temp[8];
     dynamic_cast<IFPGA*>(getFPGA())->readSGLResponseFIFO(temp, 8, 150);
@@ -253,8 +253,8 @@ int M1M3TScli::glycolDebug(command_vec) {
         }
     };
 
-    callAddr(77);
-    callAddr(78);
+    callAddr(FPGAAddress::GLYCOLTEMP_LAST_LINE);
+    callAddr(FPGAAddress::GLYCOLTEMP_DEBUG);
 
     return 0;
 }
