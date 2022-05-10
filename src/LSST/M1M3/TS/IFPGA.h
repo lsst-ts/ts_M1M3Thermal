@@ -39,6 +39,9 @@ constexpr uint16_t SLOT4_DIS = 29;
 constexpr uint16_t FCU_ON = 61;
 constexpr uint16_t HEARTBEAT = 62;
 constexpr uint16_t COOLANT_PUMP_ON = 63;
+constexpr uint16_t GLYCOLTEMP_LAST_LINE = 77;
+constexpr uint16_t GLYCOLTEMP_DEBUG = 78;
+constexpr uint16_t GLYCOLTEMP_TEMPERATURES = 79;
 }  // namespace FPGAAddress
 
 /**
