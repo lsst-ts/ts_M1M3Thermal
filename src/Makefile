@@ -9,12 +9,14 @@ CFLAGS += ${SAL_CPPFLAGS} \
 	-DVERSION="\"$(VERSION)\""
 
 C_SRCS = $(shell find LSST NiFpga -name '*.c')
-CPP_SRCS = $(shell find LSST NiFpga -name '*.cpp') ts-M1M3thermald.cpp m1m3tscli.cpp
+LIB_CPP_SRCS = $(shell find LSST NiFpga -name '*.cpp') 
+ALL_CPP_SRCS = $(LIB_CPP_SRCS) $(shell ls *.cpp)
 
-OBJS = $(patsubst %.c,%.c.o,$(C_SRCS)) $(patsubst %.cpp,%.cpp.o,$(CPP_SRCS))
+LIB_OBJS = $(patsubst %.c,%.c.o,$(C_SRCS)) $(patsubst %.cpp,%.cpp.o,$(LIB_CPP_SRCS))
+ALL_OBJS = $(patsubst %.c,%.c.o,$(C_SRCS)) $(patsubst %.cpp,%.cpp.o,$(ALL_CPP_SRCS))
 
 C_DEPS = $(patsubst %.c,%.c.d,$(C_SRCS))
-CPP_DEPS = $(patsubst %.cpp,%.cpp.d,$(CPP_SRCS))
+CPP_DEPS = $(patsubst %.cpp,%.cpp.d,$(ALL_CPP_SRCS))
 
 .PRECIOUS: *.d
 
@@ -22,12 +24,12 @@ ifneq ($(MAKECMDGOALS),clean)
   -include ${C_DEPS} ${CPP_DEPS}
 endif
 
-libM1M3TS.a: $(OBJS)
+libM1M3TS.a: $(LIB_OBJS)
 	@echo '[AR ] $@'
 	${co}$(AR) rs $@ $^
 
 clean:
-	@$(foreach file,$(OBJS) $(C_DEPS) $(CPP_DEPS) libM1M3TS.a $(shell find -name '*.d'), echo '[RM ] ${file}'; $(RM) -r $(file);)
+	@$(foreach file,$(ALL_OBJS) $(C_DEPS) $(CPP_DEPS) libM1M3TS.a $(shell find -name '*.d'), echo '[RM ] ${file}'; $(RM) -r $(file);)
 
 clang-format:
 	@$(foreach file,$(shell find LSST -name '*.cpp' -o -name '*.h'), echo '[FRM] ${file}'; clang-format -i $(file);)

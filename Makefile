@@ -36,7 +36,7 @@ deploy: M1M3ThermalCsC
 	@echo '[SCP] Bitfiles/NiFpga_ts_M1M3ThermalFPGA.lvbitx
 	${co}scp Bitfiles/NiFpga_ts_M1M3ThermalFPGA.lvbitx admin@${CRIO_IP}:Bitfiles
 
-tests: tests/Makefile tests/*.cpp
+tests: tests/Makefile tests/*.cpp src/libM1M3TS.a
 	@${MAKE} -C tests
 
 run_tests: tests

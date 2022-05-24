@@ -20,8 +20,7 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define CATCH_CONFIG_MAIN
-#include <catch/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <SimulatedFPGA.h>
 #include <cRIO/ThermalILC.h>

@@ -57,7 +57,6 @@ node {
                     source $SALUSER_HOME/.setup_salobj.sh
     
                     export PATH=\$CONDA_PREFIX/bin:$PATH
-                    export PKG_CONFIG_PATH="\$CONDA_PREFIX/lib/pkgconfig"
                     cd $WORKSPACE/ts_cRIOcpp
                     make
     

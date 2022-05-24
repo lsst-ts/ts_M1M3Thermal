@@ -20,12 +20,13 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define CATCH_CONFIG_MAIN
-#include <catch/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include <Settings/MixingValve.h>
 
 using namespace LSST::M1M3::TS::Settings;
+using Catch::Approx;
 
 TEST_CASE("Test conversions", "[MixingValveSettings]") {
     REQUIRE_NOTHROW(MixingValve::instance().load("data/MixingValve.yaml"));
