@@ -27,8 +27,9 @@
 #include "Events/Heartbeat.h"
 #include "Events/SummaryState.h"
 
-#include "Telemetry/ThermalData.h"
+#include "Telemetry/GlycolLoopTemperature.h"
 #include "Telemetry/MixingValve.h"
+#include "Telemetry/ThermalData.h"
 
 #include <cRIO/ThermalILC.h>
 
@@ -53,6 +54,11 @@ void Update::execute() {
     IFPGA::get().ilcCommands(*TSApplication::ilc());
 
     Telemetry::ThermalData::instance().send();
+
+    // auxiliary telemetry
+
+    Telemetry::GlycolLoopTemperature::instance().update();
+    Telemetry::GlycolLoopTemperature::instance().send();
 
     Telemetry::MixingValve::instance().sendPosition(IFPGA::get().getMixingValvePosition());
 
