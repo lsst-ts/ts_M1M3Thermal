@@ -17,7 +17,10 @@ endif
 M1M3_CPPFLAGS := -I"/usr/include" \
 	-I"../src/NiFpga" \
 	-I"../src/LSST/M1M3/TS" \
-	-I"../${CRIO_DIR}/include"
+	-I"../${CRIO_DIR}/include" \
+	$(shell pkg-config catch2-with-main --cflags)
+
+LIBS += $(shell pkg-config catch2-with-main --libs)
 
 compile: $(BINARIES)
 
@@ -43,4 +46,4 @@ clean:
 
 ${BINARIES}: %: %.cpp.o ../src/libM1M3TS.a
 	@echo '[TPP] $<'
-	${co}$(CPP) -o $@ $(LIBS_FLAGS) $(BOOST_CPPFLAGS) $(SAL_CPPFLAGS) $(LIBS) $(SAL_LIBS) $(M1M3_CPPFLAGS) $^ ../$(CRIO_DIR)/lib/libcRIOcpp.a ${SAL_WORK_DIR}/lib/libSAL_MTM1M3TS.a
+	${co}$(CPP) -o $@ $(LIBS_FLAGS) $(BOOST_CPPFLAGS) $(SAL_CPPFLAGS) $(SAL_LIBS) $(M1M3_CPPFLAGS) $^ $(LIBS) ../$(CRIO_DIR)/lib/libcRIOcpp.a ${SAL_WORK_DIR}/lib/libSAL_MTM1M3TS.a

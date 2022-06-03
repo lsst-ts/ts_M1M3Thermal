@@ -1,8 +1,7 @@
-FROM lsstts/develop-env:c0024.007
+FROM lsstts/develop-env:c0025.005
 
 USER root
-RUN yum -y install catch-devel boost169-devel make readline-devel
-
+RUN chmod a+rwX -R /home/saluser/
 USER saluser
 
 ARG XML_BRANCH
@@ -22,6 +21,6 @@ RUN chmod a+rwX -R /home/saluser/
 USER saluser
 
 RUN source .setup.sh \
-    && conda install -y readline yaml-cpp boost-cpp
+    && mamba install -y readline yaml-cpp boost-cpp catch2
 
 SHELL ["/bin/bash", "-lc"]
