@@ -46,7 +46,7 @@ void GlycolLoopTemperature::update() {
     IFPGA::get().writeRequestFIFO(FPGAAddress::GLYCOLTEMP_TEMPERATURES, 0);
 
     float temp[8];
-    IFPGA::get().readSGLResponseFIFO(temp, 8, 150);
+    IFPGA::get().readSGLResponseFIFO(temp, 8, 200);
 
     aboveMirrorTemperature = temp[0];
     insideCellTemperature1 = temp[1];

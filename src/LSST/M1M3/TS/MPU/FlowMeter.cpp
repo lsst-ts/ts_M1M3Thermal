@@ -25,9 +25,19 @@
 
 using namespace LSST::M1M3::TS;
 
-void FlowMeter::poll() { readHoldingRegisters(300, 28); }
+void FlowMeter::poll() { readHoldingRegisters(200, 14); }
 
-double FlowMeter::getDoubleValue(uint16_t reg) {
+float FlowMeter::_getFloatValue(uint16_t reg) {
+    uint32_t val = 0;
+    for (int i = 0; i < 2; i++) {
+        reinterpret_cast<uint16_t *>(&val)[i] = getRegister(reg + i);
+    }
+    val = le32toh(val);
+    float *dv = reinterpret_cast<float *>(&val);
+    return *dv;
+}
+
+double FlowMeter::_getDoubleValue(uint16_t reg) {
     uint64_t val = 0;
     for (int i = 0; i < 4; i++) {
         reinterpret_cast<uint16_t *>(&val)[i] = getRegister(reg + i);
