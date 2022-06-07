@@ -35,13 +35,11 @@ public:
 
     void poll();
 
-    double getSignalStrength() { return _getFloatValue(200); }
-    double getFlowRate() { return _getFloatValue(202); }
-    double getNetTotalizer() { return _getFloatValue(204); }
-    double getPositiveTotalizer() { return _getFloatValue(206); }
-    double getNegativeTotalizer() { return _getFloatValue(208); }
-    double getTemperature1() { return _getFloatValue(210); }
-    double getTemperature2() { return _getFloatValue(212); }
+    double getSignalStrength() { return _getFloatValue(199); }
+    double getFlowRate() { return _getFloatValue(201); }
+    double getNetTotalizer() { return _getFloatValue(203); }
+    double getPositiveTotalizer() { return _getFloatValue(205); }
+    double getNegativeTotalizer() { return _getFloatValue(207); }
 
 private:
     float _getFloatValue(uint16_t reg);

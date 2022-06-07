@@ -1,5 +1,5 @@
 /*
- * FlowMeter MPU
+ * Glycol Pump VFD MPU
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,35 +20,27 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <MPU/FlowMeter.h>
-#include <endian.h>
+#include <cRIO/MPU.h>
 
-using namespace LSST::M1M3::TS;
+namespace LSST {
+namespace M1M3 {
+namespace TS {
 
-void FlowMeter::poll() { readHoldingRegisters(199, 10, 255); }
+/**
+ * Reads FlowMeter values.
+ */
+class VFD : public cRIO::MPU {
+public:
+    VFD(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) {}
 
-float FlowMeter::_getFloatValue(uint16_t reg) {
-    union {
-        uint16_t data[2];
-        uint32_t d32;
-        float dfloat;
-    } buffer;
-    buffer.data[0] = getRegister(reg);
-    buffer.data[1] = getRegister(reg + 1);
-    buffer.d32 = le32toh(buffer.d32);
-    return buffer.dfloat;
-}
+    void poll();
 
-double FlowMeter::_getDoubleValue(uint16_t reg) {
-    union {
-        uint16_t data[4];
-        uint64_t d64;
-        double ddouble;
-    } buffer;
+    uint16_t getStatus() { return getRegister(8192); }
 
-    for (int i = 0; i < 4; i++) {
-        buffer.data[i] = getRegister(reg + i);
-    }
-    buffer.d64 = le64toh(buffer.d64);
-    return buffer.ddouble;
-}
+    uint16_t getTargetCurrent() { return getRegister(8450); }
+    uint16_t getCurrent() { return getRegister(8451); }
+};
+
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST

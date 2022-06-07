@@ -28,13 +28,6 @@
 #define FPGAClass ThermalFPGA
 #endif
 
-#include <cRIO/ThermalILC.h>
-#include <cRIO/PrintILC.h>
-#include <cRIO/FPGACliApp.h>
-#include <cRIO/MPU.h>
-
-#include <MPU/FlowMeter.h>
-
 #include <iostream>
 #include <iomanip>
 #include <memory>
@@ -43,15 +36,27 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
+#include <cRIO/ThermalILC.h>
+#include <cRIO/PrintILC.h>
+#include <cRIO/FPGACliApp.h>
+#include <cRIO/MPU.h>
+#include <cRIO/OStreamRestore.h>
+
+#include <MPU/FlowMeter.h>
+#include <MPU/VFD.h>
+
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
+using namespace std::chrono_literals;
 
 class M1M3TScli : public FPGACliApp {
 public:
     M1M3TScli(const char* name, const char* description);
 
-    int mpuRegisters(command_vec cmds);
+    int mpuRead(command_vec cmds);
+    int mpuWrite(command_vec cmds);
     int printFlowMeter(command_vec cmds);
+    int printPump(command_vec cmds);
     int mixingValve(command_vec cmds);
     int fcuOnOff(command_vec cmds);
     int pumpOnOff(command_vec cmds);
@@ -66,6 +71,7 @@ protected:
 
 private:
     std::shared_ptr<FlowMeter> flowMeter;
+    std::shared_ptr<VFD> vfd;
 };
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
@@ -94,16 +100,18 @@ public:
 };
 
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
-    addCommand("mpu-registers", std::bind(&M1M3TScli::mpuRegisters, this, std::placeholders::_1), "SI?",
-               NEED_FPGA, "<mpu> <register>..", "Reads MPU given MPU registers");
+    addCommand("mpu-read", std::bind(&M1M3TScli::mpuRead, this, std::placeholders::_1), "SI?", NEED_FPGA,
+               "<mpu> <register>..", "Reads given MPU registers");
+    addCommand("mpu-write", std::bind(&M1M3TScli::mpuWrite, this, std::placeholders::_1), "SII", NEED_FPGA,
+               "<mpu> <register> <value>", "Writes give MPU registers");
     addCommand("flow", std::bind(&M1M3TScli::printFlowMeter, this, std::placeholders::_1), "", NEED_FPGA,
                NULL, "Reads FlowMeter values");
     addCommand("mixing-valve", std::bind(&M1M3TScli::mixingValve, this, std::placeholders::_1), "d",
                NEED_FPGA, "[valve position (mA)]", "Reads and sets mixing valve position");
     addCommand("fcu-on", std::bind(&M1M3TScli::fcuOnOff, this, std::placeholders::_1), "b", NEED_FPGA,
                "[on|off]", "Command FCU power on/off");
-    addCommand("pump-on", std::bind(&M1M3TScli::pumpOnOff, this, std::placeholders::_1), "b", NEED_FPGA,
-               "[on|off]", "Command coolant pump on/off");
+    addCommand("pump", std::bind(&M1M3TScli::printPump, this, std::placeholders::_1), "b", NEED_FPGA, NULL,
+               "Turns pump on and reads Pump VFD values");
 
     addCommand("thermal-demand", std::bind(&M1M3TScli::thermalDemand, this, std::placeholders::_1), "iis?",
                NEED_FPGA, "<heater PWM> <fan RPM> <ILC..>", "Sets FCU heater and fan");
@@ -124,13 +132,14 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
 
     addILC(std::make_shared<PrintThermalILC>(1));
 
-    addMPU("vfd", std::make_shared<MPU>(1, 100));
-
     flowMeter = std::make_shared<FlowMeter>(2, 1);
     addMPU("flow", flowMeter);
+
+    vfd = std::make_shared<VFD>(1, 100);
+    addMPU("vfd", vfd);
 }
 
-int M1M3TScli::mpuRegisters(command_vec cmds) {
+int M1M3TScli::mpuRead(command_vec cmds) {
     std::shared_ptr<MPU> mpu = getMPU(cmds[0]);
     if (mpu == NULL) {
         std::cerr << "Invalid MPU device name " << cmds[0] << ". List of known devices: " << std::endl;
@@ -154,8 +163,28 @@ int M1M3TScli::mpuRegisters(command_vec cmds) {
 
     for (auto r : registers) {
         uint16_t v = mpu->getRegister(r);
-        std::cout << fmt::format("{0:>5d} ({0:04x}): {1:d} ({1:x})", r, v) << std::endl;
+        std::cout << fmt::format("{0:>5d} (0x{0:04x}): {1:d} (0x{1:x})", r, v) << std::endl;
     }
+
+    return 0;
+}
+
+int M1M3TScli::mpuWrite(command_vec cmds) {
+    std::shared_ptr<MPU> mpu = getMPU(cmds[0]);
+    if (mpu == NULL) {
+        std::cerr << "Invalid MPU device name " << cmds[0] << ". List of known devices: " << std::endl;
+        printMPU();
+        return -1;
+    }
+    mpu->clearCommanded();
+
+    uint16_t addrs = stoi(cmds[1], nullptr, 0);
+    uint16_t value = stoi(cmds[2], nullptr, 0);
+
+    mpu->presetHoldingRegister(addrs, value);
+    mpu->clear(true);
+
+    getFPGA()->mpuCommands(*mpu);
 
     return 0;
 }
@@ -167,14 +196,37 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
 
     getFPGA()->mpuCommands(*flowMeter);
 
-    std::cout << std::setfill(' ') << std::setw(20) << "Signal Strength: " << flowMeter->getSignalStrength()
-              << std::endl
+    OStreamRestore res(std::cout);
+
+    std::cout << std::setfill(' ') << std::fixed << std::setw(20)
+              << "Signal Strength:" << flowMeter->getSignalStrength() << std::endl
               << std::setw(20) << "Flow Rate: " << flowMeter->getFlowRate() << std::endl
               << std::setw(20) << "Net Totalizer: " << flowMeter->getNetTotalizer() << std::endl
               << std::setw(20) << "Positive Totalizer: " << flowMeter->getPositiveTotalizer() << std::endl
               << std::setw(20) << "Negative Totalizer: " << flowMeter->getNegativeTotalizer() << std::endl
-              << std::setw(20) << "Temperature 1: " << flowMeter->getTemperature1() << " \u00b0C" << std::endl
-              << std::setw(20) << "Temperature 2: " << flowMeter->getTemperature2() << " \u00b0C"
+              << std::endl;
+    return 0;
+}
+
+int M1M3TScli::printPump(command_vec cmds) {
+    OStreamRestore res(std::cout);
+
+    if (cmds.size() == 1) {
+        dynamic_cast<IFPGA*>(getFPGA())->setPumpPower(onOff(cmds[0]));
+        std::cout << "Turned pump " << cmds[0] << std::endl;
+
+        return 0;
+    }
+
+    vfd->clearCommanded();
+
+    vfd->poll();
+
+    getFPGA()->mpuCommands(*vfd);
+
+    std::cout << std::setfill(' ') << std::setw(20) << "Status: " << std::hex << vfd->getStatus() << std::endl
+              << std::setw(20) << "Target current: " << vfd->getTargetCurrent() << std::endl
+              << std::setw(20) << "Current: " << vfd->getCurrent() << std::endl
               << std::endl;
     return 0;
 }
@@ -196,13 +248,7 @@ int M1M3TScli::fcuOnOff(command_vec cmds) {
     return 0;
 }
 
-int M1M3TScli::pumpOnOff(command_vec cmds) {
-    if (cmds.size() == 1) {
-        dynamic_cast<IFPGA*>(getFPGA())->setPumpPower(onOff(cmds[0]));
-        std::cout << "Turned pump " << cmds[0] << std::endl;
-    }
-    return 0;
-}
+int M1M3TScli::pumpOnOff(command_vec cmds) { return 0; }
 
 FPGA* M1M3TScli::newFPGA(const char* dir) { return new PrintTSFPGA(); }
 
