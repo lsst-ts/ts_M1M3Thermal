@@ -20,14 +20,19 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "ThermalFPGA.h"
-#include "NiFpga_ts_M1M3ThermalFPGA.h"
-
-#include <cRIO/NiError.h>
+#include <iomanip>
+#include <iostream>
 
 #include <spdlog/spdlog.h>
 
+#include <cRIO/NiError.h>
+
+#include "ThermalFPGA.h"
+#include "NiFpga_ts_M1M3ThermalFPGA.h"
+
 using namespace LSST::cRIO;
+
+using namespace std::chrono_literals;
 
 namespace LSST {
 namespace M1M3 {
@@ -98,12 +103,46 @@ void ThermalFPGA::readMPUFIFO(MPU& mpu) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
                                    data, len, -1, NULL));
+    processMPUResponse(mpu, data, len);
+}
 
-    uint16_t u16_data[len];
-    for (int i = 0; i < len; i++) {
-        u16_data[i] = data[i];
+void ThermalFPGA::setMPUTimeouts(MPU& mpu, uint16_t write_timeout, uint16_t read_timeout) {
+    struct {
+        uint8_t call;
+        uint16_t write_tmout;
+        uint16_t read_tmout;
+    } __attribute__((packed)) req;
+
+    req.call = mpu.getBus() + 170;
+    req.write_tmout = htobe16(write_timeout);
+    req.read_tmout = htobe16(read_timeout);
+
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
+                                    &(req.call), 5, -1, NULL));
+}
+
+LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
+    uint8_t req = mpu.getBus() + 150;
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
+                                    &req, 1, -1, NULL));
+
+    uint16_t len;
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
+                                   reinterpret_cast<uint8_t*>(&len), 2, 1000, NULL));
+    len = ntohs(len);
+    uint8_t data[len];
+
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
+                                   data, len, -1, NULL));
+    if (len != 45) {
+        throw std::runtime_error(fmt::format("Invalid telemetry length - expected 45, received {}", len));
     }
-    mpu.processResponse(u16_data, len);
+
+    return MPUTelemetry(data);
 }
 
 void ThermalFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
@@ -154,6 +193,14 @@ void ThermalFPGA::waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggere
 
 void ThermalFPGA::ackIrqs(uint32_t irqs) {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_AcknowledgeIrqs(_session, irqs));
+}
+
+void ThermalFPGA::processMPUResponse(MPU& mpu, uint8_t* data, uint16_t len) {
+    uint16_t u16_data[len];
+    for (int i = 0; i < len; i++) {
+        u16_data[i] = data[i];
+    }
+    mpu.processResponse(u16_data, len);
 }
 
 }  // namespace TS

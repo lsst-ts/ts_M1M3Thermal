@@ -40,5 +40,5 @@ GIT := $(shell command -v git 2> /dev/null)
 ifndef GIT
    VERSION := "v0.0.0-None"
 else
-   VERSION := $(shell git describe --tags --dirty)
+   VERSION := $(shell git describe --tags --always --dirty)
 endif

@@ -35,10 +35,16 @@ public:
 
     void poll();
 
-    uint16_t getStatus() { return getRegister(8192); }
+    uint16_t getStatus() { return getRegister(0x2000); }
+    uint16_t getCommandedFrequency() { return getRegister(0x2001); }
 
-    uint16_t getTargetCurrent() { return getRegister(8450); }
-    uint16_t getCurrent() { return getRegister(8451); }
+    uint16_t getVelocityPositionBits() { return getRegister(0x2100); }
+    uint16_t getDriveErrorCodes() { return getRegister(0x2101); }
+    uint16_t getTargetFrequency() { return getRegister(0x2102); }
+    uint16_t getOutputFrequency() { return getRegister(0x2103); }
+    uint16_t getOutputCurrent() { return getRegister(0x2104); }
+    uint16_t getDCBusVoltage() { return getRegister(0x2105); }
+    uint16_t getOutputVoltage() { return getRegister(0x2106); }
 };
 
 }  // namespace TS

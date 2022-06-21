@@ -24,6 +24,9 @@
 #define __TS_IFPGA__
 
 #include <cRIO/FPGA.h>
+#include <cRIO/MPU.h>
+#include <cRIO/MPUTelemetry.h>
+
 #include <NiFpga.h>
 
 namespace LSST {
@@ -70,6 +73,12 @@ public:
     void setPumpPower(bool on);
 
     void setHeartbeat(bool heartbeat);
+
+    virtual void setMPUTimeouts(LSST::cRIO::MPU& mpu, uint16_t write_timeout, uint16_t read_timeout) {}
+    virtual LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) {}
+
+protected:
+    virtual void processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len) {}
 };
 
 }  // namespace TS

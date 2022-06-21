@@ -25,6 +25,6 @@
 using namespace LSST::M1M3::TS;
 
 void VFD::poll() {
-    readHoldingRegisters(8192, 3, 255);
-    readHoldingRegisters(8448, 6, 255);
+    readHoldingRegisters(0x2000, 3, 255);
+    readHoldingRegisters(0x2100, 7, 255);
 }
