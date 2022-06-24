@@ -290,12 +290,38 @@ int M1M3TScli::printPump(command_vec cmds) {
 
     getFPGA()->mpuCommands(*vfd);
 
+    // status bits
+    static const std::string status[16] = {"Ready",
+                                           "Active (Running)",
+                                           "Cmd Forward",
+                                           "Rotating Forward",
+                                           "Accelerating",
+                                           "Decelerating",
+                                           "",
+                                           "Faulted",
+                                           "At Reference",
+                                           "Main Freq Controlled by Active Comm",
+                                           "Operation Cmd Controlled by Active Comm",
+                                           "Parameters have been locked",
+                                           "Digital input 1 Status (DigIn TermBlk 05)"
+                                           "Digital input 2 Status (DigIn TermBlk 06)"
+                                           "Digital input 3 Status (DigIn TermBlk 07)"
+                                           "Digital input 4 Status (DigIn TermBlk 08)"};
+
+    uint16_t bits = vfd->getVelocityPositionBits();
+
     std::cout << std::setfill(' ') << std::setw(20) << "Status: "
               << "0x" << std::hex << vfd->getStatus() << std::endl
               << std::setw(20) << "Commanded Freq.: " << std::dec << vfd->getCommandedFrequency() << std::endl
-              << std::setw(20) << "Vel./Pos. Bits: " << std::hex << vfd->getVelocityPositionBits() << std::dec
-              << std::endl
-              << std::setw(20) << "Drive Error Codes: " << vfd->getDriveErrorCodes() << std::endl
+              << std::setw(20) << "Vel./Pos. Bits: " << std::hex << bits << std::dec << std::endl;
+
+    for (int i = 0; i < 16; i++) {
+        if (bits & 0x01)
+            std::cout << "         " << (bits == 0x01 ? "┗" : "┣") << "━━▶ " << status[i] << std::endl;
+        bits >>= 1;
+    }
+
+    std::cout << std::setw(20) << "Drive Error Codes: " << vfd->getDriveErrorCodes() << std::endl
               << std::setw(20) << "Target Frequency: " << std::dec << vfd->getTargetFrequency() << std::endl
               << std::setw(20) << "Output Frequency: " << vfd->getOutputFrequency() << std::endl
               << std::setw(20) << "Output Current: " << vfd->getOutputCurrent() << std::endl
@@ -513,14 +539,11 @@ void _printBufferU16(std::string prefix, uint16_t* buf, size_t len) {
 }
 
 void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
-    _printBufferU8("M>", mpu.getCommandVector().data(), mpu.getCommandVector().size());
+    _printBufferU8("MPU>", mpu.getCommandVector().data(), mpu.getCommandVector().size());
     FPGAClass::writeMPUFIFO(mpu);
 }
 
-void PrintTSFPGA::readMPUFIFO(MPU& mpu) {
-    FPGAClass::readMPUFIFO(mpu);
-    _printBufferU16("M<", mpu.getBuffer(), mpu.getLength());
-}
+void PrintTSFPGA::readMPUFIFO(MPU& mpu) { FPGAClass::readMPUFIFO(mpu); }
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     _printBufferU16("C>", data, length);

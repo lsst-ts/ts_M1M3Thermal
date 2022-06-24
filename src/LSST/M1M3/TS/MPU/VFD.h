@@ -27,7 +27,8 @@ namespace M1M3 {
 namespace TS {
 
 /**
- * Reads FlowMeter values.
+ * Glycol pump VFD (Variable Frequency Drive) control.
+ * [Documentation](https://confluence.lsstcorp.org/display/LTS/Datasheets?preview=/154697856/154697879/VFD%20Users%20Guide.pdf).
  */
 class VFD : public cRIO::MPU {
 public:
@@ -45,6 +46,24 @@ public:
     uint16_t getOutputCurrent() { return getRegister(0x2104); }
     uint16_t getDCBusVoltage() { return getRegister(0x2105); }
     uint16_t getOutputVoltage() { return getRegister(0x2106); }
+
+    void readParameters() { readHoldingRegisters(1, 50); }
+
+    /**
+     * Reads VFD registers.
+     *
+     * Register   | Content
+     * ---------- | -----------------
+     * 0x2101     | Drive Error Code
+     * 0x2102     | Frequency Command
+     * 0x2103     | Output Frequency
+     * 0x2104     | Output Current
+     * 0x2105     | DC-BUS Voltage
+     * 0x2106     | Output Voltage
+     */
+    void update() { readHoldingRegisters(0x2101, 6); }
+
+    static const char* getDriveError(uint16_t code);
 };
 
 }  // namespace TS

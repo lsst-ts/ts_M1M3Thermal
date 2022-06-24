@@ -74,7 +74,7 @@ void ThermalFPGA::finalize() {
 
 void ThermalFPGA::writeMPUFIFO(MPU& mpu) {
     auto buf = mpu.getCommandVector();
-    uint8_t bus = mpu.getBus();
+    uint8_t bus = (mpu.getBus() << 4) | 1;
     uint8_t len = buf.size();
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
@@ -88,7 +88,7 @@ void ThermalFPGA::writeMPUFIFO(MPU& mpu) {
 }
 
 void ThermalFPGA::readMPUFIFO(MPU& mpu) {
-    uint8_t req = mpu.getBus() + 100;
+    uint8_t req = (mpu.getBus() << 4) | 8;
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
                                     &req, 1, -1, NULL));
@@ -113,7 +113,7 @@ void ThermalFPGA::setMPUTimeouts(MPU& mpu, uint16_t write_timeout, uint16_t read
         uint16_t read_tmout;
     } __attribute__((packed)) req;
 
-    req.call = mpu.getBus() + 170;
+    req.call = (mpu.getBus() << 4) | 4;
     req.write_tmout = htobe16(write_timeout);
     req.read_tmout = htobe16(read_timeout);
 
@@ -123,7 +123,8 @@ void ThermalFPGA::setMPUTimeouts(MPU& mpu, uint16_t write_timeout, uint16_t read
 }
 
 LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
-    uint8_t req = mpu.getBus() + 150;
+    uint8_t req = (mpu.getBus() << 4) | 2;
+    std::cerr << std::hex << "T>" << +req << std::endl;
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
                                     &req, 1, -1, NULL));
@@ -135,9 +136,11 @@ LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
     len = ntohs(len);
     uint8_t data[len];
 
+    std::cout << "len" << len << std::endl;
+
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
-                                   data, len, -1, NULL));
+                                   data, len, 1000, NULL));
     if (len != 45) {
         throw std::runtime_error(fmt::format("Invalid telemetry length - expected 45, received {}", len));
     }

@@ -28,3 +28,18 @@ void VFD::poll() {
     readHoldingRegisters(0x2000, 3, 255);
     readHoldingRegisters(0x2100, 7, 255);
 }
+
+const char *VFD::getDriveError(uint16_t code) {
+    switch (code) {
+        case 0:
+            return "No Fault";
+        case 2:
+            return "Auxiliary Input";
+        case 3:
+            return "Power Loss";
+        case 4:
+            return "Undervoltage";
+        default:
+            return "Unknown error";
+    }
+}
