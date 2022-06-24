@@ -125,7 +125,7 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                NEED_FPGA, "[valve position (mA)]", "Reads and sets mixing valve position");
     addCommand("fcu-on", std::bind(&M1M3TScli::fcuOnOff, this, std::placeholders::_1), "b", NEED_FPGA,
                "[on|off]", "Command FCU power on/off");
-    addCommand("pump", std::bind(&M1M3TScli::printPump, this, std::placeholders::_1), "b", NEED_FPGA, NULL,
+    addCommand("pump", std::bind(&M1M3TScli::printPump, this, std::placeholders::_1), "s?", NEED_FPGA, NULL,
                "Turns pump on and reads Pump VFD values");
 
     addCommand("thermal-demand", std::bind(&M1M3TScli::thermalDemand, this, std::placeholders::_1), "iis?",
@@ -206,7 +206,7 @@ int M1M3TScli::mpuTimeouts(command_vec cmds) {
         dynamic_cast<IFPGA*>(getFPGA())->setMPUTimeouts(*getMPU("vfd"), write_tmout, read_tmout);
         printTelemetry("Pump (VFD)", getMPU("vfd"));
     } else {
-        for (int i = 2; i < cmds.size(); i++) {
+        for (size_t i = 2; i < cmds.size(); i++) {
             dynamic_cast<IFPGA*>(getFPGA())->setMPUTimeouts(*getMPU(cmds[i]), write_tmout, read_tmout);
             printTelemetry(cmds[i], getMPU(cmds[i]));
         }
@@ -222,7 +222,7 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
         return -1;
     }
 
-    vfd->clear(true);
+    mpu->clear(true);
     mpu->clearCommanded();
 
     uint16_t addrs = stoi(cmds[1], nullptr, 0);
@@ -255,11 +255,32 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
 }
 
 int M1M3TScli::printPump(command_vec cmds) {
-    if (cmds.size() == 1) {
-        dynamic_cast<IFPGA*>(getFPGA())->setPumpPower(onOff(cmds[0]));
-        std::cout << "Turned pump " << cmds[0] << std::endl;
+    if (cmds.size() > 0) {
+        vfd->clearCommanded();
 
-        return 0;
+        if (cmds[0] == "stop") {
+            vfd->presetHoldingRegister(0x2000, 0x01);
+            getFPGA()->mpuCommands(*vfd);
+        } else if (cmds[0] == "start") {
+            vfd->presetHoldingRegister(0x2000, 0x1a);
+            getFPGA()->mpuCommands(*vfd);
+        } else if (cmds[0] == "reset") {
+            vfd->presetHoldingRegister(0x2000, 0x8);
+            getFPGA()->mpuCommands(*vfd);
+        } else if (cmds[0] == "freq") {
+            size_t len;
+            uint16_t targetFreq = std::stoi(cmds[1], &len, 0);
+            if (len != cmds[1].length()) {
+                std::cerr << "Invalid frequency: " << cmds[1] << std::endl;
+                return 1;
+            }
+            vfd->presetHoldingRegister(0x2001, targetFreq);
+            getFPGA()->mpuCommands(*vfd);
+        } else {
+            dynamic_cast<IFPGA*>(getFPGA())->setPumpPower(onOff(cmds[0]));
+            std::cout << "Turned pump " << cmds[0] << std::endl;
+            return 0;
+        }
     }
 
     vfd->clear(true);
@@ -272,9 +293,9 @@ int M1M3TScli::printPump(command_vec cmds) {
     std::cout << std::setfill(' ') << std::setw(20) << "Status: "
               << "0x" << std::hex << vfd->getStatus() << std::endl
               << std::setw(20) << "Commanded Freq.: " << std::dec << vfd->getCommandedFrequency() << std::endl
-              << std::setw(20) << "Vel./Pos. Bits: " << vfd->getVelocityPositionBits() << std::endl
-              << std::setw(20) << "Drive Error Codes: "
-              << "0x" << std::hex << vfd->getDriveErrorCodes() << std::endl
+              << std::setw(20) << "Vel./Pos. Bits: " << std::hex << vfd->getVelocityPositionBits() << std::dec
+              << std::endl
+              << std::setw(20) << "Drive Error Codes: " << vfd->getDriveErrorCodes() << std::endl
               << std::setw(20) << "Target Frequency: " << std::dec << vfd->getTargetFrequency() << std::endl
               << std::setw(20) << "Output Frequency: " << vfd->getOutputFrequency() << std::endl
               << std::setw(20) << "Output Current: " << vfd->getOutputCurrent() << std::endl
