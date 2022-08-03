@@ -3,10 +3,12 @@ ifndef VERBOSE
   co := @
 endif
 
+c_opts := -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
+
 ifdef DEBUG
-  c_opts := -g
+  c_opts += -g
 else
-  c_opts := -O3
+  c_opts += -O3
 endif
 
 # compile x86 simulator or real cRIO stuff
@@ -38,5 +40,5 @@ GIT := $(shell command -v git 2> /dev/null)
 ifndef GIT
    VERSION := "v0.0.0-None"
 else
-   VERSION := $(shell git describe --tags --dirty)
+   VERSION := $(shell git describe --tags --always --dirty)
 endif

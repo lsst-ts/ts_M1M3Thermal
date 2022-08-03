@@ -1,5 +1,5 @@
 /*
- * Pump VFD telemetry & control.
+ * Glycol Pump VFD MPU
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,9 +20,6 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __TS_PUMPVFD__
-#define __TS_PUMPVFD__
-
 #include <cRIO/MPU.h>
 
 namespace LSST {
@@ -33,9 +30,22 @@ namespace TS {
  * Glycol pump VFD (Variable Frequency Drive) control.
  * [Documentation](https://confluence.lsstcorp.org/display/LTS/Datasheets?preview=/154697856/154697879/VFD%20Users%20Guide.pdf).
  */
-class PumpVFD : public cRIO::MPU {
+class VFD : public cRIO::MPU {
 public:
-    PumpVFD(uint8_t bus, uint8_t mpu_address);
+    VFD(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) {}
+
+    void poll();
+
+    uint16_t getStatus() { return getRegister(0x2000); }
+    uint16_t getCommandedFrequency() { return getRegister(0x2001); }
+
+    uint16_t getVelocityPositionBits() { return getRegister(0x2100); }
+    uint16_t getDriveErrorCodes() { return getRegister(0x2101); }
+    uint16_t getTargetFrequency() { return getRegister(0x2102); }
+    uint16_t getOutputFrequency() { return getRegister(0x2103); }
+    uint16_t getOutputCurrent() { return getRegister(0x2104); }
+    uint16_t getDCBusVoltage() { return getRegister(0x2105); }
+    uint16_t getOutputVoltage() { return getRegister(0x2106); }
 
     void readParameters() { readHoldingRegisters(1, 50); }
 
@@ -59,5 +69,3 @@ public:
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
-
-#endif  // !__TS_PUMPVFD__

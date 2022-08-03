@@ -1,5 +1,5 @@
 /*
- * Pump VFD telemetry & control.
+ * Glycol Pump VFD MPU
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,14 +20,16 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <PumpVFD.h>
+#include <MPU/VFD.h>
 
-using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
 
-PumpVFD::PumpVFD(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) {}
+void VFD::poll() {
+    readHoldingRegisters(0x2000, 3, 255);
+    readHoldingRegisters(0x2100, 7, 255);
+}
 
-const char *PumpVFD::getDriveError(uint16_t code) {
+const char *VFD::getDriveError(uint16_t code) {
     switch (code) {
         case 0:
             return "No Fault";

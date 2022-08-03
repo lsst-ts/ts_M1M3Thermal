@@ -35,16 +35,15 @@ public:
 
     void poll();
 
-    double getSignalStrength() { return getDoubleValue(300); }
-    double getFlowRate() { return getDoubleValue(304); }
-    double getNetTotalizer() { return getDoubleValue(308); }
-    double getPositiveTotalizer() { return getDoubleValue(312); }
-    double getNegativeTotalizer() { return getDoubleValue(316); }
-    double getTemperature1() { return getDoubleValue(320); }
-    double getTemperature2() { return getDoubleValue(324); }
+    double getSignalStrength() { return _getFloatValue(199); }
+    double getFlowRate() { return _getFloatValue(201); }
+    double getNetTotalizer() { return _getFloatValue(203); }
+    double getPositiveTotalizer() { return _getFloatValue(205); }
+    double getNegativeTotalizer() { return _getFloatValue(207); }
 
 private:
-    double getDoubleValue(uint16_t reg);
+    float _getFloatValue(uint16_t reg);
+    double _getDoubleValue(uint16_t reg);
 };
 
 }  // namespace TS
