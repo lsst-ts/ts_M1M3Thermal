@@ -49,6 +49,14 @@ SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), heaterFanDemand);
 
 SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setMixingValve);
 
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), pumpStart);
+
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), pumpStop);
+
+SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), pumpFrequency);
+
+SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), pumpReset);
+
 }  // namespace Commands
 }  // namespace TS
 }  // namespace M1M3

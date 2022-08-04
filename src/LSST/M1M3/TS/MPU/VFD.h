@@ -20,6 +20,9 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef __TS_MPU_VFD__
+#define __TS_MPU_VFD__
+
 #include <cRIO/MPU.h>
 
 namespace LSST {
@@ -69,3 +72,5 @@ public:
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
+
+#endif /* __TS_MPU_VFD__ */

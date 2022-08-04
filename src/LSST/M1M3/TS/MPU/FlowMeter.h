@@ -20,6 +20,9 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef __TS_MPU_FLOWMETER__
+#define __TS_MPU_FLOWMETER__
+
 #include <cRIO/MPU.h>
 
 namespace LSST {
@@ -49,3 +52,5 @@ private:
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
+
+#endif /* __TS_MPU_FLOWMETER__ */

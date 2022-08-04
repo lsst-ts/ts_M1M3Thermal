@@ -23,11 +23,16 @@
 #ifndef __TS_IFPGA__
 #define __TS_IFPGA__
 
+#include <memory>
+
+#include <NiFpga.h>
+
 #include <cRIO/FPGA.h>
 #include <cRIO/MPU.h>
 #include <cRIO/MPUTelemetry.h>
 
-#include <NiFpga.h>
+#include <MPU/FlowMeter.h>
+#include <MPU/VFD.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -52,7 +57,7 @@ constexpr uint16_t GLYCOLTEMP_TEMPERATURES = 79;
  */
 class IFPGA : public cRIO::FPGA {
 public:
-    IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
+    IFPGA();
     virtual ~IFPGA() {}
 
     static IFPGA& get();
@@ -72,6 +77,10 @@ public:
     void setFCUPower(bool on);
     void setPumpPower(bool on);
 
+    void pumpStartStop(bool start);
+    void pumpReset();
+    void setPumpFrequency(float freq);
+
     void setHeartbeat(bool heartbeat);
 
     virtual void setMPUTimeouts(LSST::cRIO::MPU& mpu, uint16_t write_timeout, uint16_t read_timeout) {}
@@ -79,6 +88,10 @@ public:
 
 protected:
     virtual void processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len) {}
+
+private:
+    std::shared_ptr<VFD> vfd;
+    std::shared_ptr<FlowMeter> flowMeter;
 };
 
 }  // namespace TS
