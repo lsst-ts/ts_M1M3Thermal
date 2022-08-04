@@ -71,12 +71,7 @@ protected:
     virtual ILCUnits getILCs(command_vec cmds) override;
 
 private:
-    void printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu) {
-        auto telemetry = dynamic_cast<IFPGA*>(getFPGA())->readMPUTelemetry(*mpu);
-        std::cout << name << std::endl
-                  << std::string(name.length(), '-') << std::endl
-                  << telemetry << std::endl;
-    };
+    void printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu);
 
     std::shared_ptr<FlowMeter> flowMeter;
     std::shared_ptr<VFD> vfd;
@@ -491,6 +486,11 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
         ret = 0;
     }
     return units;
+}
+
+void M1M3TScli::printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu) {
+    auto telemetry = dynamic_cast<IFPGA*>(getFPGA())->readMPUTelemetry(*mpu);
+    std::cout << name << std::endl << std::string(name.length(), '-') << std::endl << telemetry << std::endl;
 }
 
 void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,

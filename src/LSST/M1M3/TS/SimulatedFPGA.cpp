@@ -20,13 +20,14 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "SimulatedFPGA.h"
-#include "TSPublisher.h"
-
-#include <cRIO/Timestamp.h>
-
 #include <cstring>
 #include <spdlog/spdlog.h>
+
+#include <cRIO/Timestamp.h>
+#include <cRIO/ModbusBuffer.h>
+
+#include "SimulatedFPGA.h"
+#include "TSPublisher.h"
 
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
@@ -58,6 +59,26 @@ void SimulatedFPGA::writeMPUFIFO(MPU& mpu) {
 
 void SimulatedFPGA::readMPUFIFO(MPU& mpu) {
     mpu.processResponse(_mpuResponse.getBuffer(), _mpuResponse.getLength());
+}
+
+LSST::cRIO::MPUTelemetry SimulatedFPGA::readMPUTelemetry(LSST::cRIO::MPU& mpu) {
+    uint8_t data[45] = {
+            0x00, 0x01,                                      // Instruction pointer
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,  // Output counter
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03,  // Input counter
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,  // Output timeouts
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05,  // Input timeouts
+            0x00, 0x06,                                      // Instruction pointer on error
+            0x00, 0x07,                                      // Write timeout
+            0x00, 0x08,                                      // Read timeout
+            0x09,                                            // Error status
+            0x00, 0x0A,                                      // Error code
+            0x00, 0x00,                                      // CRC
+    };
+
+    *(reinterpret_cast<uint16_t*>(data + 43)) = htobe16(ModbusBuffer::CRC(data, 43).get());
+
+    return MPUTelemetry(data);
 }
 
 void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
