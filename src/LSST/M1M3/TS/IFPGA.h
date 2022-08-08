@@ -86,12 +86,11 @@ public:
     virtual void setMPUTimeouts(LSST::cRIO::MPU& mpu, uint16_t write_timeout, uint16_t read_timeout) {}
     virtual LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) = 0;
 
-protected:
-    virtual void processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len) {}
-
-private:
     std::shared_ptr<VFD> vfd;
     std::shared_ptr<FlowMeter> flowMeter;
+
+protected:
+    virtual void processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len) {}
 };
 
 }  // namespace TS

@@ -20,6 +20,10 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <spdlog/spdlog.h>
+
+#include <cRIO/ThermalILC.h>
+
 #include "Commands/Update.h"
 #include "TSApplication.h"
 
@@ -27,44 +31,84 @@
 #include "Events/Heartbeat.h"
 #include "Events/SummaryState.h"
 
+#include "Telemetry/FlowMeter.h"
+#include "Telemetry/VFD.h"
 #include "Telemetry/GlycolLoopTemperature.h"
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
-
-#include <cRIO/ThermalILC.h>
-
-#include <spdlog/spdlog.h>
 
 using namespace LSST::M1M3::TS::Commands;
 
 void Update::execute() {
     SPDLOG_TRACE("Commands::Update execute");
 
-    // FCU telemetry
-    TSApplication::ilc()->clear();
+    _sendFCU();
 
-    TSApplication::instance().callFunctionOnIlcs([](uint8_t address) -> void {
-        if (Events::SummaryState::instance().enabled()) {
-            TSApplication::ilc()->reportThermalStatus(address);
-        } else {
-            TSApplication::ilc()->reportServerStatus(address);
-        }
-    });
-
-    IFPGA::get().ilcCommands(*TSApplication::ilc());
-
-    Telemetry::ThermalData::instance().send();
-
-    // auxiliary telemetry
-
-    Telemetry::GlycolLoopTemperature::instance().update();
-    Telemetry::GlycolLoopTemperature::instance().send();
-
-    Telemetry::MixingValve::instance().sendPosition(IFPGA::get().getMixingValvePosition());
+    _sendGlycolLoopTemperature();
+    _sendMixingValve();
 
     Events::EnabledILC::instance().send();
 
     Events::Heartbeat::instance().tryToggle();
 
+    _sendFlowMeter();
+    _sendVFD();
+
     SPDLOG_TRACE("Commands::Update leaving execute");
+}
+
+void Update::_sendGlycolLoopTemperature() {
+    try {
+        Telemetry::GlycolLoopTemperature::instance().update();
+        Telemetry::GlycolLoopTemperature::instance().send();
+    } catch (std::exception &e) {
+        SPDLOG_WARN("Cannot poll Glycol loop: {}", e.what());
+    }
+}
+
+void Update::_sendMixingValve() {
+    try {
+        Telemetry::MixingValve::instance().sendPosition(IFPGA::get().getMixingValvePosition());
+
+    } catch (std::exception &e) {
+        SPDLOG_WARN("Cannot poll mixing valve: {}", e.what());
+    }
+}
+
+void Update::_sendFCU() {
+    try {
+        TSApplication::ilc()->clear();
+
+        TSApplication::instance().callFunctionOnIlcs([](uint8_t address) -> void {
+            if (Events::SummaryState::instance().enabled()) {
+                TSApplication::ilc()->reportThermalStatus(address);
+            } else {
+                TSApplication::ilc()->reportServerStatus(address);
+            }
+        });
+
+        IFPGA::get().ilcCommands(*TSApplication::ilc());
+
+        Telemetry::ThermalData::instance().send();
+    } catch (std::exception &e) {
+        SPDLOG_WARN("Cannot poll FCU: {}", e.what());
+    }
+}
+
+void Update::_sendFlowMeter() {
+    try {
+        Telemetry::FlowMeter::instance().update();
+        Telemetry::FlowMeter::instance().send();
+    } catch (std::exception &e) {
+        SPDLOG_WARN("Cannot poll Flow Meter: {}", e.what());
+    }
+}
+
+void Update::_sendVFD() {
+    try {
+        Telemetry::VFD::instance().update();
+        Telemetry::VFD::instance().send();
+    } catch (std::exception &e) {
+        SPDLOG_WARN("Cannot poll VFD: {}", e.what());
+    }
 }

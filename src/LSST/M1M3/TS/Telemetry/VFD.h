@@ -1,5 +1,5 @@
 /*
- * ThermalData telemetry handling class.
+ * VFD/pump motor controller telemetry handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,8 +20,8 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Telemetry_ThermalData_
-#define _TS_Telemetry_ThermalData_
+#ifndef _TS_Telemetry_VFD_
+#define _TS_Telemetry_VFD_
 
 #include <SAL_MTM1M3TS.h>
 #include <cRIO/Singleton.h>
@@ -31,12 +31,11 @@ namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
-class ThermalData final : MTM1M3TS_thermalDataC, public cRIO::Singleton<ThermalData> {
+class VFD final : MTM1M3TS_glycolPumpC, public cRIO::Singleton<VFD> {
 public:
-    ThermalData(token);
+    VFD(token);
 
-    void update(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
-                float absoluteTemperature);
+    void update();
 
     /**
      * Sends updates through SAL/DDS.
@@ -49,4 +48,4 @@ public:
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !_TS_Telemetry_ThermalData_
+#endif  // !_TS_Telemetry_VFD_

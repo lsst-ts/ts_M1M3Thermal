@@ -23,9 +23,10 @@
 #ifndef _TS_Command_Update_
 #define _TS_Command_Update_
 
-#include <cRIO/Command.h>
-
 #include <chrono>
+
+#include <SAL_MTM1M3TS.h>
+#include <cRIO/Command.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -35,6 +36,13 @@ namespace Commands {
 class Update : public cRIO::Command {
 public:
     void execute() override;
+
+private:
+    void _sendGlycolLoopTemperature();
+    void _sendMixingValve();
+    void _sendFCU();
+    void _sendFlowMeter();
+    void _sendVFD();
 };
 
 }  // namespace Commands

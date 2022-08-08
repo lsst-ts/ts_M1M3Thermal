@@ -1,5 +1,5 @@
 /*
- * ThermalData telemetry handling class.
+ * Publish MPU Flow Meter Telemetry.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,33 +20,28 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Telemetry_ThermalData_
-#define _TS_Telemetry_ThermalData_
+#ifndef _TS_Event_FlowMeterMPUStatus_
+#define _TS_Event_FlowMeterMPUStatus_
 
 #include <SAL_MTM1M3TS.h>
+#include <cRIO/MPUTelemetry.h>
 #include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace Telemetry {
+namespace Events {
 
-class ThermalData final : MTM1M3TS_thermalDataC, public cRIO::Singleton<ThermalData> {
+class FlowMeterMPUStatus final : public MTM1M3TS_logevent_flowMeterMPUStatusC,
+                                 public cRIO::Singleton<FlowMeterMPUStatus> {
 public:
-    ThermalData(token);
-
-    void update(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
-                float absoluteTemperature);
-
-    /**
-     * Sends updates through SAL/DDS.
-     */
-    void send();
+    FlowMeterMPUStatus(token);
+    void send(LSST::cRIO::MPUTelemetry* telemetry);
 };
 
-}  // namespace Telemetry
+}  // namespace Events
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !_TS_Telemetry_ThermalData_
+#endif /* _TS_Event_FlowMeterMPUStatus_ */

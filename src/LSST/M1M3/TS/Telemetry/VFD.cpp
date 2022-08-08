@@ -1,5 +1,5 @@
 /*
- * ThermalData telemetry handling class.
+ * VFD telemetry handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,33 +20,41 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Telemetry_ThermalData_
-#define _TS_Telemetry_ThermalData_
+#include <cmath>
 
-#include <SAL_MTM1M3TS.h>
-#include <cRIO/Singleton.h>
+#include <spdlog/spdlog.h>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Telemetry {
+#include <IFPGA.h>
+#include <TSPublisher.h>
+#include <Telemetry/VFD.h>
 
-class ThermalData final : MTM1M3TS_thermalDataC, public cRIO::Singleton<ThermalData> {
-public:
-    ThermalData(token);
+using namespace LSST::M1M3::TS::Telemetry;
 
-    void update(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
-                float absoluteTemperature);
+VFD::VFD(token) {
+    commandedFrequency = NAN;
+    targetFrequency = NAN;
+    outputFrequency = NAN;
+    outputCurrent = NAN;
+    busVoltage = NAN;
+    outputVoltage = NAN;
+}
 
-    /**
-     * Sends updates through SAL/DDS.
-     */
-    void send();
-};
+void VFD::update() {
+    auto vfd = IFPGA::get().vfd;
+    vfd->poll();
 
-}  // namespace Telemetry
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
+    commandedFrequency = vfd->getCommandedFrequency();
+    targetFrequency = vfd->getTargetFrequency();
+    outputFrequency = vfd->getOutputFrequency();
+    outputCurrent = vfd->getOutputCurrent();
+    busVoltage = vfd->getDCBusVoltage();
+    outputVoltage = vfd->getOutputVoltage();
+}
 
-#endif  // !_TS_Telemetry_ThermalData_
+void VFD::send() {
+    salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
+    if (ret != SAL__OK) {
+        SPDLOG_WARN("Cannot send VFD: {}", ret);
+        return;
+    }
+}
