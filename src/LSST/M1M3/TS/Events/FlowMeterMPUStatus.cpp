@@ -1,5 +1,5 @@
 /*
- * ThermalData telemetry handling class.
+ * Publish MPU Flow Meter Telemetry.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,33 +20,23 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Telemetry_ThermalData_
-#define _TS_Telemetry_ThermalData_
+#include <spdlog/spdlog.h>
 
-#include <SAL_MTM1M3TS.h>
-#include <cRIO/Singleton.h>
+#include <TSPublisher.h>
+#include <Events/FlowMeterMPUStatus.h>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Telemetry {
+using namespace LSST::M1M3::TS;
+using namespace LSST::M1M3::TS::Events;
 
-class ThermalData final : MTM1M3TS_thermalDataC, public cRIO::Singleton<ThermalData> {
-public:
-    ThermalData(token);
+FlowMeterMPUStatus::FlowMeterMPUStatus(token) {}
 
-    void update(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
-                float absoluteTemperature);
-
-    /**
-     * Sends updates through SAL/DDS.
-     */
-    void send();
-};
-
-}  // namespace Telemetry
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
-
-#endif  // !_TS_Telemetry_ThermalData_
+void FlowMeterMPUStatus::send(LSST::cRIO::MPUTelemetry* telemetry) {
+    if (telemetry->sendUpdates(this) == false) {
+        return;
+    }
+    salReturn ret = TSPublisher::SAL()->putSample_logevent_flowMeterMPUStatus(this);
+    if (ret != SAL__OK) {
+        SPDLOG_WARN("Cannot send flowMeterMPUStatus: {}", ret);
+        return;
+    }
+}

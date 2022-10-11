@@ -20,6 +20,9 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef __TS_MPU_VFD__
+#define __TS_MPU_VFD__
+
 #include <cRIO/MPU.h>
 
 namespace LSST {
@@ -29,6 +32,7 @@ namespace TS {
 /**
  * Glycol pump VFD (Variable Frequency Drive) control.
  * [Documentation](https://confluence.lsstcorp.org/display/LTS/Datasheets?preview=/154697856/154697879/VFD%20Users%20Guide.pdf).
+ * [Datasheets](https://confluence.lsstcorp.org/display/LTS/Datasheets).
  */
 class VFD : public cRIO::MPU {
 public:
@@ -69,3 +73,5 @@ public:
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
+
+#endif /* __TS_MPU_VFD__ */

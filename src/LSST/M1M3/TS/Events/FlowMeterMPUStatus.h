@@ -1,5 +1,5 @@
 /*
- * SAL commands
+ * Publish MPU Flow Meter Telemetry.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,46 +20,28 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Command_SAL
-#define _TS_Command_SAL
+#ifndef _TS_Event_FlowMeterMPUStatus_
+#define _TS_Event_FlowMeterMPUStatus_
 
-#include <TSPublisher.h>
 #include <SAL_MTM1M3TS.h>
-
-#include <cRIO/SAL/Command.h>
+#include <cRIO/MPUTelemetry.h>
+#include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace Commands {
+namespace Events {
 
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), start);
+class FlowMeterMPUStatus final : public MTM1M3TS_logevent_flowMeterMPUStatusC,
+                                 public cRIO::Singleton<FlowMeterMPUStatus> {
+public:
+    FlowMeterMPUStatus(token);
+    void send(LSST::cRIO::MPUTelemetry* telemetry);
+};
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), enable);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), disable);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), standby);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), exitControl);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setEngineeringMode);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), heaterFanDemand);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setMixingValve);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), pumpStart);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), pumpStop);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), pumpFrequency);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), pumpReset);
-
-}  // namespace Commands
+}  // namespace Events
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //! _TS_Command_SAL
+#endif /* _TS_Event_FlowMeterMPUStatus_ */

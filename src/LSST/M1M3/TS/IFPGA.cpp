@@ -32,6 +32,11 @@
 
 using namespace LSST::M1M3::TS;
 
+IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {
+    vfd = std::make_shared<VFD>(1, 100);
+    flowMeter = std::make_shared<FlowMeter>(2, 1);
+}
+
 IFPGA& IFPGA::get() {
 #ifdef SIMULATOR
     static SimulatedFPGA simulatedfpga;
@@ -77,6 +82,24 @@ void IFPGA::setPumpPower(bool on) {
     buf[0] = FPGAAddress::COOLANT_PUMP_ON;
     buf[1] = on;
     writeCommandFIFO(buf, 2, 10);
+}
+
+void IFPGA::pumpStartStop(bool start) {
+    vfd->clearCommanded();
+    vfd->presetHoldingRegister(0x2000, start ? 0x1a : 0x01);
+    mpuCommands(*vfd);
+}
+
+void IFPGA::pumpReset() {
+    vfd->clearCommanded();
+    vfd->presetHoldingRegister(0x2000, 0x08);
+    mpuCommands(*vfd);
+}
+
+void IFPGA::setPumpFrequency(float freq) {
+    vfd->clearCommanded();
+    vfd->presetHoldingRegister(0x2001, freq * 10);
+    mpuCommands(*vfd);
 }
 
 void IFPGA::setHeartbeat(bool heartbeat) {

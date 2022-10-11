@@ -71,12 +71,7 @@ protected:
     virtual ILCUnits getILCs(command_vec cmds) override;
 
 private:
-    void printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu) {
-        auto telemetry = dynamic_cast<IFPGA*>(getFPGA())->readMPUTelemetry(*mpu);
-        std::cout << name << std::endl
-                  << std::string(name.length(), '-') << std::endl
-                  << telemetry << std::endl;
-    };
+    void printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu);
 
     std::shared_ptr<FlowMeter> flowMeter;
     std::shared_ptr<VFD> vfd;
@@ -255,27 +250,22 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
 }
 
 int M1M3TScli::printPump(command_vec cmds) {
+    IFPGA* fpga = dynamic_cast<IFPGA*>(getFPGA());
     if (cmds.size() > 0) {
-        vfd->clearCommanded();
-
         if (cmds[0] == "stop") {
-            vfd->presetHoldingRegister(0x2000, 0x01);
-            getFPGA()->mpuCommands(*vfd);
+            fpga->pumpStartStop(false);
         } else if (cmds[0] == "start") {
-            vfd->presetHoldingRegister(0x2000, 0x1a);
-            getFPGA()->mpuCommands(*vfd);
+            fpga->pumpStartStop(true);
         } else if (cmds[0] == "reset") {
-            vfd->presetHoldingRegister(0x2000, 0x8);
-            getFPGA()->mpuCommands(*vfd);
+            fpga->pumpReset();
         } else if (cmds[0] == "freq") {
             size_t len;
-            uint16_t targetFreq = std::stoi(cmds[1], &len, 0);
+            uint16_t targetFreq = std::stod(cmds[1], &len);
             if (len != cmds[1].length()) {
                 std::cerr << "Invalid frequency: " << cmds[1] << std::endl;
                 return 1;
             }
-            vfd->presetHoldingRegister(0x2001, targetFreq);
-            getFPGA()->mpuCommands(*vfd);
+            fpga->setPumpFrequency(targetFreq);
         } else {
             dynamic_cast<IFPGA*>(getFPGA())->setPumpPower(onOff(cmds[0]));
             std::cout << "Turned pump " << cmds[0] << std::endl;
@@ -496,6 +486,11 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
         ret = 0;
     }
     return units;
+}
+
+void M1M3TScli::printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu) {
+    auto telemetry = dynamic_cast<IFPGA*>(getFPGA())->readMPUTelemetry(*mpu);
+    std::cout << name << std::endl << std::string(name.length(), '-') << std::endl << telemetry << std::endl;
 }
 
 void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,

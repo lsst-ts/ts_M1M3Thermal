@@ -20,13 +20,14 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <cmath>
+
+#include <spdlog/spdlog.h>
+
 #include <cRIO/ThermalILC.h>
 #include <TSPublisher.h>
 #include <IFPGA.h>
 #include <Telemetry/GlycolLoopTemperature.h>
-#include <spdlog/spdlog.h>
-
-#include <cmath>
 
 using namespace LSST::M1M3::TS;
 using namespace LSST::M1M3::TS::Telemetry;

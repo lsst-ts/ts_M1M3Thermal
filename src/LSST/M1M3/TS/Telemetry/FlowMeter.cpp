@@ -1,5 +1,5 @@
 /*
- * ThermalData telemetry handling class.
+ * Flow Meter telemetry handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,33 +20,39 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Telemetry_ThermalData_
-#define _TS_Telemetry_ThermalData_
+#include <cmath>
 
-#include <SAL_MTM1M3TS.h>
-#include <cRIO/Singleton.h>
+#include <spdlog/spdlog.h>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Telemetry {
+#include <IFPGA.h>
+#include <TSPublisher.h>
+#include <Telemetry/FlowMeter.h>
 
-class ThermalData final : MTM1M3TS_thermalDataC, public cRIO::Singleton<ThermalData> {
-public:
-    ThermalData(token);
+using namespace LSST::M1M3::TS::Telemetry;
 
-    void update(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
-                float absoluteTemperature);
+FlowMeter::FlowMeter(token) {
+    signalStrength = NAN;
+    flowRate = NAN;
+    netTotalizer = NAN;
+    positiveTotalizer = NAN;
+    negativeTotalizer = NAN;
+}
 
-    /**
-     * Sends updates through SAL/DDS.
-     */
-    void send();
-};
+void FlowMeter::update() {
+    auto flowMeter = IFPGA::get().flowMeter;
+    flowMeter->poll();
 
-}  // namespace Telemetry
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
+    signalStrength = flowMeter->getSignalStrength();
+    flowRate = flowMeter->getFlowRate();
+    netTotalizer = flowMeter->getNetTotalizer();
+    positiveTotalizer = flowMeter->getPositiveTotalizer();
+    negativeTotalizer = flowMeter->getNegativeTotalizer();
+}
 
-#endif  // !_TS_Telemetry_ThermalData_
+void FlowMeter::send() {
+    salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
+    if (ret != SAL__OK) {
+        SPDLOG_WARN("Cannot send FlowMeter: {}", ret);
+        return;
+    }
+}

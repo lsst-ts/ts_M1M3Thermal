@@ -129,3 +129,35 @@ void SAL_setMixingValve::execute() {
     ackComplete();
     SPDLOG_INFO("Changed mixing valve to {}", params.mixingValveTarget);
 }
+
+void SAL_pumpStart::execute() {
+    IFPGA::get().pumpStartStop(true);
+    ackComplete();
+    SPDLOG_INFO("Glycol pump started");
+}
+
+void SAL_pumpStop::execute() {
+    IFPGA::get().pumpStartStop(false);
+    ackComplete();
+    SPDLOG_INFO("Glycol pump stopped");
+}
+
+bool SAL_pumpFrequency::validate() {
+    if (params.targetFrequency < 0) {
+        SPDLOG_WARN("Target frequency must be bigger than 0: {}", params.targetFrequency);
+        return false;
+    }
+    return true;
+}
+
+void SAL_pumpFrequency::execute() {
+    IFPGA::get().setPumpFrequency(params.targetFrequency);
+    ackComplete();
+    SPDLOG_INFO("Changed pump target frequency to {}", params.targetFrequency);
+}
+
+void SAL_pumpReset::execute() {
+    IFPGA::get().pumpReset();
+    ackComplete();
+    SPDLOG_INFO("Pump reseted");
+}

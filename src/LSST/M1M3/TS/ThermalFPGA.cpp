@@ -136,8 +136,6 @@ LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
     len = ntohs(len);
     uint8_t data[len];
 
-    std::cout << "len" << len << std::endl;
-
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
                                    data, len, 1000, NULL));
