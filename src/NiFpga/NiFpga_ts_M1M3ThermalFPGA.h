@@ -23,7 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "55394A26508390FCB304C985E129FB4C";
+static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "B2BCB65ED487F59CADD36CBBAB0C2B59";
 
 #if NiFpga_Cpp
 extern "C"
@@ -61,6 +61,48 @@ typedef enum
 {
    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU64_TimestampControlFIFO = 2,
 } NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU64;
+
+#if !NiFpga_VxWorks
+
+/* Indicator: FlowMeterError */
+/* Use NiFpga_ReadArrayU8() to access FlowMeterError */
+const uint32_t NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_Resource = 0x18004;
+const uint32_t NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_PackedSizeInBytes = 5;
+
+typedef struct NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_Type{
+   NiFpga_Bool status;
+   int32_t code;
+}NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_Type;
+
+
+void NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_UnpackCluster(
+   const uint8_t* const packedData,
+   NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_Type* const destination);
+
+void NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_PackCluster(
+   uint8_t* const packedData,
+   const NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_Type* const source);
+
+/* Indicator: VFDError */
+/* Use NiFpga_ReadArrayU8() to access VFDError */
+const uint32_t NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_Resource = 0x18000;
+const uint32_t NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_PackedSizeInBytes = 5;
+
+typedef struct NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_Type{
+   NiFpga_Bool status;
+   int32_t code;
+}NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_Type;
+
+
+void NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_UnpackCluster(
+   const uint8_t* const packedData,
+   NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_Type* const destination);
+
+void NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_PackCluster(
+   uint8_t* const packedData,
+   const NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_Type* const source);
+
+#endif /* !NiFpga_VxWorks */
 
 
 #if NiFpga_Cpp

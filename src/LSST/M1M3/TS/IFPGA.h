@@ -72,6 +72,9 @@ public:
     float getMixingValvePosition();
     void setMixingValvePosition(float position);
 
+    virtual void getVFDError(bool& status, int32_t& code) = 0;
+    virtual void getFlowMeterError(bool& status, int32_t& code) = 0;
+
     uint32_t getSlot4DIs();
 
     void setFCUPower(bool on);

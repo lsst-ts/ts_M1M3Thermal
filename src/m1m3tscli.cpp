@@ -55,6 +55,7 @@ public:
     int mpuRead(command_vec cmds);
     int mpuTelemetry(command_vec cmds);
     int mpuTimeouts(command_vec cmds);
+    int mpuStatus(command_vec cmds);
     int mpuWrite(command_vec cmds);
     int printFlowMeter(command_vec cmds);
     int printPump(command_vec cmds);
@@ -112,6 +113,7 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                NEED_FPGA, "[mpu]", "Reads MPU telemetry");
     addCommand("mpu-timeouts", std::bind(&M1M3TScli::mpuTimeouts, this, std::placeholders::_1), "IIs?",
                NEED_FPGA, "<write-timeout> <read-timeout> [mpu..]", "Sets MPU timeouts");
+    addCommand("mpu-status", std::bind(&M1M3TScli::mpuStatus, this, std::placeholders::_1), "s", NEED_FPGA, "[mpu]", "Reads MPU status");
     addCommand("mpu-write", std::bind(&M1M3TScli::mpuWrite, this, std::placeholders::_1), "SII", NEED_FPGA,
                "<mpu> <register> <value>", "Writes give MPU registers");
     addCommand("flow", std::bind(&M1M3TScli::printFlowMeter, this, std::placeholders::_1), "", NEED_FPGA,
@@ -209,6 +211,19 @@ int M1M3TScli::mpuTimeouts(command_vec cmds) {
 
     return 0;
 }
+
+int M1M3TScli::mpuStatus(command_vec cmds) {
+    bool status;
+    int32_t code;
+    dynamic_cast<IFPGA*>(getFPGA())->getVFDError(status, code);
+    std::cout << "VFD " << status << ":" << code << std::endl;
+
+    dynamic_cast<IFPGA*>(getFPGA())->getFlowMeterError(status, code);
+    std::cout << "Flow meter " << status << ":" << code << std::endl;
+
+    return 0;
+}
+
 int M1M3TScli::mpuWrite(command_vec cmds) {
     std::shared_ptr<MPU> mpu = getMPU(cmds[0]);
     if (mpu == NULL) {
@@ -505,7 +520,8 @@ void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, floa
 
 M1M3TScli cli("M1M3TS", "M1M3 Thermal System Command Line Interface");
 
-void _printBufferU8(std::string prefix, uint8_t* buf, size_t len) {
+void _printBufferU8(std::string prefix, const uint8_t* buf, size_t len)
+{
     if (cli.getDebugLevel() == 0) {
         return;
     }
@@ -515,6 +531,11 @@ void _printBufferU8(std::string prefix, uint8_t* buf, size_t len) {
     CliApp::printHexBuffer(buf, len);
 
     std::cout << std::endl;
+}
+
+void _printBufferU8(std::string prefix, const std::vector<uint8_t> &buf)
+{
+    _printBufferU8(prefix, buf.data(), buf.size());
 }
 
 void _printBufferU16(std::string prefix, uint16_t* buf, size_t len) {
@@ -534,7 +555,7 @@ void _printBufferU16(std::string prefix, uint16_t* buf, size_t len) {
 }
 
 void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
-    _printBufferU8("MPU>", mpu.getCommandVector().data(), mpu.getCommandVector().size());
+    _printBufferU8("MPU>", mpu.getCommandVector());
     FPGAClass::writeMPUFIFO(mpu);
 }
 
