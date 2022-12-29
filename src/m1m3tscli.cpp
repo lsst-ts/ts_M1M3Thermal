@@ -241,7 +241,6 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
         return -1;
     }
 
-    mpu->clear(true);
     mpu->clearCommanded();
 
     uint16_t addrs = stoi(cmds[1], nullptr, 0);
@@ -256,7 +255,6 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 }
 
 int M1M3TScli::printFlowMeter(command_vec cmds) {
-    vfd->clear(true);
     flowMeter->clearCommanded();
 
     flowMeter->poll();
@@ -297,12 +295,11 @@ int M1M3TScli::printPump(command_vec cmds) {
         }
     }
 
-    vfd->clear(true);
     vfd->clearCommanded();
 
     vfd->poll();
 
-    getFPGA()->mpuCommands(*vfd);
+    getFPGA()->mpuCommands(*vfd, 1s);
 
     // status bits
     static const std::string status[16] = {"Ready",
