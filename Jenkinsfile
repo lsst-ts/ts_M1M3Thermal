@@ -38,7 +38,7 @@ node {
 
     stage('Building dev container')
     {
-        M1M3sim = docker.build("lsstts/mtm1m3_sim:" + env.BRANCH_NAME.replace("/", "_"), (params.noCache ? "--no-cache " : " ") + " --build-arg XML_BRANCH=$XML_BRANCH ts_m1m3thermal")
+        M1M3sim = docker.build("lsstts/mtm1m3_sim:" + env.BRANCH_NAME.replace("/", "_"), "--target crio-develop --build-arg XML_BRANCH=$XML_BRANCH " + (params.noCache ? "--no-cache " : " ") + "$WORKSPACE/ts_m1m3thermal")
     }
 
     stage("Running tests")
