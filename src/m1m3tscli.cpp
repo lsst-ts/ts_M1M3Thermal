@@ -107,8 +107,8 @@ protected:
 };
 
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
-    addCommand("mpu-read", std::bind(&M1M3TScli::mpuRead, this, std::placeholders::_1), "SI?", NEED_FPGA,
-               "<mpu> <register>..", "Reads given MPU registers");
+    addCommand("mpu-read", std::bind(&M1M3TScli::mpuRead, this, std::placeholders::_1), "SS?", NEED_FPGA,
+               "<mpu> <register[:length]>..", "Reads given MPU registers");
     addCommand("mpu-telemetry", std::bind(&M1M3TScli::mpuTelemetry, this, std::placeholders::_1), "s",
                NEED_FPGA, "[mpu]", "Reads MPU telemetry");
     addCommand("mpu-timeouts", std::bind(&M1M3TScli::mpuTimeouts, this, std::placeholders::_1), "IIs?",
@@ -162,22 +162,29 @@ int M1M3TScli::mpuRead(command_vec cmds) {
     vfd->clear(true);
     mpu->clearCommanded();
 
-    std::vector<uint16_t> registers;
+    std::vector<std::pair<uint16_t, uint8_t>> registers;
 
     for (size_t i = 1; i < cmds.size(); i++) {
-        registers.push_back(stoi(cmds[i], nullptr, 0));
+        auto sep = cmds[i].find(':');
+        if (sep != std::string::npos) {
+            registers.push_back(std::pair<uint16_t, uint8_t>(stoi(cmds[i], nullptr, 0), stoi(cmds[i].substr(sep + 1), nullptr, 0)));
+        } else {
+            registers.push_back(std::pair<uint16_t, uint8_t>(stoi(cmds[i], nullptr, 0), 1));
+        }
     }
 
     for (auto r : registers) {
-        mpu->readHoldingRegisters(r, 1, 255);
+        mpu->readHoldingRegisters(r.first, r.second, 255);
         mpu->clear(true);
     }
 
     getFPGA()->mpuCommands(*mpu);
 
     for (auto r : registers) {
-        uint16_t v = mpu->getRegister(r);
-        std::cout << fmt::format("{0:>5d} (0x{0:04x}): {1:d} (0x{1:x})", r, v) << std::endl;
+        for (int i = 0; i < r.second; i++) {
+            uint16_t v = mpu->getRegister(r.first + i);
+            std::cout << fmt::format("{0:>5d} (0x{0:04x}): {1:d} (0x{1:x})", r.first + i, v) << std::endl;
+        }
     }
 
     return 0;
