@@ -113,7 +113,8 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                NEED_FPGA, "[mpu]", "Reads MPU telemetry");
     addCommand("mpu-timeouts", std::bind(&M1M3TScli::mpuTimeouts, this, std::placeholders::_1), "IIs?",
                NEED_FPGA, "<write-timeout> <read-timeout> [mpu..]", "Sets MPU timeouts");
-    addCommand("mpu-status", std::bind(&M1M3TScli::mpuStatus, this, std::placeholders::_1), "s", NEED_FPGA, "[mpu]", "Reads MPU status");
+    addCommand("mpu-status", std::bind(&M1M3TScli::mpuStatus, this, std::placeholders::_1), "s", NEED_FPGA,
+               "[mpu]", "Reads MPU status");
     addCommand("mpu-write", std::bind(&M1M3TScli::mpuWrite, this, std::placeholders::_1), "SII", NEED_FPGA,
                "<mpu> <register> <value>", "Writes give MPU registers");
     addCommand("flow", std::bind(&M1M3TScli::printFlowMeter, this, std::placeholders::_1), "", NEED_FPGA,
@@ -167,7 +168,8 @@ int M1M3TScli::mpuRead(command_vec cmds) {
     for (size_t i = 1; i < cmds.size(); i++) {
         auto sep = cmds[i].find(':');
         if (sep != std::string::npos) {
-            registers.push_back(std::pair<uint16_t, uint8_t>(stoi(cmds[i], nullptr, 0), stoi(cmds[i].substr(sep + 1), nullptr, 0)));
+            registers.push_back(std::pair<uint16_t, uint8_t>(stoi(cmds[i], nullptr, 0),
+                                                             stoi(cmds[i].substr(sep + 1), nullptr, 0)));
         } else {
             registers.push_back(std::pair<uint16_t, uint8_t>(stoi(cmds[i], nullptr, 0), 1));
         }
@@ -259,7 +261,7 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
 
     flowMeter->poll();
 
-    getFPGA()->mpuCommands(*flowMeter);
+    getFPGA()->mpuCommands(*flowMeter, 2s);
 
     std::cout << std::setfill(' ') << std::fixed << std::setw(20)
               << "Signal Strength: " << flowMeter->getSignalStrength() << std::endl
@@ -527,8 +529,7 @@ void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, floa
 
 M1M3TScli cli("M1M3TS", "M1M3 Thermal System Command Line Interface");
 
-void _printBufferU8(std::string prefix, const uint8_t* buf, size_t len)
-{
+void _printBufferU8(std::string prefix, const uint8_t* buf, size_t len) {
     if (cli.getDebugLevel() == 0) {
         return;
     }
@@ -540,8 +541,7 @@ void _printBufferU8(std::string prefix, const uint8_t* buf, size_t len)
     std::cout << std::endl;
 }
 
-void _printBufferU8(std::string prefix, const std::vector<uint8_t> &buf)
-{
+void _printBufferU8(std::string prefix, const std::vector<uint8_t>& buf) {
     _printBufferU8(prefix, buf.data(), buf.size());
 }
 

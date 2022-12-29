@@ -205,8 +205,11 @@ void ThermalFPGA::processMPUResponse(MPU& mpu, uint8_t* data, uint16_t len) {
 }
 
 void ThermalFPGA::getVFDError(bool& status, int32_t& code) {
-    uint8_t packedData[NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_PackedSizeInBytes ];
-    NiThrowError(__PRETTY_FUNCTION__, NiFpga_ReadArrayU8(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_Resource, packedData, NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_PackedSizeInBytes));
+    uint8_t packedData[NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_PackedSizeInBytes];
+    NiThrowError(__PRETTY_FUNCTION__,
+                 NiFpga_ReadArrayU8(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_Resource,
+                                    packedData,
+                                    NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_PackedSizeInBytes));
 
     NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_Type vfdError;
     NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_UnpackCluster(packedData, &vfdError);
@@ -215,8 +218,12 @@ void ThermalFPGA::getVFDError(bool& status, int32_t& code) {
 }
 
 void ThermalFPGA::getFlowMeterError(bool& status, int32_t& code) {
-    uint8_t packedData[NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_PackedSizeInBytes ];
-    NiThrowError(__PRETTY_FUNCTION__, NiFpga_ReadArrayU8(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_Resource, packedData, NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_PackedSizeInBytes));
+    uint8_t packedData[NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_PackedSizeInBytes];
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_ReadArrayU8(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_Resource,
+                               packedData,
+                               NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_PackedSizeInBytes));
 
     NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_Type flowMeterError;
     NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_UnpackCluster(packedData, &flowMeterError);
