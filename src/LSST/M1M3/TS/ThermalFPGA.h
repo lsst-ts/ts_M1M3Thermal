@@ -55,6 +55,8 @@ public:
 
 protected:
     void processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len) override;
+    void getVFDError(bool& status, int32_t& code) override;
+    void getFlowMeterError(bool& status, int32_t& code) override;
 
 private:
     uint32_t _session;

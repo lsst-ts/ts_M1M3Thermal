@@ -2,5 +2,6 @@
 *.d
 *.o
 *.a
+*.ipk
 m1m3tscli
 ts-M1M3thermald

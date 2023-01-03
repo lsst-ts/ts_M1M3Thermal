@@ -52,6 +52,15 @@ public:
     void waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered = NULL) override {}
     void ackIrqs(uint32_t irqs) override {}
 
+    void getVFDError(bool& status, int32_t& code) override {
+        status = false;
+        code = 0;
+    }
+    void getFlowMeterError(bool& status, int32_t& code) override {
+        status = false;
+        code = 0;
+    }
+
 protected:
     void processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType, uint8_t networkNodeType,
                          uint8_t ilcSelectedOptions, uint8_t networkNodeOptions, uint8_t majorRev,

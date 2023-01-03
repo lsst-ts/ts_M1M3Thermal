@@ -29,6 +29,7 @@
 #include <Telemetry/FlowMeter.h>
 
 using namespace LSST::M1M3::TS::Telemetry;
+using namespace std::chrono_literals;
 
 FlowMeter::FlowMeter(token) {
     signalStrength = NAN;
@@ -40,7 +41,12 @@ FlowMeter::FlowMeter(token) {
 
 void FlowMeter::update() {
     auto flowMeter = IFPGA::get().flowMeter;
+
+    flowMeter->clearCommanded();
+
     flowMeter->poll();
+
+    IFPGA::get().mpuCommands(*flowMeter, 2s);
 
     signalStrength = flowMeter->getSignalStrength();
     flowRate = flowMeter->getFlowRate();

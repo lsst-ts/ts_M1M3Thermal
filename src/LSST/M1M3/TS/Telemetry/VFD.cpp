@@ -29,6 +29,7 @@
 #include <Telemetry/VFD.h>
 
 using namespace LSST::M1M3::TS::Telemetry;
+using namespace std::chrono_literals;
 
 VFD::VFD(token) {
     commandedFrequency = NAN;
@@ -42,6 +43,8 @@ VFD::VFD(token) {
 void VFD::update() {
     auto vfd = IFPGA::get().vfd;
     vfd->poll();
+
+    IFPGA::get().mpuCommands(*vfd, 1s);
 
     commandedFrequency = vfd->getCommandedFrequency();
     targetFrequency = vfd->getTargetFrequency();

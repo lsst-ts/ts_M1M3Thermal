@@ -55,6 +55,7 @@ public:
     int mpuRead(command_vec cmds);
     int mpuTelemetry(command_vec cmds);
     int mpuTimeouts(command_vec cmds);
+    int mpuStatus(command_vec cmds);
     int mpuWrite(command_vec cmds);
     int printFlowMeter(command_vec cmds);
     int printPump(command_vec cmds);
@@ -106,12 +107,14 @@ protected:
 };
 
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
-    addCommand("mpu-read", std::bind(&M1M3TScli::mpuRead, this, std::placeholders::_1), "SI?", NEED_FPGA,
-               "<mpu> <register>..", "Reads given MPU registers");
+    addCommand("mpu-read", std::bind(&M1M3TScli::mpuRead, this, std::placeholders::_1), "SS?", NEED_FPGA,
+               "<mpu> <register[:length]>..", "Reads given MPU registers");
     addCommand("mpu-telemetry", std::bind(&M1M3TScli::mpuTelemetry, this, std::placeholders::_1), "s",
                NEED_FPGA, "[mpu]", "Reads MPU telemetry");
     addCommand("mpu-timeouts", std::bind(&M1M3TScli::mpuTimeouts, this, std::placeholders::_1), "IIs?",
                NEED_FPGA, "<write-timeout> <read-timeout> [mpu..]", "Sets MPU timeouts");
+    addCommand("mpu-status", std::bind(&M1M3TScli::mpuStatus, this, std::placeholders::_1), "s", NEED_FPGA,
+               "[mpu]", "Reads MPU status");
     addCommand("mpu-write", std::bind(&M1M3TScli::mpuWrite, this, std::placeholders::_1), "SII", NEED_FPGA,
                "<mpu> <register> <value>", "Writes give MPU registers");
     addCommand("flow", std::bind(&M1M3TScli::printFlowMeter, this, std::placeholders::_1), "", NEED_FPGA,
@@ -160,22 +163,30 @@ int M1M3TScli::mpuRead(command_vec cmds) {
     vfd->clear(true);
     mpu->clearCommanded();
 
-    std::vector<uint16_t> registers;
+    std::vector<std::pair<uint16_t, uint8_t>> registers;
 
     for (size_t i = 1; i < cmds.size(); i++) {
-        registers.push_back(stoi(cmds[i], nullptr, 0));
+        auto sep = cmds[i].find(':');
+        if (sep != std::string::npos) {
+            registers.push_back(std::pair<uint16_t, uint8_t>(stoi(cmds[i], nullptr, 0),
+                                                             stoi(cmds[i].substr(sep + 1), nullptr, 0)));
+        } else {
+            registers.push_back(std::pair<uint16_t, uint8_t>(stoi(cmds[i], nullptr, 0), 1));
+        }
     }
 
     for (auto r : registers) {
-        mpu->readHoldingRegisters(r, 1, 255);
+        mpu->readHoldingRegisters(r.first, r.second, 255);
         mpu->clear(true);
     }
 
     getFPGA()->mpuCommands(*mpu);
 
     for (auto r : registers) {
-        uint16_t v = mpu->getRegister(r);
-        std::cout << fmt::format("{0:>5d} (0x{0:04x}): {1:d} (0x{1:x})", r, v) << std::endl;
+        for (int i = 0; i < r.second; i++) {
+            uint16_t v = mpu->getRegister(r.first + i);
+            std::cout << fmt::format("{0:>5d} (0x{0:04x}): {1:d} (0x{1:x})", r.first + i, v) << std::endl;
+        }
     }
 
     return 0;
@@ -209,6 +220,19 @@ int M1M3TScli::mpuTimeouts(command_vec cmds) {
 
     return 0;
 }
+
+int M1M3TScli::mpuStatus(command_vec cmds) {
+    bool status;
+    int32_t code;
+    dynamic_cast<IFPGA*>(getFPGA())->getVFDError(status, code);
+    std::cout << "VFD " << status << ":" << code << std::endl;
+
+    dynamic_cast<IFPGA*>(getFPGA())->getFlowMeterError(status, code);
+    std::cout << "Flow meter " << status << ":" << code << std::endl;
+
+    return 0;
+}
+
 int M1M3TScli::mpuWrite(command_vec cmds) {
     std::shared_ptr<MPU> mpu = getMPU(cmds[0]);
     if (mpu == NULL) {
@@ -217,7 +241,6 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
         return -1;
     }
 
-    mpu->clear(true);
     mpu->clearCommanded();
 
     uint16_t addrs = stoi(cmds[1], nullptr, 0);
@@ -232,12 +255,11 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 }
 
 int M1M3TScli::printFlowMeter(command_vec cmds) {
-    vfd->clear(true);
     flowMeter->clearCommanded();
 
     flowMeter->poll();
 
-    getFPGA()->mpuCommands(*flowMeter);
+    getFPGA()->mpuCommands(*flowMeter, 2s);
 
     std::cout << std::setfill(' ') << std::fixed << std::setw(20)
               << "Signal Strength: " << flowMeter->getSignalStrength() << std::endl
@@ -273,12 +295,11 @@ int M1M3TScli::printPump(command_vec cmds) {
         }
     }
 
-    vfd->clear(true);
     vfd->clearCommanded();
 
     vfd->poll();
 
-    getFPGA()->mpuCommands(*vfd);
+    getFPGA()->mpuCommands(*vfd, 1s);
 
     // status bits
     static const std::string status[16] = {"Ready",
@@ -505,7 +526,7 @@ void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, floa
 
 M1M3TScli cli("M1M3TS", "M1M3 Thermal System Command Line Interface");
 
-void _printBufferU8(std::string prefix, uint8_t* buf, size_t len) {
+void _printBufferU8(std::string prefix, const uint8_t* buf, size_t len) {
     if (cli.getDebugLevel() == 0) {
         return;
     }
@@ -515,6 +536,10 @@ void _printBufferU8(std::string prefix, uint8_t* buf, size_t len) {
     CliApp::printHexBuffer(buf, len);
 
     std::cout << std::endl;
+}
+
+void _printBufferU8(std::string prefix, const std::vector<uint8_t>& buf) {
+    _printBufferU8(prefix, buf.data(), buf.size());
 }
 
 void _printBufferU16(std::string prefix, uint16_t* buf, size_t len) {
@@ -534,7 +559,7 @@ void _printBufferU16(std::string prefix, uint16_t* buf, size_t len) {
 }
 
 void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
-    _printBufferU8("MPU>", mpu.getCommandVector().data(), mpu.getCommandVector().size());
+    _printBufferU8("MPU>", mpu.getCommandVector());
     FPGAClass::writeMPUFIFO(mpu);
 }
 

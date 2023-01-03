@@ -20,35 +20,36 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <MPU/FlowMeter.h>
 #include <endian.h>
+
+#include <MPU/FlowMeter.h>
 
 using namespace LSST::M1M3::TS;
 
-void FlowMeter::poll() { readHoldingRegisters(199, 10, 255); }
+void FlowMeter::poll() {
+    readHoldingRegisters(1000, 4, 255);
+    readHoldingRegisters(2500, 6, 255);
+    readHoldingRegisters(5500, 1, 255);
+}
 
 float FlowMeter::_getFloatValue(uint16_t reg) {
     union {
         uint16_t data[2];
-        uint32_t d32;
         float dfloat;
     } buffer;
-    buffer.data[0] = getRegister(reg);
-    buffer.data[1] = getRegister(reg + 1);
-    buffer.d32 = le32toh(buffer.d32);
+    buffer.data[0] = getRegister(reg + 1);
+    buffer.data[1] = getRegister(reg);
     return buffer.dfloat;
 }
 
 double FlowMeter::_getDoubleValue(uint16_t reg) {
     union {
         uint16_t data[4];
-        uint64_t d64;
         double ddouble;
     } buffer;
 
     for (int i = 0; i < 4; i++) {
-        buffer.data[i] = getRegister(reg + i);
+        buffer.data[i] = getRegister(reg + 4 - i);
     }
-    buffer.d64 = le64toh(buffer.d64);
     return buffer.ddouble;
 }
