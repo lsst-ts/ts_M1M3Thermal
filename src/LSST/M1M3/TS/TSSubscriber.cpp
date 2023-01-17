@@ -53,6 +53,11 @@ TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
     ADD_SAL_COMMAND(setEngineeringMode);
     ADD_SAL_COMMAND(heaterFanDemand);
     ADD_SAL_COMMAND(setMixingValve);
+    ADD_SAL_COMMAND(coolantPumpPower);
+    ADD_SAL_COMMAND(coolantPumpStart);
+    ADD_SAL_COMMAND(coolantPumpStop);
+    ADD_SAL_COMMAND(coolantPumpFrequency);
+    ADD_SAL_COMMAND(coolantPumpReset);
 
     _commands["setLogLevel"] = [m1m3tsSAL]() {
         MTM1M3TS_command_setLogLevelC data;

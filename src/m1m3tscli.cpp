@@ -275,11 +275,11 @@ int M1M3TScli::printPump(command_vec cmds) {
     IFPGA* fpga = dynamic_cast<IFPGA*>(getFPGA());
     if (cmds.size() > 0) {
         if (cmds[0] == "stop") {
-            fpga->pumpStartStop(false);
+            fpga->coolantPumpStartStop(false);
         } else if (cmds[0] == "start") {
-            fpga->pumpStartStop(true);
+            fpga->coolantPumpStartStop(true);
         } else if (cmds[0] == "reset") {
-            fpga->pumpReset();
+            fpga->coolantPumpReset();
         } else if (cmds[0] == "freq") {
             size_t len;
             uint16_t targetFreq = std::stod(cmds[1], &len);
@@ -287,9 +287,9 @@ int M1M3TScli::printPump(command_vec cmds) {
                 std::cerr << "Invalid frequency: " << cmds[1] << std::endl;
                 return 1;
             }
-            fpga->setPumpFrequency(targetFreq);
+            fpga->setCoolantPumpFrequency(targetFreq);
         } else {
-            dynamic_cast<IFPGA*>(getFPGA())->setPumpPower(onOff(cmds[0]));
+            dynamic_cast<IFPGA*>(getFPGA())->setCoolantPumpPower(onOff(cmds[0]));
             std::cout << "Turned pump " << cmds[0] << std::endl;
             return 0;
         }
