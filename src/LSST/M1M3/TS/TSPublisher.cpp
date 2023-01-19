@@ -20,11 +20,13 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <TSPublisher.h>
-
 #include <spdlog/spdlog.h>
 
+#include <TSPublisher.h>
+
 using namespace LSST::M1M3::TS;
+
+extern const char* VERSION;
 
 TSPublisher::TSPublisher(token) { _logLevel.level = -1; }
 
