@@ -20,9 +20,9 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <Events/SummaryState.h>
-
 #include <spdlog/fmt/fmt.h>
+
+#include <Events/SummaryState.h>
 
 using namespace LSST::M1M3::TS::Events;
 using namespace MTM1M3TS;

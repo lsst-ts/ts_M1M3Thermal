@@ -4,9 +4,6 @@ all: libM1M3TS.a
 
 .PHONY: clean force
 
-VERSION := $(shell git describe --tags --dirty 2>/dev/null || echo "unknown:non-git")
-GIT_HASH := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown-non-git")
-
 version.c: force
 	${co}grep -qsF "VERSION=\"$(VERSION)\"" version.c \
 	|| echo "[VER] version $(VERSION) git hash $(GIT_HASH)" && \

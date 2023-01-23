@@ -1,5 +1,5 @@
 /*
- * EnabledILCs event.
+ * Publish MPU Glycol Pump status.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,38 +20,31 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <spdlog/spdlog.h>
+#ifndef _TS_Event_GlycolPumpStatus_
+#define _TS_Event_GlycolPumpStatus_
 
-#include <cRIO/ThermalILC.h>
-#include <TSPublisher.h>
-#include <Events/EnabledILC.h>
+#include <SAL_MTM1M3TS.h>
+#include <cRIO/Singleton.h>
 
-using namespace LSST::M1M3::TS;
-using namespace LSST::M1M3::TS::Events;
+namespace LSST {
+namespace M1M3 {
+namespace TS {
+namespace Events {
 
-EnabledILC::EnabledILC(token) : _updated(true) {
-    for (int i = 0; i < LSST::cRIO::NUM_TS_ILC; i++) {
-        enabled[i] = true;
-    }
-}
+class GlycolPumpStatus final : MTM1M3TS_logevent_glycolPumpStatusC, public cRIO::Singleton<GlycolPumpStatus> {
+public:
+    GlycolPumpStatus(token);
 
-void EnabledILC::setEnabled(uint8_t ilc, bool newState) {
-    if (newState != enabled[ilc]) {
-        _updated = true;
-        enabled[ilc] = newState;
-    }
-}
+    void update();
 
-bool EnabledILC::isEnabled(uint8_t ilc) { return enabled[ilc]; }
+private:
+    uint16_t _last_status;
+    uint16_t _last_errorCode;
+};
 
-void EnabledILC::send() {
-    if (_updated == false) {
-        return;
-    }
-    salReturn ret = TSPublisher::SAL()->putSample_logevent_enabledILC(this);
-    if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot send enabledILC: {}", ret);
-        return;
-    }
-    _updated = false;
-}
+}  // namespace Events
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST
+
+#endif  //!_TS_Event_GlycolPumpStatus_

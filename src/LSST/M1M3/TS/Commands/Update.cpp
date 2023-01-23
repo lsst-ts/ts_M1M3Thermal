@@ -36,6 +36,7 @@
 #include "Telemetry/GlycolLoopTemperature.h"
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
+#include "Events/GlycolPumpStatus.h"
 
 using namespace LSST::M1M3::TS::Commands;
 
@@ -108,6 +109,7 @@ void Update::_sendVFD() {
     try {
         Telemetry::VFD::instance().update();
         Telemetry::VFD::instance().send();
+        Events::GlycolPumpStatus::instance().update();
     } catch (std::exception &e) {
         SPDLOG_WARN("Cannot poll VFD: {}", e.what());
     }
