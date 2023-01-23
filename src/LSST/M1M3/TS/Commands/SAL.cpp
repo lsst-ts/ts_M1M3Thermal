@@ -135,7 +135,7 @@ bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance
 void SAL_coolantPumpPower::execute() {
     IFPGA::get().setCoolantPumpPower(params.power);
     ackComplete();
-    SPDLOG_INFO("Glycol coolant pump powered {}", params.power);
+    SPDLOG_INFO("Glycol coolant pump powered {}", params.power ? "on" : "off");
 }
 
 void SAL_coolantPumpStart::execute() {
