@@ -35,5 +35,5 @@ endif
 
 LIBS_FLAGS += -L"${SAL_WORK_DIR}/lib" -L"${OSPL_HOME}/lib" -L"${LSST_SDK_INSTALL}/lib"
 
-VERSION := $(shell git describe --tags --dirty 2>/dev/null || echo "unknown:non-git")
+VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "unknown:non-git")
 GIT_HASH := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown-non-git")

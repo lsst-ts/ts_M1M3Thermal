@@ -323,7 +323,8 @@ int M1M3TScli::printPump(command_vec cmds) {
 
     std::cout << std::setfill(' ') << std::setw(20) << "Status: "
               << "0x" << std::hex << vfd->getStatus() << std::endl
-              << std::setw(20) << "Commanded Freq.: " << std::dec << vfd->getCommandedFrequency() << std::endl
+              << std::setw(20) << "Commanded Freq.: " << std::fixed << std::setprecision(2)
+              << vfd->getCommandedFrequency() << std::endl
               << std::setw(20) << "Vel./Pos. Bits: " << std::hex << bits << std::dec << std::endl;
 
     for (int i = 0; i < 16; i++) {
@@ -333,11 +334,13 @@ int M1M3TScli::printPump(command_vec cmds) {
     }
 
     std::cout << std::setw(20) << "Drive Error Codes: " << vfd->getDriveErrorCodes() << std::endl
-              << std::setw(20) << "Target Frequency: " << std::dec << vfd->getTargetFrequency() << std::endl
+              << std::setw(20) << "Target Frequency: " << std::fixed << std::setprecision(2)
+              << vfd->getTargetFrequency() << std::endl
               << std::setw(20) << "Output Frequency: " << vfd->getOutputFrequency() << std::endl
               << std::setw(20) << "Output Current: " << vfd->getOutputCurrent() << std::endl
-              << std::setw(20) << "DC Bus Voltage: " << vfd->getDCBusVoltage() << std::endl
-              << std::setw(20) << "Output Voltage: " << vfd->getOutputVoltage() << std::endl
+              << std::setw(20) << "DC Bus Voltage: " << std::dec << vfd->getDCBusVoltage() << std::endl
+              << std::setw(20) << "Output Voltage: " << std::fixed << std::setprecision(1)
+              << vfd->getOutputVoltage() << std::endl
               << std::endl;
     return 0;
 }

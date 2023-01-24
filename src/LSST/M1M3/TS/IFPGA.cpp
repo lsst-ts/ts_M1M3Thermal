@@ -98,7 +98,7 @@ void IFPGA::coolantPumpReset() {
 
 void IFPGA::setCoolantPumpFrequency(float freq) {
     vfd->clearCommanded();
-    vfd->presetHoldingRegister(0x2001, freq * 10);
+    vfd->presetHoldingRegister(0x2001, freq * 100.0f);
     mpuCommands(*vfd);
 }
 
