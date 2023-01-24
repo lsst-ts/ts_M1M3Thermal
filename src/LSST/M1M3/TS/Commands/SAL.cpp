@@ -127,7 +127,7 @@ void SAL_setMixingValve::execute() {
     IFPGA::get().setMixingValvePosition(
             Settings::MixingValve::instance().percentsToCommanded(params.mixingValveTarget));
     ackComplete();
-    SPDLOG_INFO("Changed mixing valve to {}", params.mixingValveTarget);
+    SPDLOG_INFO("Changed mixing valve to {:0.01f}", params.mixingValveTarget);
 }
 
 bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().isEnabled(); }
@@ -152,7 +152,7 @@ void SAL_coolantPumpStop::execute() {
 
 bool SAL_coolantPumpFrequency::validate() {
     if (params.targetFrequency < 0) {
-        SPDLOG_WARN("Target frequency must be bigger than 0: {}", params.targetFrequency);
+        SPDLOG_WARN("Target frequency must be bigger than 0, was {:+0.02f}", params.targetFrequency);
         return false;
     }
     return true;
@@ -161,7 +161,7 @@ bool SAL_coolantPumpFrequency::validate() {
 void SAL_coolantPumpFrequency::execute() {
     IFPGA::get().setCoolantPumpFrequency(params.targetFrequency);
     ackComplete();
-    SPDLOG_INFO("Changed coolant pump target frequency to {}", params.targetFrequency);
+    SPDLOG_INFO("Changed coolant pump target frequency to {:0.02f}", params.targetFrequency);
 }
 
 void SAL_coolantPumpReset::execute() {
