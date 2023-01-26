@@ -20,6 +20,17 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <getopt.h>
+#include <csignal>
+
+#include <chrono>
+#include <thread>
+
+#include <spdlog/spdlog.h>
+#include <spdlog/async.h>
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/daily_file_sink.h"
+
 #ifdef SIMULATOR
 #include <SimulatedFPGA.h>
 #else
@@ -46,20 +57,10 @@
 
 #include <SAL_MTM1M3TS.h>
 
-#include <getopt.h>
-#include <csignal>
-
-#include <chrono>
-#include <thread>
-
-#include <spdlog/spdlog.h>
-#include <spdlog/async.h>
-#include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/sinks/daily_file_sink.h"
-
+using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
 
-using namespace std::chrono_literals;
+extern const char* VERSION;
 
 class M1M3thermald : public LSST::cRIO::CSC {
 public:

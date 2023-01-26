@@ -42,6 +42,9 @@ VFD::VFD(token) {
 
 void VFD::update() {
     auto vfd = IFPGA::get().vfd;
+
+    vfd->clearCommanded();
+
     vfd->poll();
 
     IFPGA::get().mpuCommands(*vfd, 1s);

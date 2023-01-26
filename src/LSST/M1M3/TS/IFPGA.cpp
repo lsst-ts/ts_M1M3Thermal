@@ -77,28 +77,28 @@ void IFPGA::setFCUPower(bool on) {
     writeCommandFIFO(buf, 2, 10);
 }
 
-void IFPGA::setPumpPower(bool on) {
+void IFPGA::setCoolantPumpPower(bool on) {
     uint16_t buf[2];
     buf[0] = FPGAAddress::COOLANT_PUMP_ON;
     buf[1] = on;
     writeCommandFIFO(buf, 2, 10);
 }
 
-void IFPGA::pumpStartStop(bool start) {
+void IFPGA::coolantPumpStartStop(bool start) {
     vfd->clearCommanded();
     vfd->presetHoldingRegister(0x2000, start ? 0x1a : 0x01);
     mpuCommands(*vfd);
 }
 
-void IFPGA::pumpReset() {
+void IFPGA::coolantPumpReset() {
     vfd->clearCommanded();
     vfd->presetHoldingRegister(0x2000, 0x08);
     mpuCommands(*vfd);
 }
 
-void IFPGA::setPumpFrequency(float freq) {
+void IFPGA::setCoolantPumpFrequency(float freq) {
     vfd->clearCommanded();
-    vfd->presetHoldingRegister(0x2001, freq * 10);
+    vfd->presetHoldingRegister(0x2001, freq * 100.0f);
     mpuCommands(*vfd);
 }
 

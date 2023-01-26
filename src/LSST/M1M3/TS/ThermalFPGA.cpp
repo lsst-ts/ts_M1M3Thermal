@@ -52,7 +52,7 @@ void ThermalFPGA::initialize() {
 
 void ThermalFPGA::open() {
     SPDLOG_DEBUG("ThermalFPGA: open()");
-    NiOpen("/var/lib/ts-M1M3thermal", NiFpga_ts_M1M3ThermalFPGA, "RIO0", 0, &(_session));
+    NiOpen("/var/lib/M1M3TS", NiFpga_ts_M1M3ThermalFPGA, "RIO0", 0, &(_session));
     NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Abort", NiFpga_Abort(_session));
     NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Download", NiFpga_Download(_session));
     NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Reset", NiFpga_Reset(_session));

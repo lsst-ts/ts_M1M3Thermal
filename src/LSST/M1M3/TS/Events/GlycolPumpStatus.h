@@ -1,5 +1,5 @@
 /*
- * SAL commands
+ * Publish MPU Glycol Pump status.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,48 +20,31 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Command_SAL
-#define _TS_Command_SAL
+#ifndef _TS_Event_GlycolPumpStatus_
+#define _TS_Event_GlycolPumpStatus_
 
-#include <TSPublisher.h>
 #include <SAL_MTM1M3TS.h>
-
-#include <cRIO/SAL/Command.h>
+#include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace Commands {
+namespace Events {
 
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), start);
+class GlycolPumpStatus final : MTM1M3TS_logevent_glycolPumpStatusC, public cRIO::Singleton<GlycolPumpStatus> {
+public:
+    GlycolPumpStatus(token);
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), enable);
+    void update();
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), disable);
+private:
+    uint16_t _last_status;
+    uint16_t _last_errorCode;
+};
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), standby);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), exitControl);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setEngineeringMode);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), heaterFanDemand);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setMixingValve);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), coolantPumpPower);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), coolantPumpStart);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), coolantPumpStop);
-
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), coolantPumpFrequency);
-
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), coolantPumpReset);
-
-}  // namespace Commands
+}  // namespace Events
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //! _TS_Command_SAL
+#endif  //!_TS_Event_GlycolPumpStatus_

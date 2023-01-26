@@ -78,11 +78,11 @@ public:
     uint32_t getSlot4DIs();
 
     void setFCUPower(bool on);
-    void setPumpPower(bool on);
+    void setCoolantPumpPower(bool on);
 
-    void pumpStartStop(bool start);
-    void pumpReset();
-    void setPumpFrequency(float freq);
+    void coolantPumpStartStop(bool start);
+    void coolantPumpReset();
+    void setCoolantPumpFrequency(float freq);
 
     void setHeartbeat(bool heartbeat);
 

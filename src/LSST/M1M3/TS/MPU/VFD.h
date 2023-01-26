@@ -41,15 +41,15 @@ public:
     void poll();
 
     uint16_t getStatus() { return getRegister(0x2000); }
-    uint16_t getCommandedFrequency() { return getRegister(0x2001); }
+    float getCommandedFrequency() { return getRegister(0x2001) / 100.0f; }
 
     uint16_t getVelocityPositionBits() { return getRegister(0x2100); }
     uint16_t getDriveErrorCodes() { return getRegister(0x2101); }
-    uint16_t getTargetFrequency() { return getRegister(0x2102); }
-    uint16_t getOutputFrequency() { return getRegister(0x2103); }
-    uint16_t getOutputCurrent() { return getRegister(0x2104); }
+    float getTargetFrequency() { return getRegister(0x2102) / 100.0f; }
+    float getOutputFrequency() { return getRegister(0x2103) / 100.0f; }
+    float getOutputCurrent() { return getRegister(0x2104) / 100.0f; }
     uint16_t getDCBusVoltage() { return getRegister(0x2105); }
-    uint16_t getOutputVoltage() { return getRegister(0x2106); }
+    float getOutputVoltage() { return getRegister(0x2106) / 10.0f; }
 
     void readParameters() { readHoldingRegisters(1, 50); }
 

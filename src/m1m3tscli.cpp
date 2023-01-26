@@ -275,11 +275,11 @@ int M1M3TScli::printPump(command_vec cmds) {
     IFPGA* fpga = dynamic_cast<IFPGA*>(getFPGA());
     if (cmds.size() > 0) {
         if (cmds[0] == "stop") {
-            fpga->pumpStartStop(false);
+            fpga->coolantPumpStartStop(false);
         } else if (cmds[0] == "start") {
-            fpga->pumpStartStop(true);
+            fpga->coolantPumpStartStop(true);
         } else if (cmds[0] == "reset") {
-            fpga->pumpReset();
+            fpga->coolantPumpReset();
         } else if (cmds[0] == "freq") {
             size_t len;
             uint16_t targetFreq = std::stod(cmds[1], &len);
@@ -287,9 +287,9 @@ int M1M3TScli::printPump(command_vec cmds) {
                 std::cerr << "Invalid frequency: " << cmds[1] << std::endl;
                 return 1;
             }
-            fpga->setPumpFrequency(targetFreq);
+            fpga->setCoolantPumpFrequency(targetFreq);
         } else {
-            dynamic_cast<IFPGA*>(getFPGA())->setPumpPower(onOff(cmds[0]));
+            dynamic_cast<IFPGA*>(getFPGA())->setCoolantPumpPower(onOff(cmds[0]));
             std::cout << "Turned pump " << cmds[0] << std::endl;
             return 0;
         }
@@ -323,7 +323,8 @@ int M1M3TScli::printPump(command_vec cmds) {
 
     std::cout << std::setfill(' ') << std::setw(20) << "Status: "
               << "0x" << std::hex << vfd->getStatus() << std::endl
-              << std::setw(20) << "Commanded Freq.: " << std::dec << vfd->getCommandedFrequency() << std::endl
+              << std::setw(20) << "Commanded Freq.: " << std::fixed << std::setprecision(2)
+              << vfd->getCommandedFrequency() << std::endl
               << std::setw(20) << "Vel./Pos. Bits: " << std::hex << bits << std::dec << std::endl;
 
     for (int i = 0; i < 16; i++) {
@@ -333,11 +334,13 @@ int M1M3TScli::printPump(command_vec cmds) {
     }
 
     std::cout << std::setw(20) << "Drive Error Codes: " << vfd->getDriveErrorCodes() << std::endl
-              << std::setw(20) << "Target Frequency: " << std::dec << vfd->getTargetFrequency() << std::endl
+              << std::setw(20) << "Target Frequency: " << std::fixed << std::setprecision(2)
+              << vfd->getTargetFrequency() << std::endl
               << std::setw(20) << "Output Frequency: " << vfd->getOutputFrequency() << std::endl
               << std::setw(20) << "Output Current: " << vfd->getOutputCurrent() << std::endl
-              << std::setw(20) << "DC Bus Voltage: " << vfd->getDCBusVoltage() << std::endl
-              << std::setw(20) << "Output Voltage: " << vfd->getOutputVoltage() << std::endl
+              << std::setw(20) << "DC Bus Voltage: " << std::dec << vfd->getDCBusVoltage() << std::endl
+              << std::setw(20) << "Output Voltage: " << std::fixed << std::setprecision(1)
+              << vfd->getOutputVoltage() << std::endl
               << std::endl;
     return 0;
 }

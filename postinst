@@ -1,6 +1,6 @@
 #!/bin/sh
 useradd -r -U m1m3
-chown -R m1m3:m1m3 /var/lib/ts-M1M3thermal/*.lvbitx
+chown -R m1m3:m1m3 /var/lib/M1M3TS/*.lvbitx
 mkdir -p /var/log/m1m3
 chown -R m1m3:m1m3 /var/log/m1m3
 update-rc.d ts-M1M3thermal defaults

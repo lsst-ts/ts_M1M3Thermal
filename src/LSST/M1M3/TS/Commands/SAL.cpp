@@ -124,40 +124,48 @@ bool SAL_setMixingValve::validate() {
 }
 
 void SAL_setMixingValve::execute() {
-    IFPGA::get().setMixingValvePosition(
-            Settings::MixingValve::instance().percentsToCommanded(params.mixingValveTarget));
+    float target = Settings::MixingValve::instance().percentsToCommanded(params.mixingValveTarget);
+    IFPGA::get().setMixingValvePosition(target);
     ackComplete();
-    SPDLOG_INFO("Changed mixing valve to {}", params.mixingValveTarget);
+    SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.02})", params.mixingValveTarget, target);
 }
 
-void SAL_pumpStart::execute() {
-    IFPGA::get().pumpStartStop(true);
+bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().isEnabled(); }
+
+void SAL_coolantPumpPower::execute() {
+    IFPGA::get().setCoolantPumpPower(params.power);
     ackComplete();
-    SPDLOG_INFO("Glycol pump started");
+    SPDLOG_INFO("Glycol coolant pump powered {}", params.power ? "on" : "off");
 }
 
-void SAL_pumpStop::execute() {
-    IFPGA::get().pumpStartStop(false);
+void SAL_coolantPumpStart::execute() {
+    IFPGA::get().coolantPumpStartStop(true);
     ackComplete();
-    SPDLOG_INFO("Glycol pump stopped");
+    SPDLOG_INFO("Glycol coolant pump started");
 }
 
-bool SAL_pumpFrequency::validate() {
+void SAL_coolantPumpStop::execute() {
+    IFPGA::get().coolantPumpStartStop(false);
+    ackComplete();
+    SPDLOG_INFO("Glycol coolant pump stopped");
+}
+
+bool SAL_coolantPumpFrequency::validate() {
     if (params.targetFrequency < 0) {
-        SPDLOG_WARN("Target frequency must be bigger than 0: {}", params.targetFrequency);
+        SPDLOG_WARN("Target frequency must be bigger than 0 Hz, was {:+0.02f} Hz", params.targetFrequency);
         return false;
     }
     return true;
 }
 
-void SAL_pumpFrequency::execute() {
-    IFPGA::get().setPumpFrequency(params.targetFrequency);
+void SAL_coolantPumpFrequency::execute() {
+    IFPGA::get().setCoolantPumpFrequency(params.targetFrequency);
     ackComplete();
-    SPDLOG_INFO("Changed pump target frequency to {}", params.targetFrequency);
+    SPDLOG_INFO("Changed coolant pump target frequency to {:0.02f} Hz", params.targetFrequency);
 }
 
-void SAL_pumpReset::execute() {
-    IFPGA::get().pumpReset();
+void SAL_coolantPumpReset::execute() {
+    IFPGA::get().coolantPumpReset();
     ackComplete();
-    SPDLOG_INFO("Pump reseted");
+    SPDLOG_INFO("Coolant pump reseted");
 }

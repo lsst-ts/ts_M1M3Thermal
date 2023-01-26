@@ -2,17 +2,23 @@ include ../Makefile.inc
 
 all: libM1M3TS.a
 
+.PHONY: clean force
+
+version.c: force
+	${co}grep -qsF "VERSION=\"$(VERSION)\"" version.c \
+	|| echo "[VER] version $(VERSION) git hash $(GIT_HASH)" && \
+	printf >version.c 'const char *VERSION="%s";\nconst char *GIT_HASH="%s";' $(VERSION) $(GIT_HASH)
+
 CFLAGS += ${SAL_CPPFLAGS} \
 	-I../../ts_cRIOcpp/include \
 	-ILSST/M1M3/TS \
 	-INiFpga \
-	-DVERSION="\"$(VERSION)\""
 
 C_SRCS = $(shell find LSST NiFpga -name '*.c')
 LIB_CPP_SRCS = $(shell find LSST NiFpga -name '*.cpp') 
 ALL_CPP_SRCS = $(LIB_CPP_SRCS) $(shell ls *.cpp)
 
-LIB_OBJS = $(patsubst %.c,%.c.o,$(C_SRCS)) $(patsubst %.cpp,%.cpp.o,$(LIB_CPP_SRCS))
+LIB_OBJS = $(patsubst %.c,%.c.o,$(C_SRCS)) $(patsubst %.cpp,%.cpp.o,$(LIB_CPP_SRCS)) version.c.o
 ALL_OBJS = $(patsubst %.c,%.c.o,$(C_SRCS)) $(patsubst %.cpp,%.cpp.o,$(ALL_CPP_SRCS))
 
 C_DEPS = $(patsubst %.c,%.c.d,$(C_SRCS))
@@ -29,7 +35,7 @@ libM1M3TS.a: $(LIB_OBJS)
 	${co}$(AR) rs $@ $^
 
 clean:
-	@$(foreach file,$(ALL_OBJS) $(C_DEPS) $(CPP_DEPS) libM1M3TS.a $(shell find -name '*.d'), echo '[RM ] ${file}'; $(RM) -r $(file);)
+	@$(foreach file,$(ALL_OBJS) $(C_DEPS) $(CPP_DEPS) libM1M3TS.a version.c $(shell find -name '*.d'), echo '[RM ] ${file}'; $(RM) -r $(file);)
 
 clang-format:
 	@$(foreach file,$(shell find LSST -name '*.cpp' -o -name '*.h'), echo '[FRM] ${file}'; clang-format -i $(file);)

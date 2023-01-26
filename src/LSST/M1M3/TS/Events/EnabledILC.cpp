@@ -20,10 +20,11 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <spdlog/spdlog.h>
+
 #include <cRIO/ThermalILC.h>
 #include <TSPublisher.h>
 #include <Events/EnabledILC.h>
-#include <spdlog/spdlog.h>
 
 using namespace LSST::M1M3::TS;
 using namespace LSST::M1M3::TS::Events;

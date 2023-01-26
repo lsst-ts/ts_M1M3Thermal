@@ -35,10 +35,5 @@ endif
 
 LIBS_FLAGS += -L"${SAL_WORK_DIR}/lib" -L"${OSPL_HOME}/lib" -L"${LSST_SDK_INSTALL}/lib"
 
-GIT := $(shell command -v git 2> /dev/null)
-
-ifndef GIT
-   VERSION := "v0.0.0-None"
-else
-   VERSION := $(shell git describe --tags --always --dirty)
-endif
+VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "unknown:non-git")
+GIT_HASH := $(shell git rev-parse HEAD 2>/dev/null || echo "unknown-non-git")
