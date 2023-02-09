@@ -1,4 +1,4 @@
-FROM lsstts/develop-env:c0026.010 as crio-develop
+FROM lsstts/develop-env:c0028.004 as crio-develop
 
 ARG XML_BRANCH=develop
 
@@ -24,7 +24,7 @@ export CPP_FLAGS="-I\$CONDA_PREFIX/include" \\n
 RUN source ~/.crio_setup.sh && cd repos/ts_sal \
     && git fetch && git checkout develop && git pull
 
-RUN source ~/.crio_setup.sh && cd $TS_XML_DIR/sal_interfaces \
+RUN source ~/.crio_setup.sh && cd $TS_XML_DIR \
     && git fetch && git checkout $XML_BRANCH && git pull \
     && salgenerator generate cpp MTM1M3TS
 
