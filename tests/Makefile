@@ -13,14 +13,12 @@ ifneq ($(MAKECMDGOALS),clean)
     -include $(DEPS)
 endif
 
+LIBS += $(shell pkg-config catch2-with-main --libs)
 
-M1M3_CPPFLAGS := -I"/usr/include" \
+M1M3_CPPFLAGS := -I"../${CRIO_DIR}/include" \
+	$(shell pkg-config catch2-with-main --cflags) \
 	-I"../src/NiFpga" \
 	-I"../src/LSST/M1M3/TS" \
-	-I"../${CRIO_DIR}/include" \
-	$(shell pkg-config catch2-with-main --cflags)
-
-LIBS += $(shell pkg-config catch2-with-main --libs)
 
 compile: $(BINARIES)
 
