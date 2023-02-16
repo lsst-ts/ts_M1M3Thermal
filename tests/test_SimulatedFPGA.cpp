@@ -44,6 +44,8 @@ protected:
 
     void processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
                               float absoluteTemperature) override;
+
+    void processReHeaterGains(uint8_t address, float proportionalGain, float integralGain) override;
 };
 
 void TestILC::processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType, uint8_t networkNodeType,
@@ -73,6 +75,10 @@ void TestILC::processResetServer(uint8_t address) { REQUIRE(address == 198); }
 void TestILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
                                    uint8_t fanRPM, float absoluteTemperature) {
     REQUIRE(address == 56);
+}
+
+void TestILC::processReHeaterGains(uint8_t address, float proportionalGain, float integralGain) {
+    REQUIRE(address == 57);
 }
 
 TEST_CASE("Test simulated FPGA responses", "[SimulatedFPGA]") {

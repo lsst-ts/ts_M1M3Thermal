@@ -77,6 +77,8 @@ protected:
     void processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
                               float absoluteTemperature) override;
 
+    void processReHeaterGains(uint8_t address, float proportionalGain, float integralGain) override;
+
     void processMPURead(uint8_t address, uint16_t register_address, uint16_t len);
 
 private:

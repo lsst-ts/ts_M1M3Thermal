@@ -24,6 +24,7 @@ endif
 
 BOOST_CPPFLAGS += -I/usr/include/boost169
 PKG_CPPFLAGS := $(shell pkg-config yaml-cpp --cflags $(silence)) $(shell pkg-config spdlog --cflags $(silence))
+
 SAL_CPPFLAGS += $(PKG_CPPFLAGS) -I${OSPL_HOME}/include -I${OSPL_HOME}/include/sys -I${OSPL_HOME}/include/dcps/C++/SACPP -I${SAL_WORK_DIR}/MTM1M3TS/cpp/src -I${SAL_WORK_DIR}/include -I${SAL_HOME}/include -I${LSST_SDK_INSTALL}/include
 
 CRIO_DIR ?= ../ts_cRIOcpp

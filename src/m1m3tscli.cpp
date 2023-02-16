@@ -92,9 +92,9 @@ protected:
 class PrintTSFPGA : public FPGAClass {
 public:
 #ifdef SIMULATOR
-    PrintTSFPGA() : SimulatedFPGA() {}
+    PrintTSFPGA() : SimulatedFPGA() { _cmd_start = std::chrono::steady_clock::now(); }
 #else
-    PrintTSFPGA() : ThermalFPGA() {}
+    PrintTSFPGA() : ThermalFPGA() { _cmd_start = std::chrono::steady_clock::now(); }
 #endif
 
     void writeMPUFIFO(MPU& mpu) override;
@@ -106,6 +106,15 @@ public:
 
 protected:
     void processMPUResponse(MPU& mpu, uint8_t* data, uint16_t len) override;
+
+private:
+    void _printTimestamp(std::string prefix, bool nullTimer);
+
+    void _printBufferU8(std::string prefix, bool nullTimer, const uint8_t* buf, size_t len);
+    void _printBufferU8(std::string prefix, bool nullTimer, const std::vector<uint8_t>& buf);
+    void _printBufferU16(std::string prefix, bool nullTimer, uint16_t* buf, size_t len);
+
+    std::chrono::time_point<std::chrono::steady_clock> _cmd_start;
 };
 
 #define ILC_ARG "<ILC..>"
@@ -149,7 +158,7 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
             },
             "Report ILC Re-Heater Gains");
     addCommand("set-reheater-gains", std::bind(&M1M3TScli::setReHeaterGain, this, std::placeholders::_1),
-               "iis?", NEED_FPGA, "<proportionalGain> <integralGain> " ILC_ARG, "Set ILC Re-Heater Gain");
+               "DDS?", NEED_FPGA, "<proportionalGain> <integralGain> " ILC_ARG, "Set ILC Re-Heater Gain");
 
     addCommand("glycol-temperature", std::bind(&M1M3TScli::glycolTemperature, this, std::placeholders::_1),
                "", NEED_FPGA, NULL, "Primts glycol temperature values");
@@ -563,68 +572,92 @@ void PrintThermalILC::processReHeaterGains(uint8_t address, float proportionalGa
 
 M1M3TScli cli("M1M3TS", "M1M3 Thermal System Command Line Interface");
 
-void _printBufferU8(std::string prefix, const uint8_t* buf, size_t len) {
-    if (cli.getDebugLevel() == 0) {
-        return;
-    }
-
-    std::cout << prefix;
-
-    CliApp::printHexBuffer(buf, len);
-
-    std::cout << std::endl;
-}
-
-void _printBufferU8(std::string prefix, const std::vector<uint8_t>& buf) {
-    _printBufferU8(prefix, buf.data(), buf.size());
-}
-
-void _printBufferU16(std::string prefix, uint16_t* buf, size_t len) {
-    if (cli.getDebugLevel() == 0) {
-        return;
-    }
-
-    std::cout << prefix;
-
-    CliApp::printHexBuffer(buf, len);
-
-    if (cli.getDebugLevel() > 1 && len > 1) {
-        std::cout << std::endl << prefix;
-        CliApp::printDecodedBuffer(buf, len);
-    }
-    std::cout << std::endl;
-}
-
 void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
-    _printBufferU8("MPU>", mpu.getCommandVector());
+    _printBufferU8("MPU>", true, mpu.getCommandVector());
     FPGAClass::writeMPUFIFO(mpu);
 }
 
 void PrintTSFPGA::readMPUFIFO(MPU& mpu) { FPGAClass::readMPUFIFO(mpu); }
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    _printBufferU16("C>", data, length);
+    _printBufferU16("C>", true, data, length);
     FPGAClass::writeCommandFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    _printBufferU16("R>", data, length);
+    _printBufferU16("R>", false, data, length);
     FPGAClass::writeRequestFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU8ResponseFIFO(data, length, timeout);
-    _printBufferU8("R8<", data, length);
+    _printBufferU8("R8<", false, data, length);
 }
 
 void PrintTSFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU16ResponseFIFO(data, length, timeout);
-    _printBufferU16("R16<", data, length);
+    _printBufferU16("R16<", false, data, length);
 }
 
 void PrintTSFPGA::processMPUResponse(MPU& mpu, uint8_t* data, uint16_t len) {
-    _printBufferU8("MPU<", data, len);
+    _printBufferU8("MPU<", false, data, len);
     FPGAClass::processMPUResponse(mpu, data, len);
+}
+
+void PrintTSFPGA::_printTimestamp(std::string prefix, bool nullTimer) {
+    if (cli.getDebugLevel() > 3) {
+        if (nullTimer) {
+            std::cout << "0.000.000 - ";
+        } else {
+            std::chrono::duration<double> diff = std::chrono::steady_clock::now() - _cmd_start;
+            auto count = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
+            auto sdv = std::ldiv(count, 1000000);
+            int s = sdv.quot;
+            sdv = std::ldiv(sdv.rem, 1000);
+            std::cout << std::dec << std::setw(1) << std::setfill('0') << s << "." << std::setw(3) << sdv.quot
+                      << "." << std::setw(3) << sdv.rem << " - ";
+        }
+    }
+
+    _cmd_start = std::chrono::steady_clock::now();
+
+    std::cout << prefix;
+}
+
+void PrintTSFPGA::_printBufferU8(std::string prefix, bool nullTimer, const uint8_t* buf, size_t len) {
+    if (cli.getDebugLevel() == 0) {
+        return;
+    }
+
+    _printTimestamp(prefix, nullTimer);
+
+    CliApp::printHexBuffer(buf, len);
+
+    std::cout << std::endl;
+}
+
+void PrintTSFPGA::_printBufferU8(std::string prefix, bool nullTimer, const std::vector<uint8_t>& buf) {
+    _printBufferU8(prefix, nullTimer, buf.data(), buf.size());
+}
+
+void PrintTSFPGA::_printBufferU16(std::string prefix, bool nullTimer, uint16_t* buf, size_t len) {
+    if (cli.getDebugLevel() == 0) {
+        return;
+    }
+
+    _printTimestamp(prefix, nullTimer);
+
+    CliApp::printHexBuffer(buf, len);
+
+    if (cli.getDebugLevel() > 1 && len > 1) {
+        std::cout << std::endl;
+        if (cli.getDebugLevel() > 3) {
+            std::cout << "|.|||.||| - ";
+        }
+        std::cout << prefix;
+        CliApp::printDecodedBuffer(buf, len);
+    }
+    std::cout << std::endl;
 }
 
 int main(int argc, char* const argv[]) { return cli.run(argc, argv); }

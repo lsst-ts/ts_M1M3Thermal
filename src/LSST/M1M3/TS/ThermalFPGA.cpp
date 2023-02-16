@@ -20,9 +20,6 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <iomanip>
-#include <iostream>
-
 #include <spdlog/spdlog.h>
 
 #include <cRIO/NiError.h>
@@ -124,7 +121,6 @@ void ThermalFPGA::setMPUTimeouts(MPU& mpu, uint16_t write_timeout, uint16_t read
 
 LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
     uint8_t req = (mpu.getBus() << 4) | 2;
-    std::cerr << std::hex << "T>" << +req << std::endl;
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
                                     &req, 1, -1, NULL));
