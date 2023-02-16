@@ -20,6 +20,8 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <spdlog/fmt/fmt.h>
+
 #include <SALThermalILC.h>
 
 #include <Telemetry/ThermalData.h>
@@ -74,6 +76,11 @@ void SALThermalILC::processThermalStatus(uint8_t address, uint8_t status, float 
                                          uint8_t fanRPM, float absoluteTemperature) {
     Telemetry::ThermalData::instance().update(address, status, differentialTemperature, fanRPM,
                                               absoluteTemperature);
+}
+
+void SALThermalILC::processReHeaterGains(uint8_t address, float proportionalGain, float integralGain) {
+    throw std::runtime_error(
+            fmt::format("Re-Heater gain should not be called - called for address {}", +address));
 }
 
 uint8_t SALThermalILC::_address2ILCIndex(uint8_t address) { return address - 1; }
