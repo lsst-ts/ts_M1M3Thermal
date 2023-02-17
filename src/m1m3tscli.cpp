@@ -63,6 +63,7 @@ public:
     int fcuOnOff(command_vec cmds);
     int pumpOnOff(command_vec cmds);
     int thermalDemand(command_vec cmds);
+    int setReHeaterGain(command_vec cmds);
     int glycolTemperature(command_vec cmds);
     int glycolDebug(command_vec cmds);
     int slot4(command_vec);
@@ -85,14 +86,15 @@ public:
 protected:
     void processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
                               float absoluteTemperature) override;
+    void processReHeaterGains(uint8_t address, float proportionalGain, float integralGain) override;
 };
 
 class PrintTSFPGA : public FPGAClass {
 public:
 #ifdef SIMULATOR
-    PrintTSFPGA() : SimulatedFPGA() {}
+    PrintTSFPGA() : SimulatedFPGA() { _cmd_start = std::chrono::steady_clock::now(); }
 #else
-    PrintTSFPGA() : ThermalFPGA() {}
+    PrintTSFPGA() : ThermalFPGA() { _cmd_start = std::chrono::steady_clock::now(); }
 #endif
 
     void writeMPUFIFO(MPU& mpu) override;
@@ -104,7 +106,18 @@ public:
 
 protected:
     void processMPUResponse(MPU& mpu, uint8_t* data, uint16_t len) override;
+
+private:
+    void _printTimestamp(std::string prefix, bool nullTimer);
+
+    void _printBufferU8(std::string prefix, bool nullTimer, const uint8_t* buf, size_t len);
+    void _printBufferU8(std::string prefix, bool nullTimer, const std::vector<uint8_t>& buf);
+    void _printBufferU16(std::string prefix, bool nullTimer, uint16_t* buf, size_t len);
+
+    std::chrono::time_point<std::chrono::steady_clock> _cmd_start;
 };
+
+#define ILC_ARG "<ILC..>"
 
 M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
     addCommand("mpu-read", std::bind(&M1M3TScli::mpuRead, this, std::placeholders::_1), "SS?", NEED_FPGA,
@@ -127,7 +140,7 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                "Turns pump on and reads Pump VFD values");
 
     addCommand("thermal-demand", std::bind(&M1M3TScli::thermalDemand, this, std::placeholders::_1), "iis?",
-               NEED_FPGA, "<heater PWM> <fan RPM> <ILC..>", "Sets FCU heater and fan");
+               NEED_FPGA, "<heater PWM> <fan RPM> " ILC_ARG, "Sets FCU heater and fan");
     addCommand("slot4", std::bind(&M1M3TScli::slot4, this, std::placeholders::_1), "", NEED_FPGA, NULL,
                "Reads slot 4 inputs");
 
@@ -136,7 +149,16 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
             [](ILCUnit u) {
                 std::dynamic_pointer_cast<PrintThermalILC>(u.first)->reportThermalStatus(u.second);
             },
-            "Report thermal status");
+            "Report ILC Thermal Status");
+
+    addILCCommand(
+            "reheater-gains",
+            [](ILCUnit u) {
+                std::dynamic_pointer_cast<PrintThermalILC>(u.first)->reportReHeaterGains(u.second);
+            },
+            "Report ILC Re-Heater Gains");
+    addCommand("set-reheater-gains", std::bind(&M1M3TScli::setReHeaterGain, this, std::placeholders::_1),
+               "DDS?", NEED_FPGA, "<proportionalGain> <integralGain> " ILC_ARG, "Set ILC Re-Heater Gain");
 
     addCommand("glycol-temperature", std::bind(&M1M3TScli::glycolTemperature, this, std::placeholders::_1),
                "", NEED_FPGA, NULL, "Primts glycol temperature values");
@@ -380,6 +402,21 @@ int M1M3TScli::thermalDemand(command_vec cmds) {
     return 0;
 }
 
+int M1M3TScli::setReHeaterGain(command_vec cmds) {
+    float proportionalGain = std::stof(cmds[0]);
+    float integralGain = std::stof(cmds[1]);
+    cmds.erase(cmds.begin(), cmds.begin() + 2);
+
+    clearILCs();
+    ILCUnits ilcs = getILCs(cmds);
+    for (auto u : ilcs) {
+        std::dynamic_pointer_cast<PrintThermalILC>(u.first)->setReHeaterGains(u.second, proportionalGain,
+                                                                              integralGain);
+    }
+    getFPGA()->ilcCommands(*getILC(0));
+    return 0;
+}
+
 int M1M3TScli::glycolTemperature(command_vec) {
     getFPGA()->writeRequestFIFO(FPGAAddress::GLYCOLTEMP_TEMPERATURES, 0);
 
@@ -520,77 +557,107 @@ void M1M3TScli::printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu
 void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
                                            uint8_t fanRPM, float absoluteTemperature) {
     printBusAddress(address);
-    std::cout << "Thermal status: 0x" << std::setfill('0') << std::setw(2) << std::hex
+    std::cout << "Thermal Status: 0x" << std::setfill('0') << std::setw(2) << std::hex
               << static_cast<int>(status) << std::endl
-              << "Differential temperature: " << std::to_string(differentialTemperature) << std::endl
+              << "Differential Temperature: " << std::to_string(differentialTemperature) << std::endl
               << "Fan RPM: " << std::to_string(fanRPM) << std::endl
-              << "Absolute temperature: " << std::to_string(absoluteTemperature) << std::endl;
+              << "Absolute Temperature: " << std::to_string(absoluteTemperature) << std::endl;
+}
+
+void PrintThermalILC::processReHeaterGains(uint8_t address, float proportionalGain, float integralGain) {
+    printBusAddress(address);
+    std::cout << "Re-Heater Proportional Gain: " << std::to_string(proportionalGain) << std::endl
+              << "Re-Heater Integral Gain: " << std::to_string(integralGain) << std::endl;
 }
 
 M1M3TScli cli("M1M3TS", "M1M3 Thermal System Command Line Interface");
 
-void _printBufferU8(std::string prefix, const uint8_t* buf, size_t len) {
-    if (cli.getDebugLevel() == 0) {
-        return;
-    }
-
-    std::cout << prefix;
-
-    CliApp::printHexBuffer(buf, len);
-
-    std::cout << std::endl;
-}
-
-void _printBufferU8(std::string prefix, const std::vector<uint8_t>& buf) {
-    _printBufferU8(prefix, buf.data(), buf.size());
-}
-
-void _printBufferU16(std::string prefix, uint16_t* buf, size_t len) {
-    if (cli.getDebugLevel() == 0) {
-        return;
-    }
-
-    std::cout << prefix;
-
-    CliApp::printHexBuffer(buf, len);
-
-    if (cli.getDebugLevel() > 1 && len > 1) {
-        std::cout << std::endl << prefix;
-        CliApp::printDecodedBuffer(buf, len);
-    }
-    std::cout << std::endl;
-}
-
 void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
-    _printBufferU8("MPU>", mpu.getCommandVector());
+    _printBufferU8("MPU>", true, mpu.getCommandVector());
     FPGAClass::writeMPUFIFO(mpu);
 }
 
 void PrintTSFPGA::readMPUFIFO(MPU& mpu) { FPGAClass::readMPUFIFO(mpu); }
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    _printBufferU16("C>", data, length);
+    _printBufferU16("C>", true, data, length);
     FPGAClass::writeCommandFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    _printBufferU16("R>", data, length);
+    _printBufferU16("R>", false, data, length);
     FPGAClass::writeRequestFIFO(data, length, timeout);
 }
 
 void PrintTSFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU8ResponseFIFO(data, length, timeout);
-    _printBufferU8("R8<", data, length);
+    _printBufferU8("R8<", false, data, length);
 }
 
 void PrintTSFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU16ResponseFIFO(data, length, timeout);
-    _printBufferU16("R16<", data, length);
+    _printBufferU16("R16<", false, data, length);
 }
 
 void PrintTSFPGA::processMPUResponse(MPU& mpu, uint8_t* data, uint16_t len) {
-    _printBufferU8("MPU<", data, len);
+    _printBufferU8("MPU<", false, data, len);
     FPGAClass::processMPUResponse(mpu, data, len);
+}
+
+void PrintTSFPGA::_printTimestamp(std::string prefix, bool nullTimer) {
+    if (cli.getDebugLevel() > 3) {
+        if (nullTimer) {
+            std::cout << "0.000.000 - ";
+        } else {
+            std::chrono::duration<double> diff = std::chrono::steady_clock::now() - _cmd_start;
+            auto count = std::chrono::duration_cast<std::chrono::microseconds>(diff).count();
+            auto sdv = std::ldiv(count, 1000000);
+            int s = sdv.quot;
+            sdv = std::ldiv(sdv.rem, 1000);
+            std::cout << std::dec << std::setw(1) << std::setfill('0') << s << "." << std::setw(3) << sdv.quot
+                      << "." << std::setw(3) << sdv.rem << " - ";
+        }
+    }
+
+    _cmd_start = std::chrono::steady_clock::now();
+
+    std::cout << prefix;
+}
+
+void PrintTSFPGA::_printBufferU8(std::string prefix, bool nullTimer, const uint8_t* buf, size_t len) {
+    if (cli.getDebugLevel() == 0) {
+        return;
+    }
+
+    _printTimestamp(prefix, nullTimer);
+
+    CliApp::printHexBuffer(buf, len);
+
+    std::cout << std::endl;
+}
+
+void PrintTSFPGA::_printBufferU8(std::string prefix, bool nullTimer, const std::vector<uint8_t>& buf) {
+    _printBufferU8(prefix, nullTimer, buf.data(), buf.size());
+}
+
+void PrintTSFPGA::_printBufferU16(std::string prefix, bool nullTimer, uint16_t* buf, size_t len) {
+    if (cli.getDebugLevel() == 0) {
+        return;
+    }
+
+    _printTimestamp(prefix, nullTimer);
+
+    CliApp::printHexBuffer(buf, len);
+
+    if (cli.getDebugLevel() > 1 && len > 1) {
+        std::cout << std::endl;
+        if (cli.getDebugLevel() > 3) {
+            std::cout << "|.|||.||| - ";
+        }
+        std::cout << prefix;
+        CliApp::printDecodedBuffer(buf, len);
+    }
+    std::cout << std::endl;
 }
 
 int main(int argc, char* const argv[]) { return cli.run(argc, argv); }

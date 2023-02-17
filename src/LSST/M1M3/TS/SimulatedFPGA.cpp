@@ -216,6 +216,13 @@ void SimulatedFPGA::processThermalStatus(uint8_t address, uint8_t status, float 
     _response.writeCRC();
 }
 
+void SimulatedFPGA::processReHeaterGains(uint8_t address, float proportionalGain, float integralGain) {
+    _response.write<uint8_t>(address);
+    _response.write<uint8_t>(92);
+
+    _response.writeCRC();
+}
+
 void SimulatedFPGA::processMPURead(uint8_t address, uint16_t register_address, uint16_t len) {
     _mpuResponse.write<uint8_t>(address);
     _mpuResponse.write<uint8_t>(3);

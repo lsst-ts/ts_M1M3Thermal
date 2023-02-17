@@ -57,6 +57,7 @@ protected:
 
     void processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
                               float absoluteTemperature) override;
+    void processReHeaterGains(uint8_t address, float proportionalGain, float integralGain) override;
 
 private:
     std::shared_ptr<SAL_MTM1M3TS> _m1m3tsSAL;
