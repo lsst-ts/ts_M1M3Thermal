@@ -56,6 +56,8 @@ clang-format:
 
 ipk: ts-M1M3thermal_${VERSION}_x64.ipk
 
+TS_DDSCONFIG=../ts_ddsconfig
+
 ts-M1M3thermal_$(VERSION)_x64.ipk: ts-M1M3thermald m1m3tscli
 	@echo '[MK ] ipk $@'
 	${co}mkdir -p ipk/data/usr/sbin
@@ -67,11 +69,13 @@ ts-M1M3thermal_$(VERSION)_x64.ipk: ts-M1M3thermald m1m3tscli
 	${co}cp m1m3tscli ipk/data/usr/sbin/m1m3tscli
 	${co}cp init ipk/data/etc/init.d/ts-M1M3thermal
 	${co}cp default_ts-M1M3thermal ipk/data/etc/default/ts-M1M3thermal
+	${co}cp -r ${TS_DDSCONFIG}/python/lsst/ts/ddsconfig/data/config/ospl-embedded-shmem.xml ipk/data/var/lib/M1M3TS || echo "Cannot find ${TS_DDSCONFIG} ospl-embedded-shmem.xml - check it out?"
+	${co}cp -r ${TS_DDSCONFIG}/python/lsst/ts/ddsconfig/data/qos/QoS.xml ipk/data/var/lib/M1M3TS || echo "Cannot find ${TS_DDSCONFIG} QoS.xml - check it out?"
 	${co}cp -r SettingFiles/* ipk/data/var/lib/M1M3TS
 	${co}cp -r Bitfiles/* ipk/data/var/lib/M1M3TS
 	${co}sed s?@VERSION@?$(VERSION)?g control.ipk.in > ipk/control/control
 	${co}cp postinst prerm postrm ipk/control
-	${co}echo -e "/etc/default/ts-M1M3thermal" > ipk/control/conffiles
+	${co}echo -e "/etc/default/ts-M1M3thermal\n/var/lib/M1M3TS/ospl-embedded-shmem.xml\n/var/lib/M1M3TS/QoS.xml" > ipk/control/conffiles
 	${co}find SettingFiles -name '*.xml' -o -name '*.csv' | sed 's#^SettingFiles#/var/lib/M1M3TS#' >> ipk/control/conffiles
 	${co}echo "2.0" > ipk/debian-binary
 	${co}tar czf ipk/data.tar.gz -P --transform "s#^ipk/data#.#" --owner=0 --group=0 ipk/data
