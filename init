@@ -26,6 +26,9 @@ set -a
 set +a
 
 startdaemon(){
+	# CSC runs with shmem config, requires ospl daemon
+	sudo -E -u m1m3 -g m1m3 LD_LIBRARY_PATH=$OSPL_HOME/lib PATH=$PATH:$OSPL_HOME/bin $OSPL_HOME/bin/ospl start
+
 	# make sure network is up and running
 	attemps=0
 	export LSST_DDS_IP=`ip route get 1 | awk '{print $7;exit}'`
@@ -47,6 +50,7 @@ startdaemon(){
 stopdaemon(){
 	echo -n "Stopping TS M1M3 thermal:"
 	start-stop-daemon --stop --remove-pidfile --retry 5 -p ${PIDFILE}
+	sudo -E -u m1m3 -g m1m3 LD_LIBRARY_PATH=$OSPL_HOME/lib PATH=$PATH:$OSPL_HOME/bin $OSPL_HOME/bin/ospl stop
         if [ $? == 0 ]; then
 	    echo "done"
         else
@@ -67,6 +71,7 @@ case "$1" in
 	startdaemon
 	;;
   status)
+	sudo -E -u m1m3 -g m1m3 LD_LIBRARY_PATH=$OSPL_HOME/lib PATH=$PATH:$OSPL_HOME/bin $OSPL_HOME/bin/ospl status
 	status $DAEMON
 	exit $?
 	;;
