@@ -62,9 +62,6 @@ protected:
 private:
     std::shared_ptr<SAL_MTM1M3TS> _m1m3tsSAL;
 
-    MTM1M3TS_logevent_thermalInfoC _thermalInfo;
-    bool _thermalInfoChanged;
-
     uint8_t _address2ILCIndex(uint8_t address);
 };
 
