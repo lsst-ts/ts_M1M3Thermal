@@ -24,44 +24,27 @@
 
 #include <SALThermalILC.h>
 
+#include <Events/ThermalInfo.h>
 #include <Telemetry/ThermalData.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 
-SALThermalILC::SALThermalILC(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) : _m1m3tsSAL(m1m3tsSAL) {
-    float xyPos[3][2] = {{0, 1}, {1, 2}, {2, 3}};
+SALThermalILC::SALThermalILC(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) : _m1m3tsSAL(m1m3tsSAL) {}
 
-    for (int i = 0; i < 3; i++) {
-        _thermalInfo.xPosition[i] = xyPos[i][0];
-        _thermalInfo.yPosition[i] = xyPos[i][1];
-        _thermalInfo.zPosition[i] = 0;
-    }
-}
+void SALThermalILC::preProcess() {}
 
-void SALThermalILC::preProcess() { _thermalInfoChanged = false; }
-
-void SALThermalILC::postProcess() {
-    if (_thermalInfoChanged) {
-        _m1m3tsSAL->logEvent_thermalInfo(&_thermalInfo, 0);
-    }
-}
+void SALThermalILC::postProcess() {}
 
 void SALThermalILC::processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType,
                                     uint8_t networkNodeType, uint8_t ilcSelectedOptions,
                                     uint8_t networkNodeOptions, uint8_t majorRev, uint8_t minorRev,
                                     std::string firmwareName) {
     uint8_t ilcIndex = _address2ILCIndex(address);
-    _thermalInfo.referenceId[ilcIndex] = ilcIndex;
-    _thermalInfo.modbusAddress[ilcIndex] = address;
-    _thermalInfo.ilcUniqueId[ilcIndex] = uniqueID;
-    _thermalInfo.ilcApplicationType[ilcIndex] = ilcAppType;
-    _thermalInfo.networkNodeType[ilcIndex] = networkNodeType;
-    _thermalInfo.majorRevision[ilcIndex] = majorRev;
-    _thermalInfo.minorRevision[ilcIndex] = minorRev;
-
-    _thermalInfoChanged = true;
+    Events::ThermalInfo::instance().processServerID(address, ilcIndex, uniqueID, ilcAppType, networkNodeType,
+                                                    ilcSelectedOptions, networkNodeOptions, majorRev,
+                                                    minorRev, firmwareName);
 }
 
 void SALThermalILC::processServerStatus(uint8_t address, uint8_t mode, uint16_t status, uint16_t faults) {}

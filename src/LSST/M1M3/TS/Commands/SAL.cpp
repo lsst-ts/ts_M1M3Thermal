@@ -20,17 +20,19 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <spdlog/spdlog.h>
+
 #include <IFPGA.h>
-#include <TSApplication.h>
+
+#include <cRIO/ControllerThread.h>
 
 #include <Commands/SAL.h>
 #include <Events/SummaryState.h>
 #include <Events/EngineeringMode.h>
-#include <cRIO/ControllerThread.h>
+#include <Events/ThermalInfo.h>
 #include <Settings/MixingValve.h>
 #include <Settings/Controller.h>
-
-#include <spdlog/spdlog.h>
+#include <TSApplication.h>
 
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
@@ -57,6 +59,14 @@ void SAL_start::execute() {
     Settings::Controller::instance().load(params.configurationOverride);
 
     changeAllILCsMode(ILC::ILCMode::Disabled);
+
+    TSApplication::ilc()->clear();
+    TSApplication::instance().callFunctionOnIlcs(
+            [](uint8_t address) -> void { TSApplication::ilc()->reportServerID(address); });
+
+    IFPGA::get().ilcCommands(*TSApplication::ilc());
+
+    Events::ThermalInfo::instance().log();
 
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();

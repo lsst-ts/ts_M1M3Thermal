@@ -1,5 +1,5 @@
 /*
- * Thermal System SAL publisher.
+ * EnabledILCs event.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,41 +20,33 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TSPublisher_
-#define _TSPublisher_
+#ifndef _TS_Events_ThermalInfo_
+#define _TS_Events_ThermalInfo_
 
 #include <SAL_MTM1M3TS.h>
 
 #include <cRIO/Singleton.h>
 
+#include <TSPublisher.h>
+
 namespace LSST {
 namespace M1M3 {
 namespace TS {
+namespace Events {
 
-class TSPublisher final : public cRIO::Singleton<TSPublisher> {
+class ThermalInfo : public MTM1M3TS_logevent_thermalInfoC, public cRIO::Singleton<ThermalInfo> {
 public:
-    TSPublisher(token);
+    ThermalInfo(token);
+    void processServerID(uint8_t address, uint8_t ilcIndex, uint64_t uniqueID, uint8_t ilcAppType,
+                         uint8_t networkNodeType, uint8_t ilcSelectedOptions, uint8_t networkNodeOptions,
+                         uint8_t majorRev, uint8_t minorRev, std::string firmwareName);
 
-    void setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL);
-
-    static std::shared_ptr<SAL_MTM1M3TS> SAL() { return instance()._m1m3TSSAL; }
-
-    void setLogLevel(int newLevel);
-
-    void logSoftwareVersions();
-    void logSimulationMode();
-    void logThermalInfo(MTM1M3TS_logevent_thermalInfoC* data) { _m1m3TSSAL->logEvent_thermalInfo(data, 0); }
-
-    static double getTimestamp() { return instance()._m1m3TSSAL->getCurrentTime(); }
-
-private:
-    std::shared_ptr<SAL_MTM1M3TS> _m1m3TSSAL;
-
-    MTM1M3TS_logevent_logLevelC _logLevel;
+    void log() { TSPublisher::instance().logThermalInfo(this); }
 };
 
+}  // namespace Events
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //! _TSPublisher_
+#endif  // !_TS_Events_ThermalInfo_
