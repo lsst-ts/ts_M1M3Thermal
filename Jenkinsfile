@@ -24,7 +24,6 @@ node {
     def SALUSER_HOME = "/home/saluser"
     def BRANCH = (env.CHANGE_BRANCH != null) ? env.CHANGE_BRANCH : env.BRANCH_NAME
     def SAME_CRIO_BRANCH = ["main", "tickets/DM-37923"]
-    def XML_BRANCH = BRANCH in ["main"] ? BRANCH : "develop"
 
     stage('Cloning sources')
     {
@@ -38,7 +37,7 @@ node {
 
     stage('Building dev container')
     {
-        M1M3sim = docker.build("lsstts/mtm1m3_sim:" + env.BRANCH_NAME.replace("/", "_"), "--target crio-develop --build-arg XML_BRANCH=$XML_BRANCH " + (params.noCache ? "--no-cache " : " ") + "$WORKSPACE/ts_m1m3thermal")
+        M1M3sim = docker.build("lsstts/mtm1m3_sim:" + env.BRANCH_NAME.replace("/", "_"), "--target crio-develop --build-arg XML_BRANCH=$BRANCH " + (params.noCache ? "--no-cache " : " ") + "$WORKSPACE/ts_m1m3thermal")
     }
 
     stage("Running tests")

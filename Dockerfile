@@ -20,17 +20,13 @@ export PATH=\$CONDA_PREFIX/bin:\$PATH \\n\
 export LIBS="-L\$CONDA_PREFIX/lib" \\n\
 export CPP_FLAGS="-I\$CONDA_PREFIX/include" \\n
 
-# temporary upgrade ts_sal, needed for current develop ts_xml (which changed paths)
-RUN source ~/.crio_setup.sh && cd repos/ts_sal \
-    && git fetch && git checkout develop && git pull
-
 RUN source ~/.crio_setup.sh && cd $TS_XML_DIR \
-    && git fetch && git checkout $XML_BRANCH && git pull \
+    && ~/.checkout_repo.sh $XML_BRANCH develop && git pull \
     && salgenerator generate cpp MTM1M3TS
 
 FROM crio-develop
 
-ARG cRIO_CPP=v1.5.1
+ARG cRIO_CPP=v1.7.0
 ARG M1M3_SUPPORT=develop
 ARG TARGET=simulator
 
