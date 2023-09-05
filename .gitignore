@@ -5,3 +5,9 @@
 *.ipk
 m1m3tscli
 ts-M1M3thermald
+.pre-commit-config.yaml
+.clang-format
+.flake8
+.isort.cfg
+.mypy.ini
+.ruff.toml
