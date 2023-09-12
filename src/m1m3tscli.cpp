@@ -54,8 +54,6 @@ public:
 
     int mpuRead(command_vec cmds);
     int mpuTelemetry(command_vec cmds);
-    int mpuTimeouts(command_vec cmds);
-    int mpuStatus(command_vec cmds);
     int mpuWrite(command_vec cmds);
     int printFlowMeter(command_vec cmds);
     int printPump(command_vec cmds);
@@ -64,6 +62,7 @@ public:
     int pumpOnOff(command_vec cmds);
     int thermalDemand(command_vec cmds);
     int setReHeaterGain(command_vec cmds);
+    int chassisTemperature(command_vec cmds);
     int glycolTemperature(command_vec cmds);
     int glycolDebug(command_vec cmds);
     int slot4(command_vec);
@@ -124,10 +123,6 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                "<mpu> <register[:length]>..", "Reads given MPU registers");
     addCommand("mpu-telemetry", std::bind(&M1M3TScli::mpuTelemetry, this, std::placeholders::_1), "s",
                NEED_FPGA, "[mpu]", "Reads MPU telemetry");
-    addCommand("mpu-timeouts", std::bind(&M1M3TScli::mpuTimeouts, this, std::placeholders::_1), "IIs?",
-               NEED_FPGA, "<write-timeout> <read-timeout> [mpu..]", "Sets MPU timeouts");
-    addCommand("mpu-status", std::bind(&M1M3TScli::mpuStatus, this, std::placeholders::_1), "s", NEED_FPGA,
-               "[mpu]", "Reads MPU status");
     addCommand("mpu-write", std::bind(&M1M3TScli::mpuWrite, this, std::placeholders::_1), "SII", NEED_FPGA,
                "<mpu> <register> <value>", "Writes give MPU registers");
     addCommand("flow", std::bind(&M1M3TScli::printFlowMeter, this, std::placeholders::_1), "", NEED_FPGA,
@@ -159,6 +154,9 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
             "Report ILC Re-Heater Gains");
     addCommand("set-reheater-gains", std::bind(&M1M3TScli::setReHeaterGain, this, std::placeholders::_1),
                "DDS?", NEED_FPGA, "<proportionalGain> <integralGain> " ILC_ARG, "Set ILC Re-Heater Gain");
+
+    addCommand("chassis-temperature", std::bind(&M1M3TScli::chassisTemperature, this, std::placeholders::_1),
+               "", NEED_FPGA, NULL, "Reports chassis temperature");
 
     addCommand("glycol-temperature", std::bind(&M1M3TScli::glycolTemperature, this, std::placeholders::_1),
                "", NEED_FPGA, NULL, "Primts glycol temperature values");
@@ -221,36 +219,6 @@ int M1M3TScli::mpuTelemetry(command_vec cmds) {
     } else {
         printTelemetry(cmds[0], getMPU(cmds[0]));
     }
-
-    return 0;
-}
-
-int M1M3TScli::mpuTimeouts(command_vec cmds) {
-    uint16_t write_tmout = stoi(cmds[0], nullptr, 0);
-    uint16_t read_tmout = stoi(cmds[1], nullptr, 0);
-    if (cmds.size() == 2) {
-        dynamic_cast<IFPGA*>(getFPGA())->setMPUTimeouts(*getMPU("flow"), write_tmout, read_tmout);
-        printTelemetry("Flow meter", getMPU("flow"));
-        dynamic_cast<IFPGA*>(getFPGA())->setMPUTimeouts(*getMPU("vfd"), write_tmout, read_tmout);
-        printTelemetry("Pump (VFD)", getMPU("vfd"));
-    } else {
-        for (size_t i = 2; i < cmds.size(); i++) {
-            dynamic_cast<IFPGA*>(getFPGA())->setMPUTimeouts(*getMPU(cmds[i]), write_tmout, read_tmout);
-            printTelemetry(cmds[i], getMPU(cmds[i]));
-        }
-    }
-
-    return 0;
-}
-
-int M1M3TScli::mpuStatus(command_vec cmds) {
-    bool status;
-    int32_t code;
-    dynamic_cast<IFPGA*>(getFPGA())->getVFDError(status, code);
-    std::cout << "VFD " << status << ":" << code << std::endl;
-
-    dynamic_cast<IFPGA*>(getFPGA())->getFlowMeterError(status, code);
-    std::cout << "Flow meter " << status << ":" << code << std::endl;
 
     return 0;
 }
@@ -414,6 +382,13 @@ int M1M3TScli::setReHeaterGain(command_vec cmds) {
                                                                               integralGain);
     }
     getFPGA()->ilcCommands(*getILC(0));
+    return 0;
+}
+
+int M1M3TScli::chassisTemperature(command_vec cmds) {
+    float temperature = dynamic_cast<IFPGA*>(getFPGA())->chassisTemperature();
+    std::cout << "Chassis temperature: " << std::fixed << std::setprecision(2) << temperature << std::endl;
+
     return 0;
 }
 

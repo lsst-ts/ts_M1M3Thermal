@@ -28,12 +28,9 @@
 #include "NiFpga_ts_M1M3ThermalFPGA.h"
 
 using namespace LSST::cRIO;
+using namespace LSST::M1M3::TS;
 
 using namespace std::chrono_literals;
-
-namespace LSST {
-namespace M1M3 {
-namespace TS {
 
 ThermalFPGA::ThermalFPGA() : IFPGA() {
     SPDLOG_DEBUG("ThermalFPGA: ThermalFPGA()");
@@ -71,72 +68,65 @@ void ThermalFPGA::finalize() {
 
 void ThermalFPGA::writeMPUFIFO(MPU& mpu) {
     auto buf = mpu.getCommandVector();
-    uint8_t bus = (mpu.getBus() << 4) | 1;
+    uint8_t bus = mpu.getBus();
     uint8_t len = buf.size();
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
-                                    &bus, 1, -1, NULL));
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
-                                    &len, 1, -1, NULL));
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
-                                    buf.data(), len, -1, NULL));
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
+                               &bus, 1, -1, NULL));
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
+                               &len, 1, -1, NULL));
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
+                               buf.data(), len, -1, NULL));
 }
 
 void ThermalFPGA::readMPUFIFO(MPU& mpu) {
-    uint8_t req = (mpu.getBus() << 4) | 8;
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
-                                    &req, 1, -1, NULL));
+    uint8_t req[4] = {mpu.getBus(), 1, 3, mpu.getBus() + 10};
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
+                               req, 4, -1, NULL));
 
     uint16_t len;
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
-                                   reinterpret_cast<uint8_t*>(&len), 2, 1000, NULL));
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
+                              reinterpret_cast<uint8_t*>(&len), 2, 1000, NULL));
     len = ntohs(len);
     uint8_t data[len];
 
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
-                                   data, len, -1, NULL));
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
+                              data, len, -1, NULL));
     processMPUResponse(mpu, data, len);
 }
 
-void ThermalFPGA::setMPUTimeouts(MPU& mpu, uint16_t write_timeout, uint16_t read_timeout) {
-    struct {
-        uint8_t call;
-        uint16_t write_tmout;
-        uint16_t read_tmout;
-    } __attribute__((packed)) req;
-
-    req.call = (mpu.getBus() << 4) | 4;
-    req.write_tmout = htobe16(write_timeout);
-    req.read_tmout = htobe16(read_timeout);
-
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
-                                    &(req.call), 5, -1, NULL));
-}
-
 LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
-    uint8_t req = (mpu.getBus() << 4) | 2;
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_MPUCommandsFIFO,
-                                    &req, 1, -1, NULL));
+    uint8_t req[4] = {mpu.getBus(), 1, 254, mpu.getBus() + 10};
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
+                               req, 4, -1, NULL));
 
     uint16_t len;
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
-                                   reinterpret_cast<uint8_t*>(&len), 2, 1000, NULL));
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
+                              reinterpret_cast<uint8_t*>(&len), 2, 1, NULL));
     len = ntohs(len);
     uint8_t data[len];
 
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_MPUResponseFIFO,
-                                   data, len, 1000, NULL));
-    if (len != 45) {
-        throw std::runtime_error(fmt::format("Invalid telemetry length - expected 45, received {}", len));
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
+                              data, len, 1000, NULL));
+    if (len != 6) {
+        throw std::runtime_error(fmt::format("Invalid telemetry length - expected 6, received {}", len));
     }
 
     return MPUTelemetry(data);
@@ -172,6 +162,16 @@ void ThermalFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t ti
                                     data, length, timeout, NULL));
 }
 
+float ThermalFPGA::chassisTemperature() {
+    uint64_t temperature;
+    cRIO::NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_ReadU64(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorFxp_ChassisTemperature_Resource,
+                           &temperature));
+    return NiFpga_ConvertFromFxpToFloat(NiFpga_ts_M1M3ThermalFPGA_IndicatorFxp_ChassisTemperature_TypeInfo,
+                                        temperature);
+}
+
 void ThermalFPGA::waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered) {
     static std::hash<std::thread::id> hasher;
     size_t k = hasher(std::this_thread::get_id());
@@ -199,34 +199,3 @@ void ThermalFPGA::processMPUResponse(MPU& mpu, uint8_t* data, uint16_t len) {
     }
     mpu.processResponse(u16_data, len);
 }
-
-void ThermalFPGA::getVFDError(bool& status, int32_t& code) {
-    uint8_t packedData[NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_PackedSizeInBytes];
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_ReadArrayU8(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_Resource,
-                                    packedData,
-                                    NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_PackedSizeInBytes));
-
-    NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_Type vfdError;
-    NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_VFDError_UnpackCluster(packedData, &vfdError);
-    status = vfdError.status;
-    code = vfdError.code;
-}
-
-void ThermalFPGA::getFlowMeterError(bool& status, int32_t& code) {
-    uint8_t packedData[NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_PackedSizeInBytes];
-    NiThrowError(
-            __PRETTY_FUNCTION__,
-            NiFpga_ReadArrayU8(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_Resource,
-                               packedData,
-                               NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_PackedSizeInBytes));
-
-    NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_Type flowMeterError;
-    NiFpga_ts_M1M3ThermalFPGA_IndicatorCluster_FlowMeterError_UnpackCluster(packedData, &flowMeterError);
-    status = flowMeterError.status;
-    code = flowMeterError.code;
-}
-
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST

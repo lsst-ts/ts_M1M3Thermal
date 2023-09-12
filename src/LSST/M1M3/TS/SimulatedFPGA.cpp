@@ -145,6 +145,8 @@ void SimulatedFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t 
     }
 }
 
+float SimulatedFPGA::chassisTemperature() { return -5 + 5.0f * random() / RAND_MAX; }
+
 void SimulatedFPGA::processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType,
                                     uint8_t networkNodeType, uint8_t ilcSelectedOptions,
                                     uint8_t networkNodeOptions, uint8_t majorRev, uint8_t minorRev,
