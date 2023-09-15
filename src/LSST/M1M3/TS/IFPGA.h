@@ -72,8 +72,7 @@ public:
     float getMixingValvePosition();
     void setMixingValvePosition(float position);
 
-    virtual void getVFDError(bool& status, int32_t& code) = 0;
-    virtual void getFlowMeterError(bool& status, int32_t& code) = 0;
+    virtual float chassisTemperature() = 0;
 
     uint32_t getSlot4DIs();
 
@@ -86,7 +85,6 @@ public:
 
     void setHeartbeat(bool heartbeat);
 
-    virtual void setMPUTimeouts(LSST::cRIO::MPU& mpu, uint16_t write_timeout, uint16_t read_timeout) {}
     virtual LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) = 0;
 
     std::shared_ptr<VFD> vfd;

@@ -2,6 +2,11 @@
 Version History
 ###############
 
+v0.2.0
+======
+
+* better flow meter and pump control - simplified FPGA code
+
 v0.1.0
 ======
 
