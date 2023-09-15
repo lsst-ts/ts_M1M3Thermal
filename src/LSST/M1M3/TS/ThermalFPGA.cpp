@@ -132,10 +132,17 @@ LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
         len = ntohs(len);
         uint8_t data[len];
 
-        NiThrowError(__PRETTY_FUNCTION__,
-                     NiFpga_ReadFifoU8(_session,
-                                       NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
-                                       data, len, 1000, NULL));
+        if (len > 0) {
+            NiThrowError(
+                    __PRETTY_FUNCTION__,
+                    NiFpga_ReadFifoU8(_session,
+                                      NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
+                                      data, len, 1000, NULL));
+
+            for (int i = 0; i < len; i++) {
+                buffer.push_back(data[i]);
+            }
+        }
     }
 
     if (buffer.size() != 16) {
