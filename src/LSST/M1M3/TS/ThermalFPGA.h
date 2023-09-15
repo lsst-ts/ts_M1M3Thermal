@@ -50,7 +50,7 @@ public:
     void readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) override;
     void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     float chassisTemperature() override;
-    void waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered = NULL) override;
+    void waitOnIrqs(uint32_t irqs, uint32_t timeout, bool &timedout, uint32_t* triggered = NULL) override;
     void ackIrqs(uint32_t irqs) override;
 
 protected:
