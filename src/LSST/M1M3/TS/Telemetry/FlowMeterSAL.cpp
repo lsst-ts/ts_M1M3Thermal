@@ -1,5 +1,5 @@
 /*
- * VFD telemetry handling class.
+ * Flow Meter telemetry handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -26,41 +26,35 @@
 
 #include <IFPGA.h>
 #include <TSPublisher.h>
-#include <Telemetry/VFD.h>
+#include <Telemetry/FlowMeterSAL.h>
 
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-VFD::VFD(token) {
-    commandedFrequency = NAN;
-    targetFrequency = NAN;
-    outputFrequency = NAN;
-    outputCurrent = NAN;
-    busVoltage = NAN;
-    outputVoltage = NAN;
+FlowMeterSAL::FlowMeterSAL(uint8_t bus, uint8_t mpu_address) : FlowMeter(bus, mpu_address) {
+    signalStrength = NAN;
+    flowRate = NAN;
+    netTotalizer = NAN;
+    positiveTotalizer = NAN;
+    negativeTotalizer = NAN;
 }
 
-void VFD::update() {
-    auto vfd = IFPGA::get().vfd;
+void FlowMeterSAL::loopRead(bool timedout) {
+    if (timedout) {
+        return;
+    }
 
-    vfd->clearCommanded();
+    SPDLOG_TRACE("Sending FlowMeter updates");
 
-    vfd->poll();
+    signalStrength = getSignalStrength();
+    flowRate = getFlowRate();
+    netTotalizer = getNetTotalizer();
+    positiveTotalizer = getPositiveTotalizer();
+    negativeTotalizer = getNegativeTotalizer();
 
-    IFPGA::get().mpuCommands(*vfd, 1s);
-
-    commandedFrequency = vfd->getCommandedFrequency();
-    targetFrequency = vfd->getTargetFrequency();
-    outputFrequency = vfd->getOutputFrequency();
-    outputCurrent = vfd->getOutputCurrent();
-    busVoltage = vfd->getDCBusVoltage();
-    outputVoltage = vfd->getOutputVoltage();
-}
-
-void VFD::send() {
-    salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
+    salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
     if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot send VFD: {}", ret);
+        SPDLOG_WARN("Cannot send FlowMeter: {}", ret);
         return;
     }
 }

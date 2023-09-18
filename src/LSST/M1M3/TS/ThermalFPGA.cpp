@@ -116,11 +116,10 @@ LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
                                req, 4, -1, NULL));
 
     std::vector<uint8_t> buffer;
-    auto start = std::chrono::steady_clock::now();
 
     bool timedout;
 
-    uint32_t irq = 1 << (10 + mpu.getBus());
+    uint32_t irq = mpu.getIrq();
 
     waitOnIrqs(irq, 1000, timedout);
     if (timedout == true) {
@@ -128,24 +127,24 @@ LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
     }
 
     uint8_t res = mpu.getBus() + 10;
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_WriteFifoU8(_session,
-                                    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
-                                    &res, 1, -1, NULL));
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
+                               &res, 1, -1, NULL));
 
     uint16_t len;
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_ReadFifoU8(_session,
-                                   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
-                                   reinterpret_cast<uint8_t*>(&len), 2, 1, NULL));
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
+                              reinterpret_cast<uint8_t*>(&len), 2, 1, NULL));
 
     len = ntohs(len);
     uint8_t data[len];
 
-    NiThrowError(__PRETTY_FUNCTION__,
-                 NiFpga_ReadFifoU8(_session,
-                                   NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
-                                   data, len, 10, NULL));
+    NiThrowError(
+            __PRETTY_FUNCTION__,
+            NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
+                              data, len, 10, NULL));
 
     for (int i = 0; i < len; i++) {
         buffer.push_back(data[i]);
@@ -222,12 +221,4 @@ void ThermalFPGA::waitOnIrqs(uint32_t irqs, uint32_t timeout, bool& timedout, ui
 
 void ThermalFPGA::ackIrqs(uint32_t irqs) {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_AcknowledgeIrqs(_session, irqs));
-}
-
-void ThermalFPGA::processMPUResponse(MPU& mpu, uint8_t* data, uint16_t len) {
-    uint16_t u16_data[len];
-    for (int i = 0; i < len; i++) {
-        u16_data[i] = data[i];
-    }
-    mpu.processResponse(u16_data, len);
 }

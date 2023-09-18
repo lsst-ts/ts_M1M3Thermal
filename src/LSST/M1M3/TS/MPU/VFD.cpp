@@ -20,11 +20,16 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <iomanip>
+#include <iostream>
+
+#include <spdlog/spdlog.h>
+
 #include <MPU/VFD.h>
 
 using namespace LSST::M1M3::TS;
 
-void VFD::poll() {
+void VFD::loopWrite() {
     readHoldingRegisters(0x2000, 3, 255);
     readHoldingRegisters(0x2100, 7, 255);
 }
@@ -42,4 +47,54 @@ const char *VFD::getDriveError(uint16_t code) {
         default:
             return "Unknown error";
     }
+}
+
+void VFDPrint::loopRead(bool timedout) {
+    SPDLOG_TRACE("Requesting glycol pump VFD registers");
+    if (timedout) {
+        std::cout << "VFD readout timed-out." << std::endl;
+        return;
+    }
+
+    // status bits
+    static const std::string status[16] = {"Ready",
+                                           "Active (Running)",
+                                           "Cmd Forward",
+                                           "Rotating Forward",
+                                           "Accelerating",
+                                           "Decelerating",
+                                           "",
+                                           "Faulted",
+                                           "At Reference",
+                                           "Main Freq Controlled by Active Comm",
+                                           "Operation Cmd Controlled by Active Comm",
+                                           "Parameters have been locked",
+                                           "Digital input 1 Status (DigIn TermBlk 05)"
+                                           "Digital input 2 Status (DigIn TermBlk 06)"
+                                           "Digital input 3 Status (DigIn TermBlk 07)"
+                                           "Digital input 4 Status (DigIn TermBlk 08)"};
+
+    uint16_t bits = getVelocityPositionBits();
+
+    std::cout << std::setfill(' ') << std::setw(20) << "Status: "
+              << "0x" << std::hex << getStatus() << std::endl
+              << std::setw(20) << "Commanded Freq.: " << std::fixed << std::setprecision(2)
+              << getCommandedFrequency() << std::endl
+              << std::setw(20) << "Vel./Pos. Bits: " << std::hex << bits << std::dec << std::endl;
+
+    for (int i = 0; i < 16; i++) {
+        if (bits & 0x01)
+            std::cout << "         " << (bits == 0x01 ? "┗" : "┣") << "━━▶ " << status[i] << std::endl;
+        bits >>= 1;
+    }
+
+    std::cout << std::setw(20) << "Drive Error Codes: " << getDriveErrorCodes() << std::endl
+              << std::setw(20) << "Target Frequency: " << std::fixed << std::setprecision(2)
+              << getTargetFrequency() << std::endl
+              << std::setw(20) << "Output Frequency: " << getOutputFrequency() << std::endl
+              << std::setw(20) << "Output Current: " << getOutputCurrent() << std::endl
+              << std::setw(20) << "DC Bus Voltage: " << std::dec << getDCBusVoltage() << std::endl
+              << std::setw(20) << "Output Voltage: " << std::fixed << std::setprecision(1)
+              << getOutputVoltage() << std::endl
+              << std::endl;
 }

@@ -38,7 +38,7 @@ class VFD : public cRIO::MPU {
 public:
     VFD(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) {}
 
-    void poll();
+    void loopWrite() override;
 
     uint16_t getStatus() { return getRegister(0x2000); }
     float getCommandedFrequency() { return getRegister(0x2001) / 100.0f; }
@@ -68,6 +68,13 @@ public:
     void update() { readHoldingRegisters(0x2101, 6); }
 
     static const char* getDriveError(uint16_t code);
+};
+
+class VFDPrint : public VFD {
+public:
+    VFDPrint(uint8_t bus, uint8_t mpu_address) : VFD(bus, mpu_address) {}
+
+    void loopRead(bool timedout) override;
 };
 
 }  // namespace TS

@@ -20,13 +20,17 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <endian.h>
+#include <iomanip>
+#include <iostream>
+
+#include <spdlog/spdlog.h>
 
 #include <MPU/FlowMeter.h>
 
 using namespace LSST::M1M3::TS;
 
-void FlowMeter::poll() {
+void FlowMeter::loopWrite() {
+    SPDLOG_TRACE("Requesting FlowMeter registers");
     readHoldingRegisters(1000, 4, 255);
     readHoldingRegisters(2500, 6, 255);
     readHoldingRegisters(5500, 1, 255);
@@ -52,4 +56,18 @@ double FlowMeter::_getDoubleValue(uint16_t reg) {
         buffer.data[i] = getRegister(reg + 4 - i);
     }
     return buffer.ddouble;
+}
+
+void FlowMeterPrint::loopRead(bool timedout) {
+    if (timedout) {
+        std::cout << "FlowMeter readout timedouted." << std::endl;
+        return;
+    }
+
+    std::cout << std::setfill(' ') << std::fixed << "Signal Strength: " << getSignalStrength() << std::endl
+              << std::setw(20) << "Flow Rate: " << getFlowRate() << std::endl
+              << std::setw(20) << "Net Totalizer: " << getNetTotalizer() << std::endl
+              << std::setw(20) << "Positive Totalizer: " << getPositiveTotalizer() << std::endl
+              << std::setw(20) << "Negative Totalizer: " << getNegativeTotalizer() << std::endl
+              << std::endl;
 }

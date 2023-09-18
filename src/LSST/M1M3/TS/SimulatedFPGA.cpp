@@ -43,22 +43,36 @@ SimulatedFPGA::SimulatedFPGA() : IFPGA(), _U16ResponseStatus(IDLE) {
 }
 
 void SimulatedFPGA::writeMPUFIFO(MPU& mpu) {
-    _mpuResponse.clear();
+    _mpuResponses[mpu.getBus()].clear();
 
     auto buf = mpu.getCommandVector();
     for (auto i = buf.begin(); i != buf.end(); i++) {
         switch (*i) {
             case MPUCommands::WRITE:
                 i++;
-                _simulateMPU(&(*(i + 1)), *i);
+                _simulateMPU(mpu, &(*(i + 1)), *i);
                 i += *i;
+                break;
+            case MPUCommands::READ_US:
+            case MPUCommands::READ_MS:
+                i += 3;
+                break;
+            case MPUCommands::IRQ:
                 break;
         }
     }
 }
 
 void SimulatedFPGA::readMPUFIFO(MPU& mpu) {
-    mpu.processResponse(_mpuResponse.getBuffer(), _mpuResponse.getLength());
+    // TODO shall go away once we have all buffers in uin8_t
+    auto mpuResponse = &(_mpuResponses[mpu.getBus()]);
+    auto buf = mpuResponse->getBuffer();
+    auto len = mpuResponse->getLength();
+    uint8_t u8_data[len];
+    for (int i = 0; i < len; i++) {
+        u8_data[i] = buf[i];
+    }
+    processMPUResponse(mpu, u8_data, len);
 }
 
 LSST::cRIO::MPUTelemetry SimulatedFPGA::readMPUTelemetry(LSST::cRIO::MPU& mpu) {
@@ -225,16 +239,51 @@ void SimulatedFPGA::processReHeaterGains(uint8_t address, float proportionalGain
     _response.writeCRC();
 }
 
-void SimulatedFPGA::processMPURead(uint8_t address, uint16_t register_address, uint16_t len) {
-    _mpuResponse.write<uint8_t>(address);
-    _mpuResponse.write<uint8_t>(3);
-    _mpuResponse.write<uint8_t>(len * 2);
+void SimulatedFPGA::processMPURead(MPU& mpu, uint8_t address, uint16_t register_address, uint16_t len) {
+    static float simFlowMeter = 0;
+    static uint16_t commandedFrequency = 0;
+
+    auto response = &(_mpuResponses[mpu.getBus()]);
+    response->write<uint8_t>(address);
+    response->write<uint8_t>(3);
+    response->write<uint8_t>(len * 2);
+
+    union {
+        float fval;
+        uint16_t data[2];
+    } float2bus;
 
     for (int i = 0; i < len; i++) {
-        _mpuResponse.write<uint16_t>(register_address + i);
+        // for the moment VFD and FlowMeter registers are distinct, so we don't
+        // care about distinguishing if the desired output is for VFD or
+        // FlowMeter. The following code can be easily changed if that becomes
+        // an issue, or more complex simulation is needed in future,
+        switch (register_address + i) {
+            case 1000:
+            case 2500:
+            case 2502:
+            case 2504:
+                simFlowMeter += 0.1 + 0.01 * random() / float(RAND_MAX);
+
+                float2bus.fval = simFlowMeter;
+                response->write<uint16_t>(float2bus.data[1]);
+                response->write<uint16_t>(float2bus.data[0]);
+                i++;
+                break;
+            case 5500:
+                response->write<uint16_t>(1000 * random() / float(RAND_MAX));
+                break;
+            case 0x2001:
+                response->write<uint16_t>(commandedFrequency * 100);
+                commandedFrequency++;
+                commandedFrequency %= 60;
+                break;
+            default:
+                response->write<uint16_t>(register_address + i + 10 * (random() / float(RAND_MAX)));
+        }
     }
 
-    _mpuResponse.writeCRC();
+    response->writeCRC();
 }
 
 void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
@@ -307,7 +356,7 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
     }
 }
 
-void SimulatedFPGA::_simulateMPU(uint8_t* data, size_t length) {
+void SimulatedFPGA::_simulateMPU(MPU& mpu, uint8_t* data, size_t length) {
     uint16_t u16_data[length];
     for (size_t i = 0; i < length; i++) {
         u16_data[i] = data[i];
@@ -320,7 +369,7 @@ void SimulatedFPGA::_simulateMPU(uint8_t* data, size_t length) {
             case 3: {
                 uint16_t reg_add = buf.read<uint16_t>();
                 uint16_t reg_len = buf.read<uint16_t>();
-                processMPURead(address, reg_add, reg_len);
+                processMPURead(mpu, address, reg_add, reg_len);
                 break;
             }
             default:

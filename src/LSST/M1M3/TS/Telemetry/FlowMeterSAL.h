@@ -26,21 +26,18 @@
 #include <SAL_MTM1M3TS.h>
 #include <cRIO/Singleton.h>
 
+#include <MPU/FlowMeter.h>
+
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
-class FlowMeter final : MTM1M3TS_flowMeterC, public cRIO::Singleton<FlowMeter> {
+class FlowMeterSAL final : public FlowMeter, MTM1M3TS_flowMeterC {
 public:
-    FlowMeter(token);
+    FlowMeterSAL(uint8_t bus, uint8_t mpu_address);
 
-    void update();
-
-    /**
-     * Sends updates through SAL/DDS.
-     */
-    void send();
+    void loopRead(bool timedout) override;
 };
 
 }  // namespace Telemetry

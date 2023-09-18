@@ -30,11 +30,18 @@
 #include <ThermalFPGA.h>
 #endif
 
+#include <Telemetry/FlowMeterSAL.h>
+#include <Telemetry/VFDSAL.h>
+
+using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
 
 IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {
-    vfd = std::make_shared<VFD>(1, 100);
-    flowMeter = std::make_shared<FlowMeter>(2, 1);
+    vfd = std::make_shared<Telemetry::VFDSAL>(1, 100);
+    vfd->setLoopTimeOut(1000ms);
+
+    flowMeter = std::make_shared<Telemetry::FlowMeterSAL>(2, 1);
+    flowMeter->setLoopTimeOut(2000ms);
 }
 
 IFPGA& IFPGA::get() {
@@ -107,4 +114,12 @@ void IFPGA::setHeartbeat(bool heartbeat) {
     buf[0] = FPGAAddress::HEARTBEAT;
     buf[1] = heartbeat;
     writeCommandFIFO(buf, 2, 0);
+}
+
+void IFPGA::processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len) {
+    uint16_t u16_data[len];
+    for (int i = 0; i < len; i++) {
+        u16_data[i] = data[i];
+    }
+    mpu.processResponse(u16_data, len);
 }

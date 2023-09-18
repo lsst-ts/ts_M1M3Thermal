@@ -91,7 +91,7 @@ public:
     std::shared_ptr<FlowMeter> flowMeter;
 
 protected:
-    virtual void processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len) {}
+    virtual void processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len);
 };
 
 }  // namespace TS
