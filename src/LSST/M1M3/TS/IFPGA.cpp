@@ -30,19 +30,13 @@
 #include <ThermalFPGA.h>
 #endif
 
-#include <Telemetry/FlowMeterSAL.h>
-#include <Telemetry/VFDSAL.h>
+#include <MPU/FlowMeter.h>
+#include <MPU/VFD.h>
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
 
-IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {
-    vfd = std::make_shared<Telemetry::VFDSAL>(1, 100);
-    vfd->setLoopTimeOut(1000ms);
-
-    flowMeter = std::make_shared<Telemetry::FlowMeterSAL>(2, 1);
-    flowMeter->setLoopTimeOut(2000ms);
-}
+IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
 
 IFPGA& IFPGA::get() {
 #ifdef SIMULATOR
@@ -52,6 +46,14 @@ IFPGA& IFPGA::get() {
     static ThermalFPGA thermalfpga;
     return thermalfpga;
 #endif
+}
+
+void IFPGA::setMPUs(std::shared_ptr<VFD> _vfd, std::shared_ptr<FlowMeter> _flowMeter) {
+    vfd = _vfd;
+    vfd->setLoopTimeOut(1000ms);
+
+    flowMeter = _flowMeter;
+    flowMeter->setLoopTimeOut(2000ms);
 }
 
 float IFPGA::getMixingValvePosition() {

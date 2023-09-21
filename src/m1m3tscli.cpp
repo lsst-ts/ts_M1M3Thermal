@@ -304,8 +304,7 @@ int M1M3TScli::pumpOnOff(command_vec cmds) { return 0; }
 
 FPGA* M1M3TScli::newFPGA(const char* dir) {
     PrintTSFPGA* printFPGA = new PrintTSFPGA();
-    printFPGA->vfd = std::make_shared<VFDPrint>(1, 100);
-    flowMeter = std::make_shared<FlowMeterPrint>(2, 1);
+    printFPGA->setMPUs(vfd, flowMeter);
     return printFPGA;
 }
 
