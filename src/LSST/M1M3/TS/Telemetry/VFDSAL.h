@@ -24,23 +24,19 @@
 #define _TS_Telemetry_VFD_
 
 #include <SAL_MTM1M3TS.h>
-#include <cRIO/Singleton.h>
+
+#include <MPU/VFD.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
-class VFD final : MTM1M3TS_glycolPumpC, public cRIO::Singleton<VFD> {
+class VFDSAL final : public VFD, MTM1M3TS_glycolPumpC {
 public:
-    VFD(token);
+    VFDSAL(uint8_t bus, uint8_t mpu_address);
 
-    void update();
-
-    /**
-     * Sends updates through SAL/DDS.
-     */
-    void send();
+    void loopRead(bool timedout) override;
 };
 
 }  // namespace Telemetry

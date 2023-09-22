@@ -1,5 +1,5 @@
 /*
- * Flow Meter telemetry handling class.
+ * VFD telemetry handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,45 +20,42 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cmath>
-
 #include <spdlog/spdlog.h>
 
+#include <Events/GlycolPumpStatus.h>
 #include <IFPGA.h>
 #include <TSPublisher.h>
-#include <Telemetry/FlowMeter.h>
+#include <Telemetry/VFDSAL.h>
 
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-FlowMeter::FlowMeter(token) {
-    signalStrength = NAN;
-    flowRate = NAN;
-    netTotalizer = NAN;
-    positiveTotalizer = NAN;
-    negativeTotalizer = NAN;
+VFDSAL::VFDSAL(uint8_t bus, uint8_t mpu_address) : VFD(bus, mpu_address) {
+    commandedFrequency = NAN;
+    targetFrequency = NAN;
+    outputFrequency = NAN;
+    outputCurrent = NAN;
+    busVoltage = NAN;
+    outputVoltage = NAN;
 }
 
-void FlowMeter::update() {
-    auto flowMeter = IFPGA::get().flowMeter;
+void VFDSAL::loopRead(bool timedout) {
+    Events::GlycolPumpStatus::instance().update(*this);
 
-    flowMeter->clearCommanded();
+    if (timedout) {
+        return;
+    }
 
-    flowMeter->poll();
+    commandedFrequency = getCommandedFrequency();
+    targetFrequency = getTargetFrequency();
+    outputFrequency = getOutputFrequency();
+    outputCurrent = getOutputCurrent();
+    busVoltage = getDCBusVoltage();
+    outputVoltage = getOutputVoltage();
 
-    IFPGA::get().mpuCommands(*flowMeter, 2s);
-
-    signalStrength = flowMeter->getSignalStrength();
-    flowRate = flowMeter->getFlowRate();
-    netTotalizer = flowMeter->getNetTotalizer();
-    positiveTotalizer = flowMeter->getPositiveTotalizer();
-    negativeTotalizer = flowMeter->getNegativeTotalizer();
-}
-
-void FlowMeter::send() {
-    salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
+    salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
     if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot send FlowMeter: {}", ret);
+        SPDLOG_WARN("Cannot send VFD: {}", ret);
         return;
     }
 }

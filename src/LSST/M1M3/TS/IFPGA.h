@@ -60,6 +60,8 @@ public:
     IFPGA();
     virtual ~IFPGA() {}
 
+    void setMPUs(std::shared_ptr<VFD> vfd, std::shared_ptr<FlowMeter> flowMeter);
+
     static IFPGA& get();
 
     virtual void readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) = 0;
@@ -91,7 +93,7 @@ public:
     std::shared_ptr<FlowMeter> flowMeter;
 
 protected:
-    virtual void processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len) {}
+    virtual void processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len);
 };
 
 }  // namespace TS

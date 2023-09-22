@@ -165,10 +165,10 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
 
     addILC(std::make_shared<PrintThermalILC>(1));
 
-    flowMeter = std::make_shared<FlowMeter>(2, 1);
+    flowMeter = std::make_shared<FlowMeterPrint>(2, 1);
     addMPU("flow", flowMeter);
 
-    vfd = std::make_shared<VFD>(1, 100);
+    vfd = std::make_shared<VFDPrint>(1, 100);
     addMPU("vfd", vfd);
 }
 
@@ -180,7 +180,7 @@ int M1M3TScli::mpuRead(command_vec cmds) {
         return -1;
     }
 
-    vfd->clear(true);
+    vfd->clearCommanded();
     mpu->clearCommanded();
 
     std::vector<std::pair<uint16_t, uint8_t>> registers;
@@ -245,19 +245,10 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 }
 
 int M1M3TScli::printFlowMeter(command_vec cmds) {
-    flowMeter->clearCommanded();
+    while (flowMeter->getLoopState() != loop_state_t::IDLE) {
+        flowMeter->runLoop(*getFPGA());
+    }
 
-    flowMeter->poll();
-
-    getFPGA()->mpuCommands(*flowMeter, 2s);
-
-    std::cout << std::setfill(' ') << std::fixed << std::setw(20)
-              << "Signal Strength: " << flowMeter->getSignalStrength() << std::endl
-              << std::setw(20) << "Flow Rate: " << flowMeter->getFlowRate() << std::endl
-              << std::setw(20) << "Net Totalizer: " << flowMeter->getNetTotalizer() << std::endl
-              << std::setw(20) << "Positive Totalizer: " << flowMeter->getPositiveTotalizer() << std::endl
-              << std::setw(20) << "Negative Totalizer: " << flowMeter->getNegativeTotalizer() << std::endl
-              << std::endl;
     return 0;
 }
 
@@ -285,53 +276,10 @@ int M1M3TScli::printPump(command_vec cmds) {
         }
     }
 
-    vfd->clearCommanded();
-
-    vfd->poll();
-
-    getFPGA()->mpuCommands(*vfd, 1s);
-
-    // status bits
-    static const std::string status[16] = {"Ready",
-                                           "Active (Running)",
-                                           "Cmd Forward",
-                                           "Rotating Forward",
-                                           "Accelerating",
-                                           "Decelerating",
-                                           "",
-                                           "Faulted",
-                                           "At Reference",
-                                           "Main Freq Controlled by Active Comm",
-                                           "Operation Cmd Controlled by Active Comm",
-                                           "Parameters have been locked",
-                                           "Digital input 1 Status (DigIn TermBlk 05)"
-                                           "Digital input 2 Status (DigIn TermBlk 06)"
-                                           "Digital input 3 Status (DigIn TermBlk 07)"
-                                           "Digital input 4 Status (DigIn TermBlk 08)"};
-
-    uint16_t bits = vfd->getVelocityPositionBits();
-
-    std::cout << std::setfill(' ') << std::setw(20) << "Status: "
-              << "0x" << std::hex << vfd->getStatus() << std::endl
-              << std::setw(20) << "Commanded Freq.: " << std::fixed << std::setprecision(2)
-              << vfd->getCommandedFrequency() << std::endl
-              << std::setw(20) << "Vel./Pos. Bits: " << std::hex << bits << std::dec << std::endl;
-
-    for (int i = 0; i < 16; i++) {
-        if (bits & 0x01)
-            std::cout << "         " << (bits == 0x01 ? "┗" : "┣") << "━━▶ " << status[i] << std::endl;
-        bits >>= 1;
+    while (vfd->getLoopState() != loop_state_t::IDLE) {
+        vfd->runLoop(*getFPGA());
     }
 
-    std::cout << std::setw(20) << "Drive Error Codes: " << vfd->getDriveErrorCodes() << std::endl
-              << std::setw(20) << "Target Frequency: " << std::fixed << std::setprecision(2)
-              << vfd->getTargetFrequency() << std::endl
-              << std::setw(20) << "Output Frequency: " << vfd->getOutputFrequency() << std::endl
-              << std::setw(20) << "Output Current: " << vfd->getOutputCurrent() << std::endl
-              << std::setw(20) << "DC Bus Voltage: " << std::dec << vfd->getDCBusVoltage() << std::endl
-              << std::setw(20) << "Output Voltage: " << std::fixed << std::setprecision(1)
-              << vfd->getOutputVoltage() << std::endl
-              << std::endl;
     return 0;
 }
 
@@ -354,7 +302,11 @@ int M1M3TScli::fcuOnOff(command_vec cmds) {
 
 int M1M3TScli::pumpOnOff(command_vec cmds) { return 0; }
 
-FPGA* M1M3TScli::newFPGA(const char* dir) { return new PrintTSFPGA(); }
+FPGA* M1M3TScli::newFPGA(const char* dir) {
+    PrintTSFPGA* printFPGA = new PrintTSFPGA();
+    printFPGA->setMPUs(vfd, flowMeter);
+    return printFPGA;
+}
 
 int M1M3TScli::thermalDemand(command_vec cmds) {
     uint8_t heater = std::stoi(cmds[0]);

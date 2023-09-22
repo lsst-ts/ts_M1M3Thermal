@@ -30,12 +30,13 @@
 #include <ThermalFPGA.h>
 #endif
 
+#include <MPU/FlowMeter.h>
+#include <MPU/VFD.h>
+
+using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
 
-IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {
-    vfd = std::make_shared<VFD>(1, 100);
-    flowMeter = std::make_shared<FlowMeter>(2, 1);
-}
+IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
 
 IFPGA& IFPGA::get() {
 #ifdef SIMULATOR
@@ -45,6 +46,14 @@ IFPGA& IFPGA::get() {
     static ThermalFPGA thermalfpga;
     return thermalfpga;
 #endif
+}
+
+void IFPGA::setMPUs(std::shared_ptr<VFD> _vfd, std::shared_ptr<FlowMeter> _flowMeter) {
+    vfd = _vfd;
+    vfd->setLoopTimeOut(1000ms);
+
+    flowMeter = _flowMeter;
+    flowMeter->setLoopTimeOut(2000ms);
 }
 
 float IFPGA::getMixingValvePosition() {
@@ -107,4 +116,12 @@ void IFPGA::setHeartbeat(bool heartbeat) {
     buf[0] = FPGAAddress::HEARTBEAT;
     buf[1] = heartbeat;
     writeCommandFIFO(buf, 2, 0);
+}
+
+void IFPGA::processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len) {
+    uint16_t u16_data[len];
+    for (int i = 0; i < len; i++) {
+        u16_data[i] = data[i];
+    }
+    mpu.processResponse(u16_data, len);
 }

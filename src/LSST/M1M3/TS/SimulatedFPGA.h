@@ -20,11 +20,14 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <IFPGA.h>
+#include <map>
+
 #include <cRIO/NiError.h>
 #include <cRIO/SimulatedILC.h>
 #include <cRIO/SimulatedMPU.h>
 #include <cRIO/ThermalILC.h>
+
+#include <IFPGA.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -50,7 +53,9 @@ public:
     void readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) override;
     void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     float chassisTemperature() override;
-    void waitOnIrqs(uint32_t irqs, uint32_t timeout, uint32_t* triggered = NULL) override {}
+    void waitOnIrqs(uint32_t irqs, uint32_t timeout, bool& timedout, uint32_t* triggered = NULL) override {
+        timedout = false;
+    }
     void ackIrqs(uint32_t irqs) override {}
 
 protected:
@@ -71,19 +76,19 @@ protected:
 
     void processReHeaterGains(uint8_t address, float proportionalGain, float integralGain) override;
 
-    void processMPURead(uint8_t address, uint16_t register_address, uint16_t len);
+    void processMPURead(cRIO::MPU& mpu, uint8_t address, uint16_t register_address, uint16_t len);
 
 private:
     uint8_t _broadcastCounter;
     LSST::cRIO::SimulatedILC _response;
-    LSST::cRIO::SimulatedMPU _mpuResponse;
+    std::map<uint8_t, cRIO::SimulatedMPU> _mpuResponses;
 
     uint8_t _mode[cRIO::NUM_TS_ILC];
     uint8_t _heaterPWM[cRIO::NUM_TS_ILC];
     uint8_t _fanRPM[cRIO::NUM_TS_ILC];
 
     void _simulateModbus(uint16_t* data, size_t length);
-    void _simulateMPU(uint8_t* data, size_t length);
+    void _simulateMPU(cRIO::MPU& mpu, uint8_t* data, size_t length);
 
     enum { IDLE, LEN, DATA } _U16ResponseStatus;
 };

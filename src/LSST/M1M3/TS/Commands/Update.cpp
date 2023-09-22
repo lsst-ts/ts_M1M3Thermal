@@ -31,8 +31,7 @@
 #include "Events/Heartbeat.h"
 #include "Events/SummaryState.h"
 
-#include "Telemetry/FlowMeter.h"
-#include "Telemetry/VFD.h"
+#include "Telemetry/VFDSAL.h"
 #include "Telemetry/GlycolLoopTemperature.h"
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
@@ -98,19 +97,18 @@ void Update::_sendFCU() {
 
 void Update::_sendFlowMeter() {
     try {
-        Telemetry::FlowMeter::instance().update();
-        Telemetry::FlowMeter::instance().send();
+        IFPGA::get().flowMeter->runLoop(IFPGA::get());
     } catch (std::exception &e) {
         SPDLOG_WARN("Cannot poll Flow Meter: {}", e.what());
+        IFPGA::get().flowMeter->clearCommanded();
     }
 }
 
 void Update::_sendVFD() {
     try {
-        Telemetry::VFD::instance().update();
-        Telemetry::VFD::instance().send();
-        Events::GlycolPumpStatus::instance().update();
+        IFPGA::get().vfd->runLoop(IFPGA::get());
     } catch (std::exception &e) {
         SPDLOG_WARN("Cannot poll VFD: {}", e.what());
+        IFPGA::get().vfd->clearCommanded();
     }
 }

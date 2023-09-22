@@ -31,31 +31,32 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/daily_file_sink.h"
 
+#include <SAL_MTM1M3TS.h>
+
+#include <cRIO/ControllerThread.h>
+#include <cRIO/CSC.h>
+#include <cRIO/FPGA.h>
+#include <cRIO/NiError.h>
+#include <cRIO/SALSink.h>
+#include <cRIO/Settings/Path.h>
+
 #ifdef SIMULATOR
 #include <SimulatedFPGA.h>
 #else
 #include <ThermalFPGA.h>
 #endif
 
-#include <cRIO/ControllerThread.h>
 #include <OuterLoopClockThread.h>
-#include <cRIO/Settings/Path.h>
 #include <Settings/Controller.h>
 
-#include <TSSubscriber.h>
-#include <SALThermalILC.h>
-#include <TSPublisher.h>
 #include <Commands/SAL.h>
 #include <Commands/EnterControl.h>
-
-#include <cRIO/CSC.h>
-#include <cRIO/FPGA.h>
-#include <cRIO/NiError.h>
-#include <cRIO/SALSink.h>
-
+#include <SALThermalILC.h>
+#include <Telemetry/FlowMeterSAL.h>
+#include <Telemetry/VFDSAL.h>
 #include <TSApplication.h>
-
-#include <SAL_MTM1M3TS.h>
+#include <TSPublisher.h>
+#include <TSSubscriber.h>
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
@@ -93,6 +94,9 @@ void M1M3thermald::init() {
     SALThermalILC* ilc = new SALThermalILC(_m1m3tsSAL);
 
     TSApplication::instance().setILC(ilc);
+
+    IFPGA::get().setMPUs(std::make_shared<Telemetry::VFDSAL>(1, 100),
+                         std::make_shared<Telemetry::FlowMeterSAL>(2, 1));
 
 #ifdef SIMULATOR
     SPDLOG_WARN("Starting Simulator version! Version {}", VERSION);
