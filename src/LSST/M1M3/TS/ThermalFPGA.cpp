@@ -21,6 +21,7 @@
  */
 
 #include <iostream>
+#include <thread>
 
 #include <spdlog/spdlog.h>
 
