@@ -48,8 +48,9 @@ void changeAllILCsMode(uint16_t mode) {
 }
 
 bool SAL_start::validate() {
+    // TODO needs new, single file config
     if (params.configurationOverride.empty()) {
-        return false;
+        params.configurationOverride = "Default";
     }
     return true;
 }
