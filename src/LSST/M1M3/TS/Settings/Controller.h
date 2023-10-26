@@ -26,7 +26,6 @@
 
 #include <cRIO/Singleton.h>
 #include <cRIO/Settings/Path.h>
-#include <cRIO/Settings/Alias.h>
 
 #include <Settings/MixingValve.h>
 #include <Settings/Thermal.h>
@@ -44,16 +43,8 @@ public:
     Controller(token) {}
 
     void load(const std::string& label) {
-        _aliases.load(cRIO::Settings::Path::getFilePath("Base/AliasApplicationSettings.yaml"));
-
-        std::string settingsRoot = cRIO::Settings::Path::getFilePath(_aliases.getPath(label));
-
-        MixingValve::instance().load(settingsRoot + "/MixingValve.yaml");
-        Thermal::instance().load(settingsRoot + "/FCU.yaml");
+        Thermal::instance().load(cRIO::Settings::Path::getFilePath("v1/_init.yaml"));
     }
-
-private:
-    cRIO::Settings::Alias _aliases;
 };
 
 }  // namespace Settings

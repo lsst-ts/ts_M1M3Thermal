@@ -24,12 +24,12 @@
 #ifndef _TS_Settings_Thermal_h
 #define _TS_Settings_Thermal_h
 
-#include <SAL_MTM1M3TS.h>
+#include <string>
 
 #include <cRIO/Singleton.h>
 #include <TSPublisher.h>
 
-#include <string>
+#include <SAL_MTM1M3TS.h>
 
 namespace LSST {
 namespace M1M3 {

@@ -27,12 +27,13 @@
 #include <cRIO/ControllerThread.h>
 
 #include <Commands/SAL.h>
-#include <Events/SummaryState.h>
 #include <Events/EngineeringMode.h>
+#include <Events/SummaryState.h>
 #include <Events/ThermalInfo.h>
-#include <Settings/MixingValve.h>
 #include <Settings/Controller.h>
+#include <Settings/MixingValve.h>
 #include <TSApplication.h>
+#include <TSPublisher.h>
 
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
@@ -48,9 +49,12 @@ void changeAllILCsMode(uint16_t mode) {
 }
 
 bool SAL_start::validate() {
-    // TODO needs new, single file config
     if (params.configurationOverride.empty()) {
         params.configurationOverride = "Default";
+    }
+    if (params.configurationOverride[0] == '_') {
+        SPDLOG_ERROR("configurationOverride argument shall not start with _");
+        return false;
     }
     return true;
 }

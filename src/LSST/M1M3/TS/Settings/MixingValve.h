@@ -24,6 +24,8 @@
 #ifndef _TS_Settings_MixingValve_h
 #define _TS_Settings_MixingValve_h
 
+#include <yaml-cpp/yaml.h>
+
 #include <SAL_MTM1M3TS.h>
 
 #include <cRIO/Singleton.h>
@@ -38,7 +40,7 @@ class MixingValve : public cRIO::Singleton<MixingValve>, MTM1M3TS_logevent_mixin
 public:
     MixingValve(token);
 
-    void load(const std::string& filename);
+    void load(YAML::Node doc);
 
     void log() { TSPublisher::SAL()->logEvent_mixingValveSettings(this, 0); }
 

@@ -1,0 +1,18 @@
+DisabledFCU: []
+
+MixingValve:
+  # units are mA (milliamperes)
+  Commanding:
+    FullyClosed: 4
+    FullyOpened: 20
+  
+  # units are V (Volts)
+  PositionFeedback:
+    FullyClosed: 0.03
+    FullyOpened: 9.64
+
+FlowMeter:
+  Enabled: true
+
+GlycoolPump:
+  Enabled: true
