@@ -36,6 +36,11 @@ public:
     EnabledILC(token);
 
     /**
+     * Clears failed ILC counts.
+     */
+    void reset();
+
+    /**
      * Enabled / disable ILC.
      */
     void setEnabled(uint8_t ilc, bool newState);
@@ -43,9 +48,19 @@ public:
     bool isEnabled(uint8_t ilc);
 
     /**
+     * Called when an ILC experienced communication problem. Auto disable ILC
+     * if communication errors cross a counter.
+     */
+    void communicationProblem(uint8_t ilc);
+
+    /**
      * Sends updates through SAL/DDS.
      */
     void send();
+
+    // TODO move to SAL/DDS
+    int errorCount[cRIO::NUM_TS_ILC];
+    bool autoDisabled[cRIO::NUM_TS_ILC];
 
 private:
     bool _updated;

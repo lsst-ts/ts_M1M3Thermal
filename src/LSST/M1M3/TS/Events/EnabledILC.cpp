@@ -23,16 +23,23 @@
 #include <spdlog/spdlog.h>
 
 #include <cRIO/ThermalILC.h>
-#include <TSPublisher.h>
+
 #include <Events/EnabledILC.h>
+#include <Settings/Thermal.h>
+#include <TSPublisher.h>
 
 using namespace LSST::M1M3::TS;
 using namespace LSST::M1M3::TS::Events;
 
-EnabledILC::EnabledILC(token) : _updated(true) {
-    for (int i = 0; i < LSST::cRIO::NUM_TS_ILC; i++) {
+EnabledILC::EnabledILC(token) : _updated(true) { reset(); }
+
+void EnabledILC::reset() {
+    for (size_t i = 0; i < cRIO::NUM_TS_ILC; i++) {
         enabled[i] = true;
+        autoDisabled[i] = false;
+        errorCount[i] = 0;
     }
+    _updated = true;
 }
 
 void EnabledILC::setEnabled(uint8_t ilc, bool newState) {
@@ -43,6 +50,17 @@ void EnabledILC::setEnabled(uint8_t ilc, bool newState) {
 }
 
 bool EnabledILC::isEnabled(uint8_t ilc) { return enabled[ilc]; }
+
+void EnabledILC::communicationProblem(uint8_t ilc) {
+    errorCount[ilc]++;
+    if (Settings::Thermal::instance().autoDisable) {
+        if (errorCount[ilc] > Settings::Thermal::instance().failuresToDisable) {
+            autoDisabled[ilc] = true;
+            setEnabled(ilc, false);
+        }
+    }
+    _updated = true;
+}
 
 void EnabledILC::send() {
     if (_updated == false) {

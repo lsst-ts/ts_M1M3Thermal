@@ -21,10 +21,13 @@
  */
 
 #include <spdlog/fmt/fmt.h>
+#include <spdlog/spdlog.h>
 
 #include <SALThermalILC.h>
 
 #include <Events/ThermalInfo.h>
+#include <Events/EnabledILC.h>
+#include <Settings/Thermal.h>
 #include <Telemetry/ThermalData.h>
 
 namespace LSST {
@@ -32,6 +35,14 @@ namespace M1M3 {
 namespace TS {
 
 SALThermalILC::SALThermalILC(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) : _m1m3tsSAL(m1m3tsSAL) {}
+
+void SALThermalILC::handleMissingReply(uint8_t address, uint8_t func) {
+    if (Settings::Thermal::instance().autoDisable) {
+        Events::EnabledILC::instance().communicationProblem(_address2ILCIndex(address));
+    } else {
+        cRIO::ThermalILC::handleMissingReply(address, func);
+    }
+}
 
 void SALThermalILC::preProcess() {}
 
@@ -53,7 +64,7 @@ void SALThermalILC::processChangeILCMode(uint8_t address, uint16_t mode) {}
 
 void SALThermalILC::processSetTempILCAddress(uint8_t address, uint8_t newAddress) {}
 
-void SALThermalILC::processResetServer(uint8_t address) {}
+void SALThermalILC::processResetServer(uint8_t address) { SPDLOG_DEBUG("ILC {} server reset.", address); }
 
 void SALThermalILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
                                          uint8_t fanRPM, float absoluteTemperature) {

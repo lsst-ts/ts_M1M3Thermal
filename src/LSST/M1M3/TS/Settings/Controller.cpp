@@ -1,7 +1,7 @@
 /*
  * This file is part of LSST M1M3 thermal system package.
  *
- * Developed for the LSST Data Management System.
+ * Developed for the LSST Telescope & Site Software
  * This product includes software developed by the LSST Project
  * (https://www.lsst.org).
  * See the COPYRIGHT file at the top-level directory of this distribution
@@ -21,30 +21,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Settings_Controller_h
-#define _TS_Settings_Controller_h
+#include <spdlog/spdlog.h>
+#include <yaml-cpp/yaml.h>
 
-#include <cRIO/Singleton.h>
-#include <cRIO/Settings/Path.h>
+#include <Settings/Controller.h>
+#include <Settings/FlowMeter.h>
+#include <Settings/GlycolPump.h>
+#include <Settings/MixingValve.h>
+#include <Settings/Thermal.h>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Settings {
+using namespace LSST::M1M3::TS::Settings;
 
-/**
- * Settings controller. Loads all application settings from YAML file.
- */
-class Controller : public cRIO::Singleton<Controller> {
-public:
-    Controller(token) {}
+void Controller::load(const std::string& label) {
+    std::string filename = cRIO::Settings::Path::getFilePath("v1/_init.yaml");
+    SPDLOG_DEBUG("Using configuration file \"{}\"", filename);
+    try {
+        YAML::Node doc = YAML::LoadFile(filename);
 
-    void load(const std::string& label);
-};
-
-}  // namespace Settings
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
-
-#endif  // !_TS_Settings_Controller_h
+        FlowMeter::instance().load(doc["FlowMeter"]);
+        GlycolPump::instance().load(doc["GlycolPump"]);
+        MixingValve::instance().load(doc["MixingValve"]);
+        Thermal::instance().load(doc["FCU"]);
+    } catch (YAML::Exception& ex) {
+        throw std::runtime_error(fmt::format("YAML Loading {}: {}", filename, ex.what()));
+    }
+}

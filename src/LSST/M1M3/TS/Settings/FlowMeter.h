@@ -21,25 +21,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Settings_Controller_h
-#define _TS_Settings_Controller_h
+#ifndef _TS_Settings_FlowMeter_h
+#define _TS_Settings_FlowMeter_h
+
+#include <yaml-cpp/yaml.h>
 
 #include <cRIO/Singleton.h>
-#include <cRIO/Settings/Path.h>
+#include <TSPublisher.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Settings {
 
-/**
- * Settings controller. Loads all application settings from YAML file.
- */
-class Controller : public cRIO::Singleton<Controller> {
+class FlowMeter : public cRIO::Singleton<FlowMeter> {
 public:
-    Controller(token) {}
+    FlowMeter(token);
 
-    void load(const std::string& label);
+    void load(YAML::Node doc);
+
+    bool enabled;
 };
 
 }  // namespace Settings
@@ -47,4 +48,4 @@ public:
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !_TS_Settings_Controller_h
+#endif  //!_TS_Settings_FlowMeter_h

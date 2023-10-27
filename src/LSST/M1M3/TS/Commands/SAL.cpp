@@ -31,6 +31,7 @@
 #include <Events/SummaryState.h>
 #include <Events/ThermalInfo.h>
 #include <Settings/Controller.h>
+#include <Settings/GlycolPump.h>
 #include <Settings/MixingValve.h>
 #include <TSApplication.h>
 #include <TSPublisher.h>
@@ -63,6 +64,11 @@ void SAL_start::execute() {
     SPDLOG_INFO("Starting, settings={}", params.configurationOverride);
     Settings::Controller::instance().load(params.configurationOverride);
 
+    if (Settings::GlycolPump::instance().enabled) {
+        IFPGA::get().setCoolantPumpPower(true);
+        SPDLOG_INFO("Glycol pump turned on.");
+    }
+
     changeAllILCsMode(ILC::ILCMode::Disabled);
 
     TSApplication::ilc()->clear();
@@ -90,6 +96,7 @@ void SAL_enable::execute() {
 void SAL_disable::execute() {
     changeAllILCsMode(ILC::ILCMode::Disabled);
     IFPGA::get().setFCUPower(false);
+    IFPGA::get().setCoolantPumpPower(false);
 
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();

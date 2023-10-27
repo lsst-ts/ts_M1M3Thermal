@@ -24,7 +24,7 @@
 #ifndef _TS_Settings_Thermal_h
 #define _TS_Settings_Thermal_h
 
-#include <string>
+#include <yaml-cpp/yaml.h>
 
 #include <cRIO/Singleton.h>
 #include <TSPublisher.h>
@@ -37,16 +37,18 @@ namespace TS {
 namespace Settings {
 
 /**
- * Thermal Setting class. Loads settings from configuration file and sends
- * settings event.
+ * Thermal settings.
  */
 class Thermal : public cRIO::Singleton<Thermal>, MTM1M3TS_logevent_thermalSettingsC {
 public:
     Thermal(token) {}
 
-    void load(const std::string& filename);
+    void load(YAML::Node doc);
 
     void log() { TSPublisher::SAL()->logEvent_thermalSettings(this, 0); }
+
+    bool autoDisable;
+    int failuresToDisable;
 };
 
 }  // namespace Settings
@@ -54,4 +56,4 @@ public:
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //! _TS_Settings_Application_h
+#endif  //! _TS_Settings_Thermal_h

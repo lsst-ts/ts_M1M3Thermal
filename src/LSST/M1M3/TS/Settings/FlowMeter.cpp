@@ -1,7 +1,7 @@
 /*
  * This file is part of LSST M1M3 thermal system package.
  *
- * Developed for the LSST Data Management System.
+ * Developed for the Vera C. Rubin Telescope and Site System.
  * This product includes software developed by the LSST Project
  * (https://www.lsst.org).
  * See the COPYRIGHT file at the top-level directory of this distribution
@@ -21,30 +21,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Settings_Controller_h
-#define _TS_Settings_Controller_h
+#include <spdlog/spdlog.h>
 
-#include <cRIO/Singleton.h>
-#include <cRIO/Settings/Path.h>
+#include <Settings/FlowMeter.h>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Settings {
+using namespace LSST::M1M3::TS::Settings;
 
-/**
- * Settings controller. Loads all application settings from YAML file.
- */
-class Controller : public cRIO::Singleton<Controller> {
-public:
-    Controller(token) {}
+FlowMeter::FlowMeter(token) { enabled = false; }
 
-    void load(const std::string& label);
-};
+void FlowMeter::load(YAML::Node doc) {
+    SPDLOG_TRACE("Loading flow meter settings");
 
-}  // namespace Settings
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
-
-#endif  // !_TS_Settings_Controller_h
+    enabled = doc["Enabled"].as<bool>();
+}
