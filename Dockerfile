@@ -26,7 +26,7 @@ RUN source ~/.crio_setup.sh && cd $TS_XML_DIR \
 
 FROM crio-develop
 
-ARG cRIO_CPP=v1.9.0
+ARG cRIO_CPP=v1.10.0
 ARG M1M3_SUPPORT=develop
 ARG TARGET=simulator
 

@@ -22,7 +22,7 @@ m1m3tscli: src/m1m3tscli.cpp.o src/libM1M3TS.a
 
 # Other Targets
 clean:
-	@$(foreach file,M1M3ThermalCsC src/m1m3thermalcsc.cpp.o doc, echo '[RM ] ${file}'; $(RM) -r $(file);)
+	@$(foreach file,M1M3ThermalCsC src/m1m3thermalcsc.cpp.o, echo '[RM ] ${file}'; $(RM) -r $(file);)
 	@$(foreach dir,src tests,$(MAKE) -C ${dir} $@;)
 
 # file targets

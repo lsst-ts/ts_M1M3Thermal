@@ -63,7 +63,7 @@ void SimulatedFPGA::writeMPUFIFO(MPU& mpu) {
     }
 }
 
-void SimulatedFPGA::readMPUFIFO(MPU& mpu) {
+std::vector<uint8_t> SimulatedFPGA::readMPUFIFO(MPU& mpu) {
     // TODO shall go away once we have all buffers in uin8_t
     auto mpuResponse = &(_mpuResponses[mpu.getBus()]);
     auto buf = mpuResponse->getBuffer();
@@ -73,6 +73,8 @@ void SimulatedFPGA::readMPUFIFO(MPU& mpu) {
         u8_data[i] = buf[i];
     }
     processMPUResponse(mpu, u8_data, len);
+
+    return std::vector<uint8_t>(u8_data, u8_data + len);
 }
 
 LSST::cRIO::MPUTelemetry SimulatedFPGA::readMPUTelemetry(LSST::cRIO::MPU& mpu) {

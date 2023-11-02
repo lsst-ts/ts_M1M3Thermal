@@ -97,7 +97,7 @@ public:
 #endif
 
     void writeMPUFIFO(MPU& mpu) override;
-    void readMPUFIFO(MPU& mpu) override;
+    std::vector<uint8_t> readMPUFIFO(MPU& mpu) override;
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) override;
@@ -504,7 +504,7 @@ void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
     FPGAClass::writeMPUFIFO(mpu);
 }
 
-void PrintTSFPGA::readMPUFIFO(MPU& mpu) { FPGAClass::readMPUFIFO(mpu); }
+std::vector<uint8_t> PrintTSFPGA::readMPUFIFO(MPU& mpu) { return FPGAClass::readMPUFIFO(mpu); }
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     _printBufferU16("C>", true, data, length);

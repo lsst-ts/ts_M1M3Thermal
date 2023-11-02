@@ -87,7 +87,7 @@ void ThermalFPGA::writeMPUFIFO(MPU& mpu) {
                                buf.data(), len, -1, NULL));
 }
 
-void ThermalFPGA::readMPUFIFO(MPU& mpu) {
+std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU& mpu) {
     uint8_t req = mpu.getBus() + 10;
     NiThrowError(
             __PRETTY_FUNCTION__,
@@ -95,18 +95,25 @@ void ThermalFPGA::readMPUFIFO(MPU& mpu) {
                                &req, 1, -1, NULL));
 
     uint16_t len;
+
     NiThrowError(
             __PRETTY_FUNCTION__,
             NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
                               reinterpret_cast<uint8_t*>(&len), 2, 1000, NULL));
     len = ntohs(len);
-    uint8_t data[len];
+    uint8_t* data = new uint8_t[len];
 
     NiThrowError(
             __PRETTY_FUNCTION__,
             NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
                               data, len, -1, NULL));
     processMPUResponse(mpu, data, len);
+
+    std::vector<uint8_t> ret(data, data + len);
+
+    delete[] data;
+
+    return ret;
 }
 
 LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
