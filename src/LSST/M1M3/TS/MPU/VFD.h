@@ -40,6 +40,11 @@ public:
 
     void loopWrite() override;
 
+    void start() { presetHoldingRegister(0x2000, 0x1a); }
+    void stop() { presetHoldingRegister(0x2000, 0x01); }
+    void reset() { presetHoldingRegister(0x2000, 0x08); }
+    void setFrequency(float freq) { presetHoldingRegister(0x2001, freq * 100.0f); }
+
     uint16_t getStatus() { return getRegister(0x2000); }
     float getCommandedFrequency() { return getRegister(0x2001) / 100.0f; }
 

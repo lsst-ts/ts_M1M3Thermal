@@ -4,7 +4,7 @@ ifndef VERBOSE
   silence := --silence-errors
 endif
 
-c_opts := -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE -DSPDLOG_FMT_EXTERNAL
+c_opts := -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE # -DSPDLOG_FMT_EXTERNAL
 
 ifdef DEBUG
   c_opts += -g
@@ -34,6 +34,7 @@ CRIO_CFLAGS := -I${CRIO_DIR}/include
 PKG_LIBS := $(shell pkg-config yaml-cpp --libs $(silence)) \
 	$(shell pkg-config spdlog --libs $(silence)) \
 	$(shell pkg-config fmt --libs $(silence)) \
+	-lreadline
 
 ifdef SIMULATOR
   LIBS := $(PKG_LIBS) -ldl ${SAL_WORK_DIR}/lib/libSAL_MTM1M3TS.a -ldcpssacpp -ldcpsgapi -lddsuser -lddskernel -lpthread -lddsserialization -lddsconfparser -lddsconf -lddsdatabase -lddsutil -lddsos

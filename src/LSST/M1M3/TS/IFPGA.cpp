@@ -93,24 +93,6 @@ void IFPGA::setCoolantPumpPower(bool on) {
     writeCommandFIFO(buf, 2, 10);
 }
 
-void IFPGA::coolantPumpStartStop(bool start) {
-    vfd->clearCommanded();
-    vfd->presetHoldingRegister(0x2000, start ? 0x1a : 0x01);
-    mpuCommands(*vfd);
-}
-
-void IFPGA::coolantPumpReset() {
-    vfd->clearCommanded();
-    vfd->presetHoldingRegister(0x2000, 0x08);
-    mpuCommands(*vfd);
-}
-
-void IFPGA::setCoolantPumpFrequency(float freq) {
-    vfd->clearCommanded();
-    vfd->presetHoldingRegister(0x2001, freq * 100.0f);
-    mpuCommands(*vfd);
-}
-
 void IFPGA::setHeartbeat(bool heartbeat) {
     uint16_t buf[2];
     buf[0] = FPGAAddress::HEARTBEAT;

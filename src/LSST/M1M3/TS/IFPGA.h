@@ -81,10 +81,6 @@ public:
     void setFCUPower(bool on);
     void setCoolantPumpPower(bool on);
 
-    void coolantPumpStartStop(bool start);
-    void coolantPumpReset();
-    void setCoolantPumpFrequency(float freq);
-
     void setHeartbeat(bool heartbeat);
 
     virtual LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) = 0;
