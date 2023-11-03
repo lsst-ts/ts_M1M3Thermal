@@ -245,6 +245,8 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 }
 
 int M1M3TScli::printFlowMeter(command_vec cmds) {
+    flowMeter->clearCommanded();
+
     while (flowMeter->getLoopState() != loop_state_t::IDLE) {
         flowMeter->runLoop(*getFPGA());
     }
@@ -275,6 +277,8 @@ int M1M3TScli::printPump(command_vec cmds) {
             return 0;
         }
     }
+
+    vfd->clearCommanded();
 
     while (vfd->getLoopState() != loop_state_t::IDLE) {
         vfd->runLoop(*getFPGA());
