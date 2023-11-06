@@ -41,6 +41,7 @@
 #include <cRIO/FPGACliApp.h>
 #include <cRIO/MPU.h>
 
+#include <MPU/FactoryInterface.h>
 #include <MPU/FlowMeter.h>
 #include <MPU/VFD.h>
 
@@ -114,6 +115,21 @@ private:
     void _printBufferU16(std::string prefix, bool nullTimer, uint16_t* buf, size_t len);
 
     std::chrono::time_point<std::chrono::steady_clock> _cmd_start;
+};
+
+class PrintMPUFactory : public FactoryInterface {
+public:
+    PrintMPUFactory(std::shared_ptr<FlowMeter> flowMeter, std::shared_ptr<VFD> vfd) {
+        _flowMeter = flowMeter;
+        _vfd = vfd;
+    }
+
+    std::shared_ptr<FlowMeter> createFlowMeter() override { return _flowMeter; }
+    std::shared_ptr<VFD> createVFD() override { return _vfd; }
+
+private:
+    std::shared_ptr<FlowMeter> _flowMeter;
+    std::shared_ptr<VFD> _vfd;
 };
 
 #define ILC_ARG "<ILC..>"
@@ -308,7 +324,7 @@ int M1M3TScli::pumpOnOff(command_vec cmds) { return 0; }
 
 FPGA* M1M3TScli::newFPGA(const char* dir) {
     PrintTSFPGA* printFPGA = new PrintTSFPGA();
-    printFPGA->setMPUs(vfd, flowMeter);
+    printFPGA->setMPUFactory(std::make_shared<PrintMPUFactory>(flowMeter, vfd));
     return printFPGA;
 }
 

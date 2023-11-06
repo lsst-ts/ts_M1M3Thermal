@@ -1,5 +1,5 @@
 /*
- * FlowMeter MPU
+ * Interface for factory creating application specific MPU objects.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
  * This product includes software developed by the Vera C.Rubin Observatory Project
@@ -20,44 +20,28 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __TS_MPU_FLOWMETER__
-#define __TS_MPU_FLOWMETER__
+#ifndef __TS_SALMPUFactory__
+#define __TS_SALMPUFactory__
 
-#include <cRIO/MPU.h>
+#include <MPU/FactoryInterface.h>
+
+#include "FlowMeterSAL.h"
+#include "VFDSAL.h"
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
+namespace Telemetry {
 
-/**
- * Reads FlowMeter values.
- */
-class FlowMeter : public cRIO::MPU {
+class SALMPUFactory : public FactoryInterface {
 public:
-    FlowMeter(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) { setLoopTimeOut(1000ms); }
-
-    void loopWrite() override;
-
-    uint16_t getSignalStrength() { return getRegister(5500); }
-    double getFlowRate() { return _getFloatValue(1000); }
-    double getNetTotalizer() { return _getFloatValue(2500); }
-    double getPositiveTotalizer() { return _getFloatValue(2502); }
-    double getNegativeTotalizer() { return _getFloatValue(2504); }
-
-private:
-    float _getFloatValue(uint16_t reg);
-    double _getDoubleValue(uint16_t reg);
+    std::shared_ptr<FlowMeter> createFlowMeter() override { return std::make_shared<FlowMeterSAL>(2, 1); }
+    std::shared_ptr<VFD> createVFD() override { return std::make_shared<VFDSAL>(1, 100); }
 };
 
-class FlowMeterPrint : public FlowMeter {
-public:
-    FlowMeterPrint(uint8_t bus, uint8_t mpu_address) : FlowMeter(bus, mpu_address) {}
-
-    void loopRead(bool timedout) override;
-};
-
+}  // namespace Telemetry
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif /* __TS_MPU_FLOWMETER__ */
+#endif /* __TS_SALMPUFactory__ */

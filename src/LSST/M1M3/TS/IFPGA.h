@@ -31,6 +31,7 @@
 #include <cRIO/MPU.h>
 #include <cRIO/MPUTelemetry.h>
 
+#include <MPU/FactoryInterface.h>
 #include <MPU/FlowMeter.h>
 #include <MPU/VFD.h>
 
@@ -60,7 +61,13 @@ public:
     IFPGA();
     virtual ~IFPGA() {}
 
-    void setMPUs(std::shared_ptr<VFD> vfd, std::shared_ptr<FlowMeter> flowMeter);
+    void setMPUFactory(std::shared_ptr<FactoryInterface> _factory);
+
+    /**
+     * Switch to use next flow meter.
+     */
+    void setNextFlowMeter();
+    void setNextVFD();
 
     static IFPGA& get();
 
@@ -85,8 +92,10 @@ public:
 
     virtual LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) = 0;
 
-    std::shared_ptr<VFD> vfd;
-    std::shared_ptr<FlowMeter> flowMeter;
+    std::shared_ptr<FactoryInterface> mpuFactory;
+
+    std::shared_ptr<VFD> vfd, next_vfd;
+    std::shared_ptr<FlowMeter> flowMeter, next_flowMeter;
 
 protected:
     virtual void processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len);

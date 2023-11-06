@@ -106,18 +106,24 @@ void Update::_sendFCU() {
 
 void Update::_sendFlowMeter() {
     try {
-        IFPGA::get().flowMeter->runLoop(IFPGA::get());
+        bool finished = IFPGA::get().flowMeter->runLoop(IFPGA::get());
+        if (finished) {
+            IFPGA::get().setNextFlowMeter();
+        }
     } catch (std::exception &e) {
         SPDLOG_WARN("Cannot poll Flow Meter: {}", e.what());
-        IFPGA::get().flowMeter->clearCommanded();
+        IFPGA::get().setNextFlowMeter();
     }
 }
 
 void Update::_sendVFD() {
     try {
-        IFPGA::get().vfd->runLoop(IFPGA::get());
+        bool finished = IFPGA::get().vfd->runLoop(IFPGA::get());
+        if (finished) {
+            IFPGA::get().setNextVFD();
+        }
     } catch (std::exception &e) {
         SPDLOG_WARN("Cannot poll VFD: {}", e.what());
-        IFPGA::get().vfd->clearCommanded();
+        IFPGA::get().setNextVFD();
     }
 }
