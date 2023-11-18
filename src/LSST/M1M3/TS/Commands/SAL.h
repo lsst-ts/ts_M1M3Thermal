@@ -23,10 +23,11 @@
 #ifndef _TS_Command_SAL
 #define _TS_Command_SAL
 
-#include <TSPublisher.h>
 #include <SAL_MTM1M3TS.h>
 
 #include <cRIO/SAL/Command.h>
+
+#include <TSPublisher.h>
 
 namespace LSST {
 namespace M1M3 {

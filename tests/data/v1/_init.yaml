@@ -1,0 +1,21 @@
+FCU:
+  AutoDisable: true
+  FailuresToDisable: 3
+  Disabled: []
+
+FlowMeter:
+  Enabled: true
+
+GlycolPump:
+  Enabled: true
+
+MixingValve:
+  # units are mA (milliamperes)
+  Commanding:
+    FullyClosed: 4
+    FullyOpened: 20
+  
+  # units are V (Volts)
+  PositionFeedback:
+    FullyClosed: 0.03
+    FullyOpened: 9.64

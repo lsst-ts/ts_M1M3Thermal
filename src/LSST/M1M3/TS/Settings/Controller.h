@@ -26,10 +26,6 @@
 
 #include <cRIO/Singleton.h>
 #include <cRIO/Settings/Path.h>
-#include <cRIO/Settings/Alias.h>
-
-#include <Settings/MixingValve.h>
-#include <Settings/Thermal.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -37,23 +33,13 @@ namespace TS {
 namespace Settings {
 
 /**
- * Settings controller. Loads all application settings.
+ * Settings controller. Loads all application settings from YAML file.
  */
 class Controller : public cRIO::Singleton<Controller> {
 public:
     Controller(token) {}
 
-    void load(const std::string& label) {
-        _aliases.load(cRIO::Settings::Path::getFilePath("Base/AliasApplicationSettings.yaml"));
-
-        std::string settingsRoot = cRIO::Settings::Path::getFilePath(_aliases.getPath(label));
-
-        MixingValve::instance().load(settingsRoot + "/MixingValve.yaml");
-        Thermal::instance().load(settingsRoot + "/FCU.yaml");
-    }
-
-private:
-    cRIO::Settings::Alias _aliases;
+    void load(const std::string& label);
 };
 
 }  // namespace Settings

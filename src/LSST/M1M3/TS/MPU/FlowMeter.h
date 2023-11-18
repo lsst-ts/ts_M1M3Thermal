@@ -34,7 +34,7 @@ namespace TS {
  */
 class FlowMeter : public cRIO::MPU {
 public:
-    FlowMeter(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) {}
+    FlowMeter(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) { setLoopTimeOut(1000ms); }
 
     void loopWrite() override;
 

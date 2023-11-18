@@ -48,12 +48,24 @@ IFPGA& IFPGA::get() {
 #endif
 }
 
-void IFPGA::setMPUs(std::shared_ptr<VFD> _vfd, std::shared_ptr<FlowMeter> _flowMeter) {
-    vfd = _vfd;
-    vfd->setLoopTimeOut(1000ms);
+void IFPGA::setMPUFactory(std::shared_ptr<FactoryInterface> _factory) {
+    mpuFactory = _factory;
 
-    flowMeter = _flowMeter;
-    flowMeter->setLoopTimeOut(2000ms);
+    flowMeter = mpuFactory->createFlowMeter();
+    next_flowMeter = mpuFactory->createFlowMeter();
+
+    vfd = mpuFactory->createVFD();
+    next_vfd = mpuFactory->createVFD();
+}
+
+void IFPGA::setNextFlowMeter() {
+    flowMeter = next_flowMeter;
+    next_flowMeter = mpuFactory->createFlowMeter();
+}
+
+void IFPGA::setNextVFD() {
+    vfd = next_vfd;
+    next_vfd = mpuFactory->createVFD();
 }
 
 float IFPGA::getMixingValvePosition() {
@@ -91,24 +103,6 @@ void IFPGA::setCoolantPumpPower(bool on) {
     buf[0] = FPGAAddress::COOLANT_PUMP_ON;
     buf[1] = on;
     writeCommandFIFO(buf, 2, 10);
-}
-
-void IFPGA::coolantPumpStartStop(bool start) {
-    vfd->clearCommanded();
-    vfd->presetHoldingRegister(0x2000, start ? 0x1a : 0x01);
-    mpuCommands(*vfd);
-}
-
-void IFPGA::coolantPumpReset() {
-    vfd->clearCommanded();
-    vfd->presetHoldingRegister(0x2000, 0x08);
-    mpuCommands(*vfd);
-}
-
-void IFPGA::setCoolantPumpFrequency(float freq) {
-    vfd->clearCommanded();
-    vfd->presetHoldingRegister(0x2001, freq * 100.0f);
-    mpuCommands(*vfd);
 }
 
 void IFPGA::setHeartbeat(bool heartbeat) {

@@ -52,8 +52,7 @@
 #include <Commands/SAL.h>
 #include <Commands/EnterControl.h>
 #include <SALThermalILC.h>
-#include <Telemetry/FlowMeterSAL.h>
-#include <Telemetry/VFDSAL.h>
+#include <Telemetry/SALMPUFactory.h>
 #include <TSApplication.h>
 #include <TSPublisher.h>
 #include <TSSubscriber.h>
@@ -95,8 +94,7 @@ void M1M3thermald::init() {
 
     TSApplication::instance().setILC(ilc);
 
-    IFPGA::get().setMPUs(std::make_shared<Telemetry::VFDSAL>(1, 100),
-                         std::make_shared<Telemetry::FlowMeterSAL>(2, 1));
+    IFPGA::get().setMPUFactory(std::make_shared<Telemetry::SALMPUFactory>());
 
 #ifdef SIMULATOR
     SPDLOG_WARN("Starting Simulator version! Version {}", VERSION);

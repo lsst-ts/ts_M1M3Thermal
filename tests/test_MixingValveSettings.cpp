@@ -23,13 +23,29 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include <Settings/MixingValve.h>
+#include <SAL_MTM1M3TS.h>
 
-using namespace LSST::M1M3::TS::Settings;
+#include <cRIO/Settings/Path.h>
+
+#include <Settings/Controller.h>
+#include <Settings/MixingValve.h>
+#include <TSPublisher.h>
+
 using Catch::Approx;
+using namespace LSST::M1M3::TS;
+using namespace LSST::M1M3::TS::Settings;
+
+void init_sal() {
+    std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL = std::make_shared<SAL_MTM1M3TS>();
+    m1m3TSSAL->setDebugLevel(2);
+    TSPublisher::instance().setSAL(m1m3TSSAL);
+}
 
 TEST_CASE("Test conversions", "[MixingValveSettings]") {
-    REQUIRE_NOTHROW(MixingValve::instance().load("data/MixingValve.yaml"));
+    init_sal();
+
+    LSST::cRIO::Settings::Path::setRootPath("data");
+    REQUIRE_NOTHROW(Controller::instance().load("data/_init.yaml"));
 
     REQUIRE(MixingValve::instance().positionToPercents(10) == 100);
     REQUIRE(MixingValve::instance().positionToPercents(-1) == 0);

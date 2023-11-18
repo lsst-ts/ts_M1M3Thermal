@@ -41,6 +41,7 @@
 #include <cRIO/FPGACliApp.h>
 #include <cRIO/MPU.h>
 
+#include <MPU/FactoryInterface.h>
 #include <MPU/FlowMeter.h>
 #include <MPU/VFD.h>
 
@@ -97,7 +98,7 @@ public:
 #endif
 
     void writeMPUFIFO(MPU& mpu) override;
-    void readMPUFIFO(MPU& mpu) override;
+    std::vector<uint8_t> readMPUFIFO(MPU& mpu) override;
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) override;
@@ -114,6 +115,21 @@ private:
     void _printBufferU16(std::string prefix, bool nullTimer, uint16_t* buf, size_t len);
 
     std::chrono::time_point<std::chrono::steady_clock> _cmd_start;
+};
+
+class PrintMPUFactory : public FactoryInterface {
+public:
+    PrintMPUFactory(std::shared_ptr<FlowMeter> flowMeter, std::shared_ptr<VFD> vfd) {
+        _flowMeter = flowMeter;
+        _vfd = vfd;
+    }
+
+    std::shared_ptr<FlowMeter> createFlowMeter() override { return _flowMeter; }
+    std::shared_ptr<VFD> createVFD() override { return _vfd; }
+
+private:
+    std::shared_ptr<FlowMeter> _flowMeter;
+    std::shared_ptr<VFD> _vfd;
 };
 
 #define ILC_ARG "<ILC..>"
@@ -245,6 +261,8 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 }
 
 int M1M3TScli::printFlowMeter(command_vec cmds) {
+    flowMeter->clearCommanded();
+
     while (flowMeter->getLoopState() != loop_state_t::IDLE) {
         flowMeter->runLoop(*getFPGA());
     }
@@ -253,14 +271,16 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
 }
 
 int M1M3TScli::printPump(command_vec cmds) {
+    vfd->clearCommanded();
+
     IFPGA* fpga = dynamic_cast<IFPGA*>(getFPGA());
     if (cmds.size() > 0) {
         if (cmds[0] == "stop") {
-            fpga->coolantPumpStartStop(false);
+            vfd->stop();
         } else if (cmds[0] == "start") {
-            fpga->coolantPumpStartStop(true);
+            vfd->start();
         } else if (cmds[0] == "reset") {
-            fpga->coolantPumpReset();
+            vfd->reset();
         } else if (cmds[0] == "freq") {
             size_t len;
             uint16_t targetFreq = std::stod(cmds[1], &len);
@@ -268,7 +288,7 @@ int M1M3TScli::printPump(command_vec cmds) {
                 std::cerr << "Invalid frequency: " << cmds[1] << std::endl;
                 return 1;
             }
-            fpga->setCoolantPumpFrequency(targetFreq);
+            vfd->setFrequency(targetFreq);
         } else {
             dynamic_cast<IFPGA*>(getFPGA())->setCoolantPumpPower(onOff(cmds[0]));
             std::cout << "Turned pump " << cmds[0] << std::endl;
@@ -304,7 +324,7 @@ int M1M3TScli::pumpOnOff(command_vec cmds) { return 0; }
 
 FPGA* M1M3TScli::newFPGA(const char* dir) {
     PrintTSFPGA* printFPGA = new PrintTSFPGA();
-    printFPGA->setMPUs(vfd, flowMeter);
+    printFPGA->setMPUFactory(std::make_shared<PrintMPUFactory>(flowMeter, vfd));
     return printFPGA;
 }
 
@@ -504,7 +524,7 @@ void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
     FPGAClass::writeMPUFIFO(mpu);
 }
 
-void PrintTSFPGA::readMPUFIFO(MPU& mpu) { FPGAClass::readMPUFIFO(mpu); }
+std::vector<uint8_t> PrintTSFPGA::readMPUFIFO(MPU& mpu) { return FPGAClass::readMPUFIFO(mpu); }
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     _printBufferU16("C>", true, data, length);

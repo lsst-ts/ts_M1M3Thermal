@@ -40,6 +40,8 @@ public:
     SALThermalILC(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL);
 
 protected:
+    void handleMissingReply(uint8_t address, uint8_t func) override;
+
     void preProcess() override;
     void postProcess() override;
 

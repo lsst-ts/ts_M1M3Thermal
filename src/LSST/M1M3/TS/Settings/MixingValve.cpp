@@ -21,10 +21,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <Settings/MixingValve.h>
-
 #include <spdlog/spdlog.h>
-#include <yaml-cpp/yaml.h>
+
+#include <Settings/MixingValve.h>
 
 using namespace LSST::M1M3::TS::Settings;
 
@@ -35,19 +34,16 @@ MixingValve::MixingValve(token) {
     positionFeedbackFullyOpened = NAN;
 }
 
-void MixingValve::load(const std::string &filename) {
-    SPDLOG_DEBUG("MixingValve::load(\"{}\")", filename);
-
+void MixingValve::load(YAML::Node doc) {
+    SPDLOG_TRACE("Loading mixing valve settigns");
     try {
-        YAML::Node doc = YAML::LoadFile(filename);
-
         commandingFullyClosed = doc["Commanding"]["FullyClosed"].as<float>();
         commandingFullyOpened = doc["Commanding"]["FullyOpened"].as<float>();
 
         positionFeedbackFullyClosed = doc["PositionFeedback"]["FullyClosed"].as<float>();
         positionFeedbackFullyOpened = doc["PositionFeedback"]["FullyOpened"].as<float>();
     } catch (YAML::Exception &ex) {
-        throw std::runtime_error(fmt::format("YAML Loading {}: {}", filename, ex.what()));
+        throw std::runtime_error(fmt::format("Cannot load Mising Valve settings: {}", ex.what()));
     }
 }
 

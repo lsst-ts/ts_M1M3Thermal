@@ -21,31 +21,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cRIO/ThermalILC.h>
-#include <Settings/Thermal.h>
-#include <Events/EnabledILC.h>
-
 #include <algorithm>
 #include <spdlog/spdlog.h>
-#include <yaml-cpp/yaml.h>
+
+#include <cRIO/ThermalILC.h>
+
+#include <Events/EnabledILC.h>
+#include <Settings/Thermal.h>
 
 using namespace LSST::M1M3::TS::Settings;
 
-void Thermal::load(const std::string &filename) {
-    SPDLOG_DEBUG("Thermal::load(\"{}\")", filename);
+void Thermal::load(YAML::Node doc) {
+    SPDLOG_TRACE("Loading disabled FCU list");
 
-    try {
-        YAML::Node doc = YAML::LoadFile(filename);
+    autoDisable = doc["AutoDisable"].as<bool>();
+    failuresToDisable = doc["FailuresToDisable"].as<int>();
 
-        auto disabledIndices = doc["DisabledFCU"].as<std::vector<int>>();
+    auto disabledIndices = doc["Disabled"].as<std::vector<int>>();
 
-        for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
-            enabledFCU[i] =
-                    std::find(disabledIndices.begin(), disabledIndices.end(), i + 1) == disabledIndices.end();
-            Events::EnabledILC::instance().setEnabled(i, enabledFCU[i]);
-        }
-    } catch (YAML::Exception &ex) {
-        throw std::runtime_error(fmt::format("YAML Loading {}: {}", filename, ex.what()));
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        enabledFCU[i] =
+                std::find(disabledIndices.begin(), disabledIndices.end(), i + 1) == disabledIndices.end();
+        Events::EnabledILC::instance().setEnabled(i, enabledFCU[i]);
     }
 
     log();

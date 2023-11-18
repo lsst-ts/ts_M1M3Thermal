@@ -4,7 +4,7 @@ ifndef VERBOSE
   silence := --silence-errors
 endif
 
-c_opts := -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
+c_opts := -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE # -DSPDLOG_FMT_EXTERNAL
 
 ifdef DEBUG
   c_opts += -g
@@ -22,14 +22,19 @@ else
   CPP := g++ -std=c++14 -Wall -fmessage-length=0 ${c_opts} -ldl -lpthread
 endif
 
-PKG_CPPFLAGS := $(shell pkg-config yaml-cpp --cflags $(silence)) $(shell pkg-config spdlog --cflags $(silence))
+PKG_CPPFLAGS := $(shell pkg-config yaml-cpp --cflags $(silence)) \
+	$(shell pkg-config spdlog --cflags $(silence)) \
+	$(shell pkg-config fmt --cflags $(silence))
 
 SAL_CPPFLAGS += $(PKG_CPPFLAGS) -I${OSPL_HOME}/include -I${OSPL_HOME}/include/sys -I${OSPL_HOME}/include/dcps/C++/SACPP -I${SAL_WORK_DIR}/MTM1M3TS/cpp/src -I${SAL_WORK_DIR}/include -I${SAL_HOME}/include -I${LSST_SDK_INSTALL}/include
 
 CRIO_DIR ?= ../ts_cRIOcpp
 CRIO_CFLAGS := -I${CRIO_DIR}/include
 
-PKG_LIBS := $(shell pkg-config yaml-cpp --libs $(silence)) $(shell pkg-config spdlog --libs $(silence))
+PKG_LIBS := $(shell pkg-config yaml-cpp --libs $(silence)) \
+	$(shell pkg-config spdlog --libs $(silence)) \
+	$(shell pkg-config fmt --libs $(silence)) \
+	-lreadline
 
 ifdef SIMULATOR
   LIBS := $(PKG_LIBS) -ldl ${SAL_WORK_DIR}/lib/libSAL_MTM1M3TS.a -ldcpssacpp -ldcpsgapi -lddsuser -lddskernel -lpthread -lddsserialization -lddsconfparser -lddsconf -lddsdatabase -lddsutil -lddsos

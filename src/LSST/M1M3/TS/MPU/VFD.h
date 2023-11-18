@@ -23,7 +23,11 @@
 #ifndef __TS_MPU_VFD__
 #define __TS_MPU_VFD__
 
+#include <chrono>
+
 #include <cRIO/MPU.h>
+
+using namespace std::chrono_literals;
 
 namespace LSST {
 namespace M1M3 {
@@ -36,9 +40,14 @@ namespace TS {
  */
 class VFD : public cRIO::MPU {
 public:
-    VFD(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) {}
+    VFD(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) { setLoopTimeOut(2000ms); }
 
     void loopWrite() override;
+
+    void start() { presetHoldingRegister(0x2000, 0x1a); }
+    void stop() { presetHoldingRegister(0x2000, 0x01); }
+    void resetCommand() { presetHoldingRegister(0x2000, 0x08); }
+    void setFrequency(float freq) { presetHoldingRegister(0x2001, freq * 100.0f); }
 
     uint16_t getStatus() { return getRegister(0x2000); }
     float getCommandedFrequency() { return getRegister(0x2001) / 100.0f; }

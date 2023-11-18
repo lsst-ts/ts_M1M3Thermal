@@ -27,12 +27,14 @@
 #include <cRIO/ControllerThread.h>
 
 #include <Commands/SAL.h>
-#include <Events/SummaryState.h>
 #include <Events/EngineeringMode.h>
+#include <Events/SummaryState.h>
 #include <Events/ThermalInfo.h>
-#include <Settings/MixingValve.h>
 #include <Settings/Controller.h>
+#include <Settings/GlycolPump.h>
+#include <Settings/MixingValve.h>
 #include <TSApplication.h>
+#include <TSPublisher.h>
 
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
@@ -48,9 +50,12 @@ void changeAllILCsMode(uint16_t mode) {
 }
 
 bool SAL_start::validate() {
-    // TODO needs new, single file config
     if (params.configurationOverride.empty()) {
         params.configurationOverride = "Default";
+    }
+    if (params.configurationOverride[0] == '_') {
+        SPDLOG_ERROR("configurationOverride argument shall not start with _");
+        return false;
     }
     return true;
 }
@@ -58,6 +63,11 @@ bool SAL_start::validate() {
 void SAL_start::execute() {
     SPDLOG_INFO("Starting, settings={}", params.configurationOverride);
     Settings::Controller::instance().load(params.configurationOverride);
+
+    if (Settings::GlycolPump::instance().enabled) {
+        IFPGA::get().setCoolantPumpPower(true);
+        SPDLOG_INFO("Glycol pump turned on.");
+    }
 
     changeAllILCsMode(ILC::ILCMode::Disabled);
 
@@ -86,6 +96,7 @@ void SAL_enable::execute() {
 void SAL_disable::execute() {
     changeAllILCsMode(ILC::ILCMode::Disabled);
     IFPGA::get().setFCUPower(false);
+    IFPGA::get().setCoolantPumpPower(false);
 
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
@@ -150,13 +161,13 @@ void SAL_coolantPumpPower::execute() {
 }
 
 void SAL_coolantPumpStart::execute() {
-    IFPGA::get().coolantPumpStartStop(true);
+    IFPGA::get().next_vfd->start();
     ackComplete();
     SPDLOG_INFO("Glycol coolant pump started");
 }
 
 void SAL_coolantPumpStop::execute() {
-    IFPGA::get().coolantPumpStartStop(false);
+    IFPGA::get().next_vfd->stop();
     ackComplete();
     SPDLOG_INFO("Glycol coolant pump stopped");
 }
@@ -170,13 +181,13 @@ bool SAL_coolantPumpFrequency::validate() {
 }
 
 void SAL_coolantPumpFrequency::execute() {
-    IFPGA::get().setCoolantPumpFrequency(params.targetFrequency);
+    IFPGA::get().next_vfd->setFrequency(params.targetFrequency);
     ackComplete();
     SPDLOG_INFO("Changed coolant pump target frequency to {:0.02f} Hz", params.targetFrequency);
 }
 
 void SAL_coolantPumpReset::execute() {
-    IFPGA::get().coolantPumpReset();
+    IFPGA::get().next_vfd->resetCommand();
     ackComplete();
     SPDLOG_INFO("Coolant pump reseted");
 }
