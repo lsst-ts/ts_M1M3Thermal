@@ -58,8 +58,8 @@ node {
                     make
     
                     cd $WORKSPACE/ts_m1m3thermal
-                    LIBS_FLAGS="-L\$CONDA_PREFIX/lib" make simulator
-                    LSST_DDS_PARTITION_PREFIX=test make junit
+                    make SIMULATOR=1
+                    LSST_DDS_PARTITION_PREFIX=test make SIMULATOR=1 junit
                  """
              }
         }
