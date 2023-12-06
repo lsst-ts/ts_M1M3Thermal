@@ -41,7 +41,9 @@ else
   PKG_LIBS += $(shell pkg-config spdlog --libs $(silence) | sed -E 's/-l([a-z0-9]*)/-l:lib\1.a/g')
 endif
 
-LIBS += $(PKG_LIBS) -ldl -ldcpssacpp -ldcpsgapi -lddsuser -lddskernel \
+LIBS += $(PKG_LIBS) -ldl
+
+SAL_LIBS := -ldcpssacpp -ldcpsgapi -lddsuser -lddskernel \
 	-lpthread -lddsserialization -lddsconfparser -lddsconf -lddsdatabase \
 	-lddsutil -lddsos \
 	${SAL_WORK_DIR}/lib/libSAL_MTM1M3TS.a
