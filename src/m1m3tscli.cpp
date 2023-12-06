@@ -290,14 +290,14 @@ int M1M3TScli::printPump(command_vec cmds) {
             }
             vfd->setFrequency(targetFreq);
         } else {
-            dynamic_cast<IFPGA*>(getFPGA())->setCoolantPumpPower(onOff(cmds[0]));
+            fpga->setCoolantPumpPower(onOff(cmds[0]));
             std::cout << "Turned pump " << cmds[0] << std::endl;
             return 0;
         }
     }
 
     while (vfd->getLoopState() != loop_state_t::IDLE) {
-        vfd->runLoop(*getFPGA());
+        vfd->runLoop(*fpga);
     }
 
     return 0;
@@ -504,7 +504,7 @@ void M1M3TScli::printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu
 void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
                                            uint8_t fanRPM, float absoluteTemperature) {
     printBusAddress(address);
-    std::cout << "Thermal ILC Status: 0x" << std::hex << std::setfill('0') << +status << ": "
+    std::cout << "Thermal ILC Status: 0x" << std::hex << std::setfill('0') << std::setw(4) << +status << ": "
               << fmt::format("{}", fmt::join(getStatusString(status), " | ")) << std::endl
               << "Differential Temperature: " << std::to_string(differentialTemperature) << std::endl
               << "Fan RPM: " << std::to_string(fanRPM) << std::endl
