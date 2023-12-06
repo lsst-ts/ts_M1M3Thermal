@@ -20,21 +20,23 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <chrono>
+
+#include <spdlog/spdlog.h>
+
 #include <cRIO/ControllerThread.h>
 #include <OuterLoopClockThread.h>
 #include <Commands/Update.h>
 #include <Events/SummaryState.h>
-
-#include <chrono>
-#include <spdlog/spdlog.h>
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
 
 void OuterLoopClockThread::run(std::unique_lock<std::mutex>& lock) {
     SPDLOG_INFO("OuterLoopClockThread: Run");
+
     while (keepRunning) {
-        runCondition.wait_for(lock, 500ms);
+        runCondition.wait_for(lock, 20ms);
         if (Events::SummaryState::instance().active()) {
             cRIO::ControllerThread::instance().enqueue(new Commands::Update());
         }

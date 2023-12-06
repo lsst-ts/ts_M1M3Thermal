@@ -20,6 +20,8 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <chrono>
+
 #include <spdlog/spdlog.h>
 
 #include <cRIO/ThermalILC.h>
@@ -42,6 +44,7 @@
 #include "TSApplication.h"
 
 using namespace LSST::M1M3::TS::Commands;
+using namespace std::chrono_literals;
 
 void Update::execute() {
     SPDLOG_TRACE("Commands::Update execute");
@@ -85,6 +88,14 @@ void Update::_sendMixingValve() {
 }
 
 void Update::_sendFCU() {
+    static auto next_update = std::chrono::steady_clock::now() - 20ms;
+
+    auto now = std::chrono::steady_clock::now();
+    if (now < next_update) {
+        return;
+    }
+    next_update = now + 500ms;
+
     try {
         TSApplication::ilc()->clear();
 
