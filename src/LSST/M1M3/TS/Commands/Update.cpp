@@ -87,14 +87,14 @@ void Update::_sendMixingValve() {
     }
 }
 
-void Update::_sendFCU() {
-    static auto next_update = std::chrono::steady_clock::now() - 20ms;
+static auto next_update = std::chrono::steady_clock::now() - 20ms;
 
+void Update::_sendFCU() {
     auto now = std::chrono::steady_clock::now();
     if (now < next_update) {
         return;
     }
-    next_update = now + 500ms;
+    next_update += 500ms;
 
     try {
         TSApplication::ilc()->clear();

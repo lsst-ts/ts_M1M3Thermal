@@ -505,7 +505,7 @@ void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, floa
                                            uint8_t fanRPM, float absoluteTemperature) {
     printBusAddress(address);
     std::cout << "Thermal ILC Status: 0x" << std::hex << std::setfill('0') << std::setw(4) << +status << ": "
-              << fmt::format("{}", fmt::join(getStatusString(status), " | ")) << std::endl
+              << fmt::format("{}", fmt::join(getThermalStatusString(status), " | ")) << std::endl
               << "Differential Temperature: " << std::to_string(differentialTemperature) << std::endl
               << "Fan RPM: " << std::to_string(fanRPM) << std::endl
               << "Absolute Temperature: " << std::to_string(absoluteTemperature) << std::endl;
