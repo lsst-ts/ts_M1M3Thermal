@@ -7,6 +7,7 @@ Version History
 v0.2.0
 ------
 
+# Report thermal status strings
 * Improved makefile
 
 v0.1.0
