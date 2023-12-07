@@ -335,6 +335,7 @@ FPGA* M1M3TScli::newFPGA(const char* dir) {
     return printFPGA;
 }
 
+<<<<<<< HEAD
 int M1M3TScli::fcuBroadcast(command_vec cmds) {
     uint8_t heater = std::stoi(cmds[0]);
     uint8_t fan = std::stoi(cmds[1]);
@@ -350,6 +351,8 @@ int M1M3TScli::fcuBroadcast(command_vec cmds) {
     return 0;
 }
 
+=======
+>>>>>>> 11ff29d (Changed CLI commands thermal-xxx to fcu-xx, updated version-history.rst)
 int M1M3TScli::fcuDemand(command_vec cmds) {
     uint8_t heater = std::stoi(cmds[0]);
     uint8_t fan = std::stoi(cmds[1]);
