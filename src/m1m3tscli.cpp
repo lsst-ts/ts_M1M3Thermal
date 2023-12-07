@@ -61,7 +61,7 @@ public:
     int mixingValve(command_vec cmds);
     int fcuOnOff(command_vec cmds);
     int pumpOnOff(command_vec cmds);
-    int thermalDemand(command_vec cmds);
+    int fcuDemand(command_vec cmds);
     int setReHeaterGain(command_vec cmds);
     int chassisTemperature(command_vec cmds);
     int glycolTemperature(command_vec cmds);
@@ -150,13 +150,13 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
     addCommand("pump", std::bind(&M1M3TScli::printPump, this, std::placeholders::_1), "s?", NEED_FPGA, NULL,
                "Turns pump on and reads Pump VFD values");
 
-    addCommand("thermal-demand", std::bind(&M1M3TScli::thermalDemand, this, std::placeholders::_1), "iis?",
+    addCommand("fcu-demand", std::bind(&M1M3TScli::fcuDemand, this, std::placeholders::_1), "iis?",
                NEED_FPGA, "<heater PWM> <fan RPM> " ILC_ARG, "Sets FCU heater and fan");
     addCommand("slot4", std::bind(&M1M3TScli::slot4, this, std::placeholders::_1), "", NEED_FPGA, NULL,
                "Reads slot 4 inputs");
 
     addILCCommand(
-            "thermal-status",
+            "fcu-status",
             [](ILCUnit u) {
                 std::dynamic_pointer_cast<PrintThermalILC>(u.first)->reportThermalStatus(u.second);
             },
@@ -328,7 +328,7 @@ FPGA* M1M3TScli::newFPGA(const char* dir) {
     return printFPGA;
 }
 
-int M1M3TScli::thermalDemand(command_vec cmds) {
+int M1M3TScli::fcuDemand(command_vec cmds) {
     uint8_t heater = std::stoi(cmds[0]);
     uint8_t fan = std::stoi(cmds[1]);
     cmds.erase(cmds.begin(), cmds.begin() + 2);
