@@ -13,12 +13,12 @@ src/libM1M3TS.a: FORCE
 
 ts-M1M3thermald: src/ts-M1M3thermald.cpp.o src/libM1M3TS.a
 	@echo '[LD ] $@'
-	${co}$(CPP) $(LIBS_FLAGS) -o $@ $^ $(LIBS) $(SAL_LIBS) ../ts_cRIOcpp/lib/libcRIOcpp.a $(shell pkg-config --libs readline $(silence))
+	${co}$(CPP) $(LIBS_FLAGS) -o $@ $^  ../ts_cRIOcpp/lib/libcRIOcpp.a $(LIBS) $(SAL_LIBS) $(shell pkg-config --libs readline $(silence))
 
 
 m1m3tscli: src/m1m3tscli.cpp.o src/libM1M3TS.a
 	@echo '[LD ] $@'
-	${co}$(CPP) $(LIBS_FLAGS) -o $@ $^ $(LIBS) ../ts_cRIOcpp/lib/libcRIOcpp.a $(shell pkg-config --libs readline $(silence))
+	${co}$(CPP) $(LIBS_FLAGS) -o $@ $^  ../ts_cRIOcpp/lib/libcRIOcpp.a $(LIBS) $(shell pkg-config --libs readline $(silence)) -lreadline
 
 # Other Targets
 clean:

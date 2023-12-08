@@ -104,7 +104,7 @@ void M1M3thermald::init() {
 
     SPDLOG_INFO("Creating publisher");
     TSPublisher::instance().setSAL(_m1m3tsSAL);
-    TSPublisher::instance().setLogLevel(getSpdLogLogLevel() * 10);
+    TSPublisher::instance().setLogLevel(static_cast<int>(getSpdLogLogLevel()) * 10);
 
     SPDLOG_INFO("Starting controller thread");
     LSST::cRIO::ControllerThread::instance().start();
