@@ -61,6 +61,7 @@ public:
     int mixingValve(command_vec cmds);
     int fcuOnOff(command_vec cmds);
     int pumpOnOff(command_vec cmds);
+    int fcuBroadcast(command_vec cmds);
     int fcuDemand(command_vec cmds);
     int setReHeaterGain(command_vec cmds);
     int chassisTemperature(command_vec cmds);
@@ -150,8 +151,11 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
     addCommand("pump", std::bind(&M1M3TScli::printPump, this, std::placeholders::_1), "s?", NEED_FPGA, NULL,
                "Turns pump on and reads Pump VFD values");
 
-    addCommand("fcu-demand", std::bind(&M1M3TScli::fcuDemand, this, std::placeholders::_1), "iis?",
-               NEED_FPGA, "<heater PWM> <fan RPM> " ILC_ARG, "Sets FCU heater and fan");
+    addCommand("fcu-broadcast", std::bind(&M1M3TScli::fcuBroadcast, this, std::placeholders::_1), "ii",
+               NEED_FPGA, "<heater PWM> <fan RPM>",
+               "Broadcast ILC heater and fan demand, set all ILC to the same value");
+    addCommand("fcu-demand", std::bind(&M1M3TScli::fcuDemand, this, std::placeholders::_1), "iis?", NEED_FPGA,
+               "<heater PWM> <fan RPM> " ILC_ARG, "Sets FCU heater and fan");
     addCommand("slot4", std::bind(&M1M3TScli::slot4, this, std::placeholders::_1), "", NEED_FPGA, NULL,
                "Reads slot 4 inputs");
 
@@ -326,6 +330,21 @@ FPGA* M1M3TScli::newFPGA(const char* dir) {
     PrintTSFPGA* printFPGA = new PrintTSFPGA();
     printFPGA->setMPUFactory(std::make_shared<PrintMPUFactory>(flowMeter, vfd));
     return printFPGA;
+}
+
+int M1M3TScli::fcuBroadcast(command_vec cmds) {
+    uint8_t heater = std::stoi(cmds[0]);
+    uint8_t fan = std::stoi(cmds[1]);
+
+    uint8_t heater_data[NUM_TS_ILC];
+    uint8_t fan_data[NUM_TS_ILC];
+
+    memset(heater_data, heater, NUM_TS_ILC);
+    memset(fan_data, fan, NUM_TS_ILC);
+
+    std::dynamic_pointer_cast<PrintThermalILC>(getILC(0))->broadcastThermalDemand(heater_data, fan_data);
+    getFPGA()->ilcCommands(*getILC(0));
+    return 0;
 }
 
 int M1M3TScli::fcuDemand(command_vec cmds) {

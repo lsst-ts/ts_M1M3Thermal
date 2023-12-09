@@ -131,7 +131,6 @@ void SAL_setEngineeringMode::execute() {
 bool SAL_heaterFanDemand::validate() { return Events::EngineeringMode::instance().isEnabled(); }
 
 void SAL_heaterFanDemand::execute() {
-    TSApplication::ilc()->clear();
     TSApplication::ilc()->broadcastThermalDemand(params.heaterPWM, params.fanRPM);
     IFPGA::get().ilcCommands(*TSApplication::ilc());
     ackComplete();
