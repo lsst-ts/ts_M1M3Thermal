@@ -128,10 +128,19 @@ void SAL_setEngineeringMode::execute() {
     SPDLOG_INFO("{} Engineering Mode", params.enableEngineeringMode ? "Entered" : "Exited");
 }
 
+bool SAL_fanCoilsHeatersPower::validate() { return Events::EngineeringMode::instance().isEnabled(); }
+
+void SAL_fanCoilsHeatersPower::execute() {
+    IFPGA::get().setFCUPower(params.power);
+    SPDLOG_INFO("Turned Fan Coils Heaters Power {}", params.power ? "on" : "off");
+}
+
 bool SAL_heaterFanDemand::validate() { return Events::EngineeringMode::instance().isEnabled(); }
 
 void SAL_heaterFanDemand::execute() {
-    TSApplication::ilc()->broadcastThermalDemand(params.heaterPWM, params.fanRPM);
+    for (int i = 0; i < NUM_TS_ILC; i++) {
+        TSApplication::ilc()->setThermalDemand(i + 1, params.heaterPWM[i], params.fanRPM[i]);
+    }
     IFPGA::get().ilcCommands(*TSApplication::ilc());
     ackComplete();
     SPDLOG_INFO("Changed heaters and fans demand");

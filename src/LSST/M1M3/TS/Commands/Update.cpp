@@ -46,6 +46,8 @@
 using namespace LSST::M1M3::TS::Commands;
 using namespace std::chrono_literals;
 
+constexpr auto default_period = 500ms;
+
 void Update::execute() {
     SPDLOG_TRACE("Commands::Update execute");
 
@@ -79,6 +81,18 @@ void Update::_sendGlycolLoopTemperature() {
 }
 
 void Update::_sendMixingValve() {
+    static auto next_update = std::chrono::steady_clock::now() - 20ms;
+
+    auto now = std::chrono::steady_clock::now();
+    if (now < next_update) {
+        return;
+    }
+    if (now - next_update > default_period / 2.0) {
+        next_update = now + default_period;
+    } else {
+        next_update += default_period;
+    }
+
     try {
         Telemetry::MixingValve::instance().sendPosition(IFPGA::get().getMixingValvePosition());
 
@@ -94,10 +108,10 @@ void Update::_sendFCU() {
     if (now < next_update) {
         return;
     }
-    if (now - next_update > 100ms) {
-        next_update = now + 500ms;
+    if (now - next_update > default_period / 2.0) {
+        next_update = now + default_period;
     } else {
-        next_update += 500ms;
+        next_update += default_period;
     }
 
     try {

@@ -20,15 +20,17 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <chrono>
+
+#include <spdlog/spdlog.h>
+
+#include <SAL_MTM1M3TS.h>
+
 #include <TSSubscriber.h>
 #include <Commands/SAL.h>
 
 #include <cRIO/Command.h>
 #include <cRIO/ControllerThread.h>
-#include <SAL_MTM1M3TS.h>
-#include <spdlog/spdlog.h>
-
-#include <chrono>
 
 using namespace LSST::M1M3::TS;
 
@@ -51,6 +53,7 @@ TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
     ADD_SAL_COMMAND(standby);
     ADD_SAL_COMMAND(exitControl);
     ADD_SAL_COMMAND(setEngineeringMode);
+    ADD_SAL_COMMAND(fanCoilsHeatersPower);
     ADD_SAL_COMMAND(heaterFanDemand);
     ADD_SAL_COMMAND(setMixingValve);
     ADD_SAL_COMMAND(coolantPumpPower);
