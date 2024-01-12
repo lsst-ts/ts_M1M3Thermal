@@ -343,7 +343,7 @@ int M1M3TScli::fcuBroadcast(command_vec cmds) {
     memset(fan_data, fan, NUM_TS_ILC);
 
     std::dynamic_pointer_cast<PrintThermalILC>(getILC(0))->broadcastThermalDemand(heater_data, fan_data);
-    getFPGA()->ilcCommands(*getILC(0));
+    getFPGA()->ilcCommands(*getILC(0), ilcTimeout);
     return 0;
 }
 
@@ -357,7 +357,7 @@ int M1M3TScli::fcuDemand(command_vec cmds) {
     for (auto u : ilcs) {
         std::dynamic_pointer_cast<PrintThermalILC>(u.first)->setThermalDemand(u.second, heater, fan);
     }
-    getFPGA()->ilcCommands(*getILC(0));
+    getFPGA()->ilcCommands(*getILC(0), ilcTimeout);
     return 0;
 }
 
@@ -372,7 +372,7 @@ int M1M3TScli::setReHeaterGain(command_vec cmds) {
         std::dynamic_pointer_cast<PrintThermalILC>(u.first)->setReHeaterGains(u.second, proportionalGain,
                                                                               integralGain);
     }
-    getFPGA()->ilcCommands(*getILC(0));
+    getFPGA()->ilcCommands(*getILC(0), ilcTimeout);
     return 0;
 }
 

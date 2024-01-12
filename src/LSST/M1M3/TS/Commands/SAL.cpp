@@ -46,7 +46,7 @@ void changeAllILCsMode(uint16_t mode) {
     TSApplication::instance().callFunctionOnIlcs(
             [mode](uint8_t address) -> void { TSApplication::ilc()->changeILCMode(address, mode); });
 
-    IFPGA::get().ilcCommands(*TSApplication::ilc());
+    IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
 }
 
 bool SAL_start::validate() {
@@ -75,7 +75,7 @@ void SAL_start::execute() {
     TSApplication::instance().callFunctionOnIlcs(
             [](uint8_t address) -> void { TSApplication::ilc()->reportServerID(address); });
 
-    IFPGA::get().ilcCommands(*TSApplication::ilc());
+    IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
 
     Events::ThermalInfo::instance().log();
 
@@ -141,7 +141,7 @@ void SAL_heaterFanDemand::execute() {
     for (int i = 0; i < NUM_TS_ILC; i++) {
         TSApplication::ilc()->setThermalDemand(i + 1, params.heaterPWM[i], params.fanRPM[i]);
     }
-    IFPGA::get().ilcCommands(*TSApplication::ilc());
+    IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
     ackComplete();
     SPDLOG_INFO("Changed heaters and fans demand");
 }

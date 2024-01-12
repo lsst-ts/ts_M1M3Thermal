@@ -71,8 +71,12 @@ void ThermalFPGA::finalize() {
 
 void ThermalFPGA::writeMPUFIFO(MPU& mpu) {
     auto buf = mpu.getCommandVector();
+
     uint8_t bus = mpu.getBus();
     uint8_t len = buf.size();
+
+    writeDebugFile<uint8_t> ("MPU<", buf.data(), len);
+
     NiThrowError(
             __PRETTY_FUNCTION__,
             NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
@@ -107,6 +111,9 @@ std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU& mpu) {
             __PRETTY_FUNCTION__,
             NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
                               data, len, -1, NULL));
+
+    writeDebugFile<uint8_t> ("MPU>", data, len);
+
     processMPUResponse(mpu, data, len);
 
     std::vector<uint8_t> ret(data, data + len);
@@ -172,12 +179,16 @@ void ThermalFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeo
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO,
                                      data, length, timeout, NULL));
+    
+    writeDebugFile<uint16_t> ("CMD<", data, length);
 }
 
 void ThermalFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO,
                                      data, length, timeout, NULL));
+
+    writeDebugFile<uint16_t> ("REQ<", data, length);
 }
 
 void ThermalFPGA::readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) {
@@ -190,12 +201,16 @@ void ThermalFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t time
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_U8ResponseFIFO,
                                    data, length, timeout, NULL));
+
+    writeDebugFile<uint8_t> ("U8>", data, length);
 }
 
 void ThermalFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU16_U16ResponseFIFO,
                                     data, length, timeout, NULL));
+
+    writeDebugFile<uint16_t> ("U16>", data, length);
 }
 
 float ThermalFPGA::chassisTemperature() {
