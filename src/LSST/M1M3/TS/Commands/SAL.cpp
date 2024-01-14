@@ -138,6 +138,8 @@ void SAL_fanCoilsHeatersPower::execute() {
 bool SAL_heaterFanDemand::validate() { return Events::EngineeringMode::instance().isEnabled(); }
 
 void SAL_heaterFanDemand::execute() {
+    TSApplication::ilc()->clear();
+
     for (int i = 0; i < NUM_TS_ILC; i++) {
         TSApplication::ilc()->setThermalDemand(i + 1, params.heaterPWM[i], params.fanRPM[i]);
     }
