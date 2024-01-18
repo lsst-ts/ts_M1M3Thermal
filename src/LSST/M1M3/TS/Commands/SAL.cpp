@@ -138,14 +138,19 @@ void SAL_fanCoilsHeatersPower::execute() {
 bool SAL_heaterFanDemand::validate() { return Events::EngineeringMode::instance().isEnabled(); }
 
 void SAL_heaterFanDemand::execute() {
-    TSApplication::ilc()->clear();
+    try {
+        TSApplication::ilc()->clear();
 
-    for (int i = 0; i < NUM_TS_ILC; i++) {
-        TSApplication::ilc()->setThermalDemand(i + 1, params.heaterPWM[i], params.fanRPM[i]);
+        TSApplication::instance().callFunctionOnIlcs([this](uint8_t address) -> void {
+            TSApplication::ilc()->setThermalDemand(address, params.heaterPWM[address - 1], params.fanRPM[address - 1]);
+        });
+
+        IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
+        SPDLOG_INFO("Changed heaters and fans demand");
+        ackComplete();
+    } catch (std::exception &e) {
+        ackFailed(e.what());
     }
-    IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
-    ackComplete();
-    SPDLOG_INFO("Changed heaters and fans demand");
 }
 
 bool SAL_setMixingValve::validate() {
