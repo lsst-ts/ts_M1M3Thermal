@@ -23,10 +23,11 @@
 #ifndef _TS_Command_EnterControl_
 #define _TS_Command_ENterControl_
 
-#include <cRIO/Command.h>
 #include <SAL_MTM1M3TS.h>
-#include <TSPublisher.h>
 
+#include <cRIO/Task.h>
+
+#include <TSPublisher.h>
 #include <Events/SummaryState.h>
 
 namespace LSST {
@@ -34,13 +35,14 @@ namespace M1M3 {
 namespace TS {
 namespace Commands {
 
-class EnterControl : public cRIO::Command {
+class EnterControl : public cRIO::Task {
 public:
-    void execute() override {
+    std::chrono::milliseconds run() override {
         SPDLOG_DEBUG("EnterControl");
         TSPublisher::instance().logSoftwareVersions();
         TSPublisher::instance().logSimulationMode();
         Events::SummaryState::setState(MTM1M3TS::MTM1M3TS_shared_SummaryStates_StandbyState);
+        return Task::DONT_RESCHEDULE;
     }
 };
 

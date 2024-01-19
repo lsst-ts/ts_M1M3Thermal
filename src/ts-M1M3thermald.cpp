@@ -113,7 +113,7 @@ void M1M3thermald::init() {
     SPDLOG_INFO("Creating subscriber");
     addThread(new TSSubscriber(_m1m3tsSAL));
 
-    LSST::cRIO::ControllerThread::instance().enqueue(new Commands::EnterControl());
+    LSST::cRIO::ControllerThread::instance().enqueue(std::make_shared<Commands::EnterControl>());
 
     daemonOK();
 }

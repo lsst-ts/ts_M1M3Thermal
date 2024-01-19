@@ -21,6 +21,7 @@
  */
 
 #include <chrono>
+#include <memory>
 
 #include <spdlog/spdlog.h>
 
@@ -38,7 +39,7 @@ void OuterLoopClockThread::run(std::unique_lock<std::mutex>& lock) {
     while (keepRunning) {
         runCondition.wait_for(lock, 20ms);
         if (Events::SummaryState::instance().active()) {
-            cRIO::ControllerThread::instance().enqueue(new Commands::Update());
+            cRIO::ControllerThread::instance().enqueue(std::make_shared<Commands::Update>());
         }
     }
     SPDLOG_INFO("OuterLoopClockThread: Completed");

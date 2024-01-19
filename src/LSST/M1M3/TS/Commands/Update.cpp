@@ -48,7 +48,7 @@ using namespace std::chrono_literals;
 
 constexpr auto default_period = 500ms;
 
-void Update::execute() {
+std::chrono::milliseconds Update::run() {
     SPDLOG_TRACE("Commands::Update execute");
 
     _sendFCU();
@@ -69,6 +69,8 @@ void Update::execute() {
     }
 
     SPDLOG_TRACE("Commands::Update leaving execute");
+
+    return Task::DONT_RESCHEDULE;
 }
 
 void Update::_sendGlycolLoopTemperature() {
