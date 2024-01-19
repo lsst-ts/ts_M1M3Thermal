@@ -20,14 +20,6 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifdef SIMULATOR
-#include <SimulatedFPGA.h>
-#define FPGAClass SimulatedFPGA
-#else
-#include <ThermalFPGA.h>
-#define FPGAClass ThermalFPGA
-#endif
-
 #include <iostream>
 #include <iomanip>
 #include <memory>
@@ -40,6 +32,14 @@
 #include <cRIO/PrintILC.h>
 #include <cRIO/FPGACliApp.h>
 #include <cRIO/MPU.h>
+
+#ifdef SIMULATOR
+#include <SimulatedFPGA.h>
+#define FPGAClass SimulatedFPGA
+#else
+#include <ThermalFPGA.h>
+#define FPGAClass ThermalFPGA
+#endif
 
 #include <MPU/FactoryInterface.h>
 #include <MPU/FlowMeter.h>
@@ -190,6 +190,10 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
 
     vfd = std::make_shared<VFDPrint>(1, 100);
     addMPU("vfd", vfd);
+
+#ifdef SIMULATOR
+    std::cout << "Starting SIMULATED m1m3tscli!" << std::endl;
+#endif
 }
 
 int M1M3TScli::mpuRead(command_vec cmds) {
