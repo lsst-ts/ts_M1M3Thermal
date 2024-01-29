@@ -412,11 +412,11 @@ int M1M3TScli::glycolDebug(command_vec) {
         dynamic_cast<IFPGA*>(getFPGA())->readU8ResponseFIFO(reinterpret_cast<uint8_t*>(&len), 2, 150);
         len = ntohs(len);
         if (len > 0) {
-            uint8_t data[len + 1];
-            dynamic_cast<IFPGA*>(getFPGA())->readU8ResponseFIFO(data, len, 10);
+            std::vector<uint8_t> data(len + 1);
+            dynamic_cast<IFPGA*>(getFPGA())->readU8ResponseFIFO(data.data(), len, 10);
 
             data[len] = '\0';
-            std::cout << "String out: " << data << std::endl;
+            std::cout << "String out: " << data.data() << std::endl;
         }
     };
 

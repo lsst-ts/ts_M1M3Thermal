@@ -142,7 +142,8 @@ void SAL_heaterFanDemand::execute() {
         TSApplication::ilc()->clear();
 
         TSApplication::instance().callFunctionOnIlcs([this](uint8_t address) -> void {
-            TSApplication::ilc()->setThermalDemand(address, params.heaterPWM[address - 1], params.fanRPM[address - 1]);
+            TSApplication::ilc()->setThermalDemand(address, params.heaterPWM[address - 1],
+                                                   params.fanRPM[address - 1]);
         });
 
         IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
