@@ -37,7 +37,7 @@ namespace Commands {
 
 class EnterControl : public cRIO::Task {
 public:
-    std::chrono::milliseconds run() override {
+    cRIO::task_return_t run() override {
         SPDLOG_DEBUG("EnterControl");
         TSPublisher::instance().logSoftwareVersions();
         TSPublisher::instance().logSimulationMode();

@@ -87,5 +87,5 @@ TEST_CASE("Test simulated FPGA responses", "[SimulatedFPGA]") {
 
     testILC.reportServerID(16);
 
-    simulated.ilcCommands(testILC);
+    simulated.ilcCommands(testILC, 10);
 }

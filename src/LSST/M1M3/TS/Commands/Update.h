@@ -23,8 +23,6 @@
 #ifndef _TS_Command_Update_
 #define _TS_Command_Update_
 
-#include <chrono>
-
 #include <SAL_MTM1M3TS.h>
 
 #include <cRIO/Task.h>
@@ -36,7 +34,7 @@ namespace Commands {
 
 class Update : public cRIO::Task {
 public:
-    std::chrono::milliseconds run() override;
+    cRIO::task_return_t run() override;
 
 private:
     void _sendGlycolLoopTemperature();

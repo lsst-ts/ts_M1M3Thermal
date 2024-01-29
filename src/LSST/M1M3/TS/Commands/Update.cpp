@@ -48,7 +48,7 @@ using namespace std::chrono_literals;
 
 constexpr auto default_period = 500ms;
 
-std::chrono::milliseconds Update::run() {
+LSST::cRIO::task_return_t Update::run() {
     SPDLOG_TRACE("Commands::Update execute");
 
     _sendFCU();
