@@ -20,14 +20,6 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifdef SIMULATOR
-#include <SimulatedFPGA.h>
-#define FPGAClass SimulatedFPGA
-#else
-#include <ThermalFPGA.h>
-#define FPGAClass ThermalFPGA
-#endif
-
 #include <iostream>
 #include <iomanip>
 #include <memory>
@@ -40,6 +32,14 @@
 #include <cRIO/PrintILC.h>
 #include <cRIO/FPGACliApp.h>
 #include <cRIO/MPU.h>
+
+#ifdef SIMULATOR
+#include <SimulatedFPGA.h>
+#define FPGAClass SimulatedFPGA
+#else
+#include <ThermalFPGA.h>
+#define FPGAClass ThermalFPGA
+#endif
 
 #include <MPU/FactoryInterface.h>
 #include <MPU/FlowMeter.h>
@@ -61,7 +61,8 @@ public:
     int mixingValve(command_vec cmds);
     int fcuOnOff(command_vec cmds);
     int pumpOnOff(command_vec cmds);
-    int thermalDemand(command_vec cmds);
+    int fcuBroadcast(command_vec cmds);
+    int fcuDemand(command_vec cmds);
     int setReHeaterGain(command_vec cmds);
     int chassisTemperature(command_vec cmds);
     int glycolTemperature(command_vec cmds);
@@ -150,13 +151,16 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
     addCommand("pump", std::bind(&M1M3TScli::printPump, this, std::placeholders::_1), "s?", NEED_FPGA, NULL,
                "Turns pump on and reads Pump VFD values");
 
-    addCommand("thermal-demand", std::bind(&M1M3TScli::thermalDemand, this, std::placeholders::_1), "iis?",
-               NEED_FPGA, "<heater PWM> <fan RPM> " ILC_ARG, "Sets FCU heater and fan");
+    addCommand("fcu-broadcast", std::bind(&M1M3TScli::fcuBroadcast, this, std::placeholders::_1), "ii",
+               NEED_FPGA, "<heater PWM> <fan RPM>",
+               "Broadcast ILC heater and fan demand, set all ILC to the same value");
+    addCommand("fcu-demand", std::bind(&M1M3TScli::fcuDemand, this, std::placeholders::_1), "iis?", NEED_FPGA,
+               "<heater PWM> <fan RPM> " ILC_ARG, "Sets FCU heater and fan");
     addCommand("slot4", std::bind(&M1M3TScli::slot4, this, std::placeholders::_1), "", NEED_FPGA, NULL,
                "Reads slot 4 inputs");
 
     addILCCommand(
-            "thermal-status",
+            "fcu-status",
             [](ILCUnit u) {
                 std::dynamic_pointer_cast<PrintThermalILC>(u.first)->reportThermalStatus(u.second);
             },
@@ -186,6 +190,10 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
 
     vfd = std::make_shared<VFDPrint>(1, 100);
     addMPU("vfd", vfd);
+
+#ifdef SIMULATOR
+    std::cout << "Starting SIMULATED m1m3tscli!" << std::endl;
+#endif
 }
 
 int M1M3TScli::mpuRead(command_vec cmds) {
@@ -290,14 +298,14 @@ int M1M3TScli::printPump(command_vec cmds) {
             }
             vfd->setFrequency(targetFreq);
         } else {
-            dynamic_cast<IFPGA*>(getFPGA())->setCoolantPumpPower(onOff(cmds[0]));
+            fpga->setCoolantPumpPower(onOff(cmds[0]));
             std::cout << "Turned pump " << cmds[0] << std::endl;
             return 0;
         }
     }
 
     while (vfd->getLoopState() != loop_state_t::IDLE) {
-        vfd->runLoop(*getFPGA());
+        vfd->runLoop(*fpga);
     }
 
     return 0;
@@ -328,7 +336,22 @@ FPGA* M1M3TScli::newFPGA(const char* dir) {
     return printFPGA;
 }
 
-int M1M3TScli::thermalDemand(command_vec cmds) {
+int M1M3TScli::fcuBroadcast(command_vec cmds) {
+    uint8_t heater = std::stoi(cmds[0]);
+    uint8_t fan = std::stoi(cmds[1]);
+
+    uint8_t heater_data[NUM_TS_ILC];
+    uint8_t fan_data[NUM_TS_ILC];
+
+    memset(heater_data, heater, NUM_TS_ILC);
+    memset(fan_data, fan, NUM_TS_ILC);
+
+    std::dynamic_pointer_cast<PrintThermalILC>(getILC(0))->broadcastThermalDemand(heater_data, fan_data);
+    getFPGA()->ilcCommands(*getILC(0), ilcTimeout);
+    return 0;
+}
+
+int M1M3TScli::fcuDemand(command_vec cmds) {
     uint8_t heater = std::stoi(cmds[0]);
     uint8_t fan = std::stoi(cmds[1]);
     cmds.erase(cmds.begin(), cmds.begin() + 2);
@@ -338,7 +361,7 @@ int M1M3TScli::thermalDemand(command_vec cmds) {
     for (auto u : ilcs) {
         std::dynamic_pointer_cast<PrintThermalILC>(u.first)->setThermalDemand(u.second, heater, fan);
     }
-    getFPGA()->ilcCommands(*getILC(0));
+    getFPGA()->ilcCommands(*getILC(0), ilcTimeout);
     return 0;
 }
 
@@ -353,7 +376,7 @@ int M1M3TScli::setReHeaterGain(command_vec cmds) {
         std::dynamic_pointer_cast<PrintThermalILC>(u.first)->setReHeaterGains(u.second, proportionalGain,
                                                                               integralGain);
     }
-    getFPGA()->ilcCommands(*getILC(0));
+    getFPGA()->ilcCommands(*getILC(0), ilcTimeout);
     return 0;
 }
 
@@ -389,11 +412,11 @@ int M1M3TScli::glycolDebug(command_vec) {
         dynamic_cast<IFPGA*>(getFPGA())->readU8ResponseFIFO(reinterpret_cast<uint8_t*>(&len), 2, 150);
         len = ntohs(len);
         if (len > 0) {
-            uint8_t data[len + 1];
-            dynamic_cast<IFPGA*>(getFPGA())->readU8ResponseFIFO(data, len, 10);
+            std::vector<uint8_t> data(len + 1);
+            dynamic_cast<IFPGA*>(getFPGA())->readU8ResponseFIFO(data.data(), len, 10);
 
             data[len] = '\0';
-            std::cout << "String out: " << data << std::endl;
+            std::cout << "String out: " << data.data() << std::endl;
         }
     };
 
@@ -504,8 +527,8 @@ void M1M3TScli::printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu
 void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,
                                            uint8_t fanRPM, float absoluteTemperature) {
     printBusAddress(address);
-    std::cout << "Thermal ILC Status: 0x" << std::hex << std::setfill('0') << +status << ": "
-              << fmt::format("{}", fmt::join(getStatusString(status), " | ")) << std::endl
+    std::cout << "Thermal ILC Status: 0x" << std::hex << std::setfill('0') << std::setw(4) << +status << ": "
+              << fmt::format("{}", fmt::join(getThermalStatusString(status), " | ")) << std::endl
               << "Differential Temperature: " << std::to_string(differentialTemperature) << std::endl
               << "Fan RPM: " << std::to_string(fanRPM) << std::endl
               << "Absolute Temperature: " << std::to_string(absoluteTemperature) << std::endl;

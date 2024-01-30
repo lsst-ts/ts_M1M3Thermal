@@ -55,6 +55,8 @@ void ThermalData::update(uint8_t address, uint8_t _status, float _differentialTe
 }
 
 void ThermalData::send() {
+    timestamp = TSPublisher::instance().getTimestamp();
+
     salReturn ret = TSPublisher::SAL()->putSample_thermalData(this);
     if (ret != SAL__OK) {
         SPDLOG_WARN("Cannot send thermalData: {}", ret);

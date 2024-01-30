@@ -20,6 +20,8 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <chrono>
+
 #include <spdlog/spdlog.h>
 
 #include <cRIO/ThermalILC.h>
@@ -42,8 +44,11 @@
 #include "TSApplication.h"
 
 using namespace LSST::M1M3::TS::Commands;
+using namespace std::chrono_literals;
 
-void Update::execute() {
+constexpr auto default_period = 500ms;
+
+LSST::cRIO::task_return_t Update::run() {
     SPDLOG_TRACE("Commands::Update execute");
 
     _sendFCU();
@@ -64,6 +69,8 @@ void Update::execute() {
     }
 
     SPDLOG_TRACE("Commands::Update leaving execute");
+
+    return Task::DONT_RESCHEDULE;
 }
 
 void Update::_sendGlycolLoopTemperature() {
@@ -76,6 +83,18 @@ void Update::_sendGlycolLoopTemperature() {
 }
 
 void Update::_sendMixingValve() {
+    static auto next_update = std::chrono::steady_clock::now() - 20ms;
+
+    auto now = std::chrono::steady_clock::now();
+    if (now < next_update) {
+        return;
+    }
+    if (now - next_update > default_period / 2.0) {
+        next_update = now + default_period;
+    } else {
+        next_update += default_period;
+    }
+
     try {
         Telemetry::MixingValve::instance().sendPosition(IFPGA::get().getMixingValvePosition());
 
@@ -85,6 +104,18 @@ void Update::_sendMixingValve() {
 }
 
 void Update::_sendFCU() {
+    static auto next_update = std::chrono::steady_clock::now() - 20ms;
+
+    auto now = std::chrono::steady_clock::now();
+    if (now < next_update) {
+        return;
+    }
+    if (now - next_update > default_period / 2.0) {
+        next_update = now + default_period;
+    } else {
+        next_update += default_period;
+    }
+
     try {
         TSApplication::ilc()->clear();
 
@@ -96,7 +127,7 @@ void Update::_sendFCU() {
             }
         });
 
-        IFPGA::get().ilcCommands(*TSApplication::ilc());
+        IFPGA::get().ilcCommands(*TSApplication::ilc(), 400);
 
         Telemetry::ThermalData::instance().send();
     } catch (std::exception &e) {

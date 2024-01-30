@@ -20,15 +20,18 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <chrono>
+#include <memory>
+
+#include <spdlog/spdlog.h>
+
+#include <SAL_MTM1M3TS.h>
+
 #include <TSSubscriber.h>
 #include <Commands/SAL.h>
 
 #include <cRIO/Command.h>
 #include <cRIO/ControllerThread.h>
-#include <SAL_MTM1M3TS.h>
-#include <spdlog/spdlog.h>
-
-#include <chrono>
 
 using namespace LSST::M1M3::TS;
 
@@ -37,12 +40,13 @@ constexpr int32_t ACK_COMPLETE = 303;    /// Command is completed.
 constexpr int32_t ACK_FAILED = -302;     /// Command execution failed.
 
 TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
-#define ADD_SAL_COMMAND(name)                                                                   \
-    _commands[#name] = [m1m3tsSAL]() {                                                          \
-        MTM1M3TS_command_##name##C data;                                                        \
-        int32_t commandID = m1m3tsSAL->acceptCommand_##name(&data);                             \
-        if (commandID <= 0) return;                                                             \
-        cRIO::ControllerThread::instance().enqueue(new Commands::SAL_##name(commandID, &data)); \
+#define ADD_SAL_COMMAND(name)                                              \
+    _commands[#name] = [m1m3tsSAL]() {                                     \
+        MTM1M3TS_command_##name##C data;                                   \
+        int32_t commandID = m1m3tsSAL->acceptCommand_##name(&data);        \
+        if (commandID <= 0) return;                                        \
+        cRIO::ControllerThread::instance().enqueue(                        \
+                std::make_shared<Commands::SAL_##name>(commandID, &data)); \
     }
 
     ADD_SAL_COMMAND(start);
@@ -51,6 +55,7 @@ TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
     ADD_SAL_COMMAND(standby);
     ADD_SAL_COMMAND(exitControl);
     ADD_SAL_COMMAND(setEngineeringMode);
+    ADD_SAL_COMMAND(fanCoilsHeatersPower);
     ADD_SAL_COMMAND(heaterFanDemand);
     ADD_SAL_COMMAND(setMixingValve);
     ADD_SAL_COMMAND(coolantPumpPower);

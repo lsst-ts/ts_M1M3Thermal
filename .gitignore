@@ -11,3 +11,4 @@ ts-M1M3thermald
 .isort.cfg
 .mypy.ini
 .ruff.toml
+towncrier.toml

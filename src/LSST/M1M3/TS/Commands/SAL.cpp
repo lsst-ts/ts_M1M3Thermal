@@ -46,7 +46,7 @@ void changeAllILCsMode(uint16_t mode) {
     TSApplication::instance().callFunctionOnIlcs(
             [mode](uint8_t address) -> void { TSApplication::ilc()->changeILCMode(address, mode); });
 
-    IFPGA::get().ilcCommands(*TSApplication::ilc());
+    IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
 }
 
 bool SAL_start::validate() {
@@ -75,7 +75,7 @@ void SAL_start::execute() {
     TSApplication::instance().callFunctionOnIlcs(
             [](uint8_t address) -> void { TSApplication::ilc()->reportServerID(address); });
 
-    IFPGA::get().ilcCommands(*TSApplication::ilc());
+    IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
 
     Events::ThermalInfo::instance().log();
 
@@ -128,14 +128,30 @@ void SAL_setEngineeringMode::execute() {
     SPDLOG_INFO("{} Engineering Mode", params.enableEngineeringMode ? "Entered" : "Exited");
 }
 
+bool SAL_fanCoilsHeatersPower::validate() { return Events::EngineeringMode::instance().isEnabled(); }
+
+void SAL_fanCoilsHeatersPower::execute() {
+    IFPGA::get().setFCUPower(params.power);
+    SPDLOG_INFO("Turned Fan Coils Heaters Power {}", params.power ? "on" : "off");
+}
+
 bool SAL_heaterFanDemand::validate() { return Events::EngineeringMode::instance().isEnabled(); }
 
 void SAL_heaterFanDemand::execute() {
-    TSApplication::ilc()->clear();
-    TSApplication::ilc()->broadcastThermalDemand(params.heaterPWM, params.fanRPM);
-    IFPGA::get().ilcCommands(*TSApplication::ilc());
-    ackComplete();
-    SPDLOG_INFO("Changed heaters and fans demand");
+    try {
+        TSApplication::ilc()->clear();
+
+        TSApplication::instance().callFunctionOnIlcs([this](uint8_t address) -> void {
+            TSApplication::ilc()->setThermalDemand(address, params.heaterPWM[address - 1],
+                                                   params.fanRPM[address - 1]);
+        });
+
+        IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
+        SPDLOG_INFO("Changed heaters and fans demand");
+        ackComplete();
+    } catch (std::exception &e) {
+        ackFailed(e.what());
+    }
 }
 
 bool SAL_setMixingValve::validate() {

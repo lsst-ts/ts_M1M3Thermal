@@ -23,6 +23,10 @@
 #ifndef _TSPublisher_
 #define _TSPublisher_
 
+#ifdef SIMULATOR
+#include <sys/timex.h>
+#endif
+
 #include <SAL_MTM1M3TS.h>
 
 #include <cRIO/Singleton.h>
@@ -45,7 +49,21 @@ public:
     void logSimulationMode();
     void logThermalInfo(MTM1M3TS_logevent_thermalInfoC* data) { _m1m3TSSAL->logEvent_thermalInfo(data, 0); }
 
-    static double getTimestamp() { return instance()._m1m3TSSAL->getCurrentTime(); }
+    static double getTimestamp() {
+#ifdef SIMULATOR
+        struct timex tx;
+        struct timespec now;
+        double taiTime;
+
+        memset(&tx, 0, sizeof(tx));
+        adjtimex(&tx);
+        clock_gettime(CLOCK_TAI, &now);
+        taiTime = (double)now.tv_sec + (double)now.tv_nsec / 1000000000.;
+        return taiTime;
+#else
+        return instance()._m1m3TSSAL->getCurrentTime();
+#endif
+    }
 
 private:
     std::shared_ptr<SAL_MTM1M3TS> _m1m3TSSAL;

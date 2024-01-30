@@ -68,13 +68,13 @@ std::vector<uint8_t> SimulatedFPGA::readMPUFIFO(MPU& mpu) {
     auto mpuResponse = &(_mpuResponses[mpu.getBus()]);
     auto buf = mpuResponse->getBuffer();
     auto len = mpuResponse->getLength();
-    uint8_t u8_data[len];
-    for (int i = 0; i < len; i++) {
+    std::vector<uint8_t> u8_data(len);
+    for (size_t i = 0; i < len; i++) {
         u8_data[i] = buf[i];
     }
-    processMPUResponse(mpu, u8_data, len);
+    processMPUResponse(mpu, u8_data.data(), len);
 
-    return std::vector<uint8_t>(u8_data, u8_data + len);
+    return u8_data;
 }
 
 LSST::cRIO::MPUTelemetry SimulatedFPGA::readMPUTelemetry(LSST::cRIO::MPU& mpu) {
@@ -359,11 +359,11 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
 }
 
 void SimulatedFPGA::_simulateMPU(MPU& mpu, uint8_t* data, size_t length) {
-    uint16_t u16_data[length];
+    std::vector<uint16_t> u16_data(length);
     for (size_t i = 0; i < length; i++) {
         u16_data[i] = data[i];
     }
-    SimulatedMPU buf(u16_data, length);
+    SimulatedMPU buf(u16_data.data(), length);
     while (!buf.endOfBuffer()) {
         uint8_t address = buf.read<uint8_t>();
         uint8_t func = buf.read<uint8_t>();

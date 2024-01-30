@@ -23,19 +23,18 @@
 #ifndef _TS_Command_Update_
 #define _TS_Command_Update_
 
-#include <chrono>
-
 #include <SAL_MTM1M3TS.h>
-#include <cRIO/Command.h>
+
+#include <cRIO/Task.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Commands {
 
-class Update : public cRIO::Command {
+class Update : public cRIO::Task {
 public:
-    void execute() override;
+    cRIO::task_return_t run() override;
 
 private:
     void _sendGlycolLoopTemperature();
