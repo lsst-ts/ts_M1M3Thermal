@@ -7,7 +7,7 @@ Version History
 v0.2.0
 ------
 
-# Report thermal status strings
+* Report thermal status strings
 * Reports meaning of ILC status bites
 * Improved makefile
 

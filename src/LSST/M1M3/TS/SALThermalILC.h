@@ -40,11 +40,6 @@ public:
     SALThermalILC(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL);
 
 protected:
-    void handleMissingReply(uint8_t address, uint8_t func) override;
-
-    void preProcess() override;
-    void postProcess() override;
-
     void processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType, uint8_t networkNodeType,
                          uint8_t ilcSelectedOptions, uint8_t networkNodeOptions, uint8_t majorRev,
                          uint8_t minorRev, std::string firmwareName) override;

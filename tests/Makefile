@@ -29,7 +29,7 @@ junit: compile
 	@$(foreach b,$(BINARIES),echo '[JUT] ${b}'; ./${b} -r junit -o ${b}.xml;)
 
 clean:
-	@$(foreach df,$(BINARIES) $(DEPS) $(JUNIT_FILES),echo '[RM ] ${df}'; $(RM) ${df};)
+	@$(foreach df,$(BINARIES) $(patsubst %,%.cpp.o,$(BINARIES)) $(DEPS) $(JUNIT_FILES),echo '[RM ] ${df}'; $(RM) ${df};)
 
 ../src/libM1M3SS.a: FORCE
 	@$(MAKE) -C ../src libM1M3TS.a SIMULATOR=1
