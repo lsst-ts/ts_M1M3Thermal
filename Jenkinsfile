@@ -21,12 +21,13 @@ properties(
 node {
     def SALUSER_HOME = "/home/saluser"
     def BRANCH = (env.CHANGE_BRANCH != null) ? env.CHANGE_BRANCH : env.BRANCH_NAME
-    def SAME_CRIO_BRANCH = ["main", "tickets/DM-41336", "tickets/DM-42503"]
+    def SAME_CRIO_BRANCH = ["main", "tickets/DM-42503"]
+    def CRIO_BRANCH=(BRANCH in SAME_CRIO_BRANCH) ? BRANCH : "develop"
 
     stage('Cloning sources')
     {
         dir("ts_cRIOcpp") {
-            git branch: (BRANCH in SAME_CRIO_BRANCH) ? BRANCH : "develop", url: 'https://github.com/lsst-ts/ts_cRIOcpp'
+            git branch: CRIO_BRANCH, url: 'https://github.com/lsst-ts/ts_cRIOcpp'
         }
         dir("ts_m1m3thermal") {
             checkout scm
@@ -35,7 +36,7 @@ node {
 
     stage('Building dev container')
     {
-        M1M3sim = docker.build("lsstts/mtm1m3_sim:" + env.BRANCH_NAME.replace("/", "_"), "--target crio-develop --build-arg XML_BRANCH=$BRANCH " + (params.noCache ? "--no-cache " : " ") + "$WORKSPACE/ts_m1m3thermal")
+        M1M3sim = docker.build("lsstts/mtm1m3_sim:" + env.BRANCH_NAME.replace("/", "_"), "--target crio-develop --build-arg XML_BRANCH=$BRANCH --build-arg cRIO_CPP=$CRIO_BRANCH" + (params.noCache ? " --no-cache " : " ") + "$WORKSPACE/ts_m1m3thermal")
     }
 
     stage("Running tests")
