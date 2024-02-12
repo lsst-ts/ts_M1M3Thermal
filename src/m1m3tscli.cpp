@@ -82,7 +82,7 @@ private:
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
 public:
-    PrintThermalILC(uint8_t bus) : ILC(bus), ThermalILC(bus), PrintILC(bus) {}
+    PrintThermalILC(uint8_t bus) : ILCBusList(bus), ThermalILC(bus), PrintILC(bus) {}
 
 protected:
     void processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,

@@ -69,7 +69,7 @@ void SAL_start::execute() {
         SPDLOG_INFO("Glycol pump turned on.");
     }
 
-    changeAllILCsMode(ILC::ILCMode::Disabled);
+    changeAllILCsMode(ILC::Mode::Disabled);
 
     TSApplication::ilc()->clear();
     TSApplication::instance().callFunctionOnIlcs(
@@ -85,7 +85,7 @@ void SAL_start::execute() {
 }
 
 void SAL_enable::execute() {
-    changeAllILCsMode(ILC::ILCMode::Enabled);
+    changeAllILCsMode(ILC::Mode::Enabled);
     IFPGA::get().setFCUPower(true);
 
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_EnabledState);
@@ -94,7 +94,7 @@ void SAL_enable::execute() {
 }
 
 void SAL_disable::execute() {
-    changeAllILCsMode(ILC::ILCMode::Disabled);
+    changeAllILCsMode(ILC::Mode::Disabled);
     IFPGA::get().setFCUPower(false);
     IFPGA::get().setCoolantPumpPower(false);
 
@@ -103,8 +103,8 @@ void SAL_disable::execute() {
 }
 
 void SAL_standby::execute() {
-    changeAllILCsMode(ILC::ILCMode::ClearFaults);
-    changeAllILCsMode(ILC::ILCMode::Standby);
+    changeAllILCsMode(ILC::Mode::ClearFaults);
+    changeAllILCsMode(ILC::Mode::Standby);
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_StandbyState);
     ackComplete();
     SPDLOG_INFO("Standby");

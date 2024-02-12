@@ -30,12 +30,12 @@
 #include <Settings/Thermal.h>
 #include <Telemetry/ThermalData.h>
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
+using namespace LSST::M1M3::TS;
 
-SALThermalILC::SALThermalILC(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) : _m1m3tsSAL(m1m3tsSAL) {}
+SALThermalILC::SALThermalILC(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL)
+        : ILC::ILCBusList(1), cRIO::ThermalILC(1), _m1m3tsSAL(m1m3tsSAL) {}
 
+#if 0
 void SALThermalILC::handleMissingReply(uint8_t address, uint8_t func) {
     if (Settings::Thermal::instance().autoDisable) {
         Events::EnabledILC::instance().communicationProblem(_address2ILCIndex(address));
@@ -43,10 +43,7 @@ void SALThermalILC::handleMissingReply(uint8_t address, uint8_t func) {
         cRIO::ThermalILC::handleMissingReply(address, func);
     }
 }
-
-void SALThermalILC::preProcess() {}
-
-void SALThermalILC::postProcess() {}
+#endif
 
 void SALThermalILC::processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType,
                                     uint8_t networkNodeType, uint8_t ilcSelectedOptions,
@@ -78,7 +75,3 @@ void SALThermalILC::processReHeaterGains(uint8_t address, float proportionalGain
 }
 
 uint8_t SALThermalILC::_address2ILCIndex(uint8_t address) { return address - 1; }
-
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST

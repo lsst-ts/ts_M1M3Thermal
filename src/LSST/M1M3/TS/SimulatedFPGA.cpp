@@ -32,11 +32,11 @@
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
 
-SimulatedFPGA::SimulatedFPGA() : IFPGA(), _U16ResponseStatus(IDLE) {
+SimulatedFPGA::SimulatedFPGA() : ILC::ILCBusList(1), IFPGA(), ThermalILC(1), _U16ResponseStatus(IDLE) {
     _broadcastCounter = 0;
     srandom(time(NULL));
     for (int i = 0; i < NUM_TS_ILC; i++) {
-        _mode[i] = ILC::ILCMode::Standby;
+        _mode[i] = ILC::Mode::Standby;
         _heaterPWM[i] = 0;
         _fanRPM[i] = 0;
     }
