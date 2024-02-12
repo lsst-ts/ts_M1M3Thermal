@@ -30,7 +30,7 @@
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-VFDSAL::VFDSAL(uint8_t bus, uint8_t mpu_address) : VFD(bus, mpu_address) {
+VFDSAL::VFDSAL(uint8_t bus) : VFD(bus) {
     commandedFrequency = NAN;
     targetFrequency = NAN;
     outputFrequency = NAN;

@@ -40,9 +40,9 @@ namespace TS {
  */
 class VFD : public cRIO::MPU {
 public:
-    VFD(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) { setLoopTimeOut(2000ms); }
+    VFD(uint8_t bus) : MPU(bus, 100) {}
 
-    void loopWrite() override;
+    void loopWrite();
 
     void start() { presetHoldingRegister(0x2000, 0x1a); }
     void stop() { presetHoldingRegister(0x2000, 0x01); }
@@ -81,9 +81,9 @@ public:
 
 class VFDPrint : public VFD {
 public:
-    VFDPrint(uint8_t bus, uint8_t mpu_address) : VFD(bus, mpu_address) {}
+    VFDPrint(uint8_t bus) : VFD(bus) {}
 
-    void loopRead(bool timedout) override;
+    void loopRead(bool timedout);
 };
 
 }  // namespace TS

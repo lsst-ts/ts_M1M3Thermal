@@ -23,6 +23,8 @@
 #ifndef __TS_THERMALFPGA__
 #define __TS_THERMALFPGA__
 
+#include <cRIO/MPU.h>
+
 #include <IFPGA.h>
 
 namespace LSST {

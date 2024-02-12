@@ -35,9 +35,9 @@ namespace Telemetry {
 
 class FlowMeterSAL final : public FlowMeter, MTM1M3TS_flowMeterC {
 public:
-    FlowMeterSAL(uint8_t bus, uint8_t mpu_address);
+    FlowMeterSAL(uint8_t bus);
 
-    void loopRead(bool timedout) override;
+    void loopRead(bool timedout);
 };
 
 }  // namespace Telemetry

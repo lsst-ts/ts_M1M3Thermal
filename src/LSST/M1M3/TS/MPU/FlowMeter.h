@@ -34,9 +34,9 @@ namespace TS {
  */
 class FlowMeter : public cRIO::MPU {
 public:
-    FlowMeter(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) { setLoopTimeOut(1000ms); }
+    FlowMeter(uint8_t bus) : MPU(bus, 1) {}
 
-    void loopWrite() override;
+    void loopWrite();
 
     uint16_t getSignalStrength() { return getRegister(5500); }
     double getFlowRate() { return _getFloatValue(1000); }
@@ -51,9 +51,9 @@ private:
 
 class FlowMeterPrint : public FlowMeter {
 public:
-    FlowMeterPrint(uint8_t bus, uint8_t mpu_address) : FlowMeter(bus, mpu_address) {}
+    FlowMeterPrint(uint8_t bus) : FlowMeter(bus) {}
 
-    void loopRead(bool timedout) override;
+    void loopRead(bool timedout);
 };
 
 }  // namespace TS
