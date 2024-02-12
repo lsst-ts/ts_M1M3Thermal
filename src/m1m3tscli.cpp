@@ -99,15 +99,12 @@ public:
     PrintTSFPGA() : ThermalFPGA() { _cmd_start = std::chrono::steady_clock::now(); }
 #endif
 
-    void writeMPUFIFO(MPU& mpu) override;
+    void writeMPUFIFO(uint8_t bus, std::vector<uint8_t> buf) override;
     std::vector<uint8_t> readMPUFIFO(MPU& mpu) override;
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) override;
     void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
-
-protected:
-    void processMPUResponse(MPU& mpu, uint8_t* data, uint16_t len) override;
 
 private:
     void _printTimestamp(std::string prefix, bool nullTimer);
@@ -188,10 +185,10 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
 
     addILC(std::make_shared<PrintThermalILC>(1));
 
-    flowMeter = std::make_shared<FlowMeterPrint>(2, 1);
+    flowMeter = std::make_shared<FlowMeterPrint>(2);
     addMPU("flow", flowMeter);
 
-    vfd = std::make_shared<VFDPrint>(1, 100);
+    vfd = std::make_shared<VFDPrint>(1);
     addMPU("vfd", vfd);
 
 #ifdef SIMULATOR
@@ -207,8 +204,12 @@ int M1M3TScli::mpuRead(command_vec cmds) {
         return -1;
     }
 
-    vfd->clearCommanded();
-    mpu->clearCommanded();
+    uint8_t mpu_a = 1;
+    if (cmds[0] == "vfd") {
+        mpu_a = 100;
+    }
+
+    mpu->reset();
 
     std::vector<std::pair<uint16_t, uint8_t>> registers;
 
@@ -223,15 +224,15 @@ int M1M3TScli::mpuRead(command_vec cmds) {
     }
 
     for (auto r : registers) {
-        mpu->readHoldingRegisters(r.first, r.second, 255);
-        mpu->clear(true);
+        mpu->readHoldingRegisters(mpu_a, r.first, r.second, 255);
+        mpu->clear();
     }
 
     getFPGA()->mpuCommands(*mpu);
 
     for (auto r : registers) {
         for (int i = 0; i < r.second; i++) {
-            uint16_t v = mpu->getRegister(r.first + i);
+            uint16_t v = mpu->getRegister(mpu_a, r.first + i);
             std::cout << fmt::format("{0:>5d} (0x{0:04x}): {1:d} (0x{1:x})", r.first + i, v) << std::endl;
         }
     }
@@ -258,13 +259,21 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
         return -1;
     }
 
-    mpu->clearCommanded();
+    uint8_t mpu_a = 1;
+    if (cmds[0] == "vfd") {
+        mpu_a = 100;
+    }
+
+    mpu->clear();
+    mpu->reset();
 
     uint16_t addrs = stoi(cmds[1], nullptr, 0);
     uint16_t value = stoi(cmds[2], nullptr, 0);
 
-    mpu->presetHoldingRegister(addrs, value);
-    mpu->clear(true);
+    mpu->presetHoldingRegister(mpu_a, addrs, value);
+
+    mpu->reset();
+    mpu->clear();
 
     getFPGA()->mpuCommands(*mpu);
 
@@ -272,7 +281,8 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 }
 
 int M1M3TScli::printFlowMeter(command_vec cmds) {
-    flowMeter->clearCommanded();
+    flowMeter->reset();
+    flowMeter->clear();
 
     getFPGA()->mpuCommands(*flowMeter);
 
@@ -280,7 +290,8 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
 }
 
 int M1M3TScli::printPump(command_vec cmds) {
-    vfd->clearCommanded();
+    vfd->reset();
+    vfd->clear();
 
     IFPGA* fpga = dynamic_cast<IFPGA*>(getFPGA());
     if (cmds.size() > 0) {
@@ -335,7 +346,6 @@ FPGA* M1M3TScli::newFPGA(const char* dir) {
     return printFPGA;
 }
 
-<<<<<<< HEAD
 int M1M3TScli::fcuBroadcast(command_vec cmds) {
     uint8_t heater = std::stoi(cmds[0]);
     uint8_t fan = std::stoi(cmds[1]);
@@ -351,8 +361,6 @@ int M1M3TScli::fcuBroadcast(command_vec cmds) {
     return 0;
 }
 
-=======
->>>>>>> 11ff29d (Changed CLI commands thermal-xxx to fcu-xx, updated version-history.rst)
 int M1M3TScli::fcuDemand(command_vec cmds) {
     uint8_t heater = std::stoi(cmds[0]);
     uint8_t fan = std::stoi(cmds[1]);
@@ -550,9 +558,9 @@ void PrintThermalILC::processReHeaterGains(uint8_t address, float proportionalGa
 
 M1M3TScli cli("M1M3TS", "M1M3 Thermal System Command Line Interface");
 
-void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
-    _printBufferU8("MPU>", true, mpu.getCommandVector());
-    FPGAClass::writeMPUFIFO(mpu);
+void PrintTSFPGA::writeMPUFIFO(uint8_t bus, std::vector<uint8_t> buf) {
+    _printBufferU8("MPU>", true, buf);
+    FPGAClass::writeMPUFIFO(bus, buf);
 }
 
 std::vector<uint8_t> PrintTSFPGA::readMPUFIFO(MPU& mpu) { return FPGAClass::readMPUFIFO(mpu); }
@@ -575,11 +583,6 @@ void PrintTSFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t time
 void PrintTSFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU16ResponseFIFO(data, length, timeout);
     _printBufferU16("R16<", false, data, length);
-}
-
-void PrintTSFPGA::processMPUResponse(MPU& mpu, uint8_t* data, uint16_t len) {
-    _printBufferU8("MPU<", false, data, len);
-    FPGAClass::processMPUResponse(mpu, data, len);
 }
 
 void PrintTSFPGA::_printTimestamp(std::string prefix, bool nullTimer) {

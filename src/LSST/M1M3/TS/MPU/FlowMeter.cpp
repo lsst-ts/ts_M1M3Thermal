@@ -31,9 +31,9 @@ using namespace LSST::M1M3::TS;
 
 void FlowMeter::loopWrite() {
     SPDLOG_TRACE("Requesting FlowMeter registers");
-    readHoldingRegisters(1000, 4, 255);
-    readHoldingRegisters(2500, 6, 255);
-    readHoldingRegisters(5500, 1, 255);
+    readHoldingRegisters(flow_address, 1000, 4, 255);
+    readHoldingRegisters(flow_address, 2500, 6, 255);
+    readHoldingRegisters(flow_address, 5500, 1, 255);
 }
 
 float FlowMeter::_getFloatValue(uint16_t reg) {
@@ -41,8 +41,8 @@ float FlowMeter::_getFloatValue(uint16_t reg) {
         uint16_t data[2];
         float dfloat;
     } buffer;
-    buffer.data[0] = getRegister(reg + 1);
-    buffer.data[1] = getRegister(reg);
+    buffer.data[0] = getRegister(flow_address, reg + 1);
+    buffer.data[1] = getRegister(flow_address, reg);
     return buffer.dfloat;
 }
 
@@ -53,7 +53,7 @@ double FlowMeter::_getDoubleValue(uint16_t reg) {
     } buffer;
 
     for (int i = 0; i < 4; i++) {
-        buffer.data[i] = getRegister(reg + 4 - i);
+        buffer.data[i] = getRegister(flow_address, reg + 4 - i);
     }
     return buffer.ddouble;
 }

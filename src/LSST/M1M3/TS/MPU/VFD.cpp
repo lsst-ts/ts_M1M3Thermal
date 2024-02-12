@@ -30,8 +30,8 @@
 using namespace LSST::M1M3::TS;
 
 void VFD::loopWrite() {
-    readHoldingRegisters(0x2000, 3, 255);
-    readHoldingRegisters(0x2100, 7, 255);
+    readHoldingRegisters(vfd_address, 0x2000, 3, 255);
+    readHoldingRegisters(vfd_address, 0x2100, 7, 255);
 }
 
 const char *VFD::getDriveError(uint16_t code) {

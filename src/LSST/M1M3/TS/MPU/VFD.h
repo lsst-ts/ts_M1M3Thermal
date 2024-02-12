@@ -40,27 +40,27 @@ namespace TS {
  */
 class VFD : public cRIO::MPU {
 public:
-    VFD(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) { setLoopTimeOut(2000ms); }
+    VFD(uint8_t bus) : MPU(bus) { setLoopTimeOut(2000ms); }
 
     void loopWrite() override;
 
-    void start() { presetHoldingRegister(0x2000, 0x1a); }
-    void stop() { presetHoldingRegister(0x2000, 0x01); }
-    void resetCommand() { presetHoldingRegister(0x2000, 0x08); }
-    void setFrequency(float freq) { presetHoldingRegister(0x2001, freq * 100.0f); }
+    void start() { presetHoldingRegister(vfd_address, 0x2000, 0x1a); }
+    void stop() { presetHoldingRegister(vfd_address, 0x2000, 0x01); }
+    void resetCommand() { presetHoldingRegister(vfd_address, 0x2000, 0x08); }
+    void setFrequency(float freq) { presetHoldingRegister(vfd_address, 0x2001, freq * 100.0f); }
 
-    uint16_t getStatus() { return getRegister(0x2000); }
-    float getCommandedFrequency() { return getRegister(0x2001) / 100.0f; }
+    uint16_t getStatus() { return getRegister(vfd_address, 0x2000); }
+    float getCommandedFrequency() { return getRegister(vfd_address, 0x2001) / 100.0f; }
 
-    uint16_t getVelocityPositionBits() { return getRegister(0x2100); }
-    uint16_t getDriveErrorCodes() { return getRegister(0x2101); }
-    float getTargetFrequency() { return getRegister(0x2102) / 100.0f; }
-    float getOutputFrequency() { return getRegister(0x2103) / 100.0f; }
-    float getOutputCurrent() { return getRegister(0x2104) / 100.0f; }
-    uint16_t getDCBusVoltage() { return getRegister(0x2105); }
-    float getOutputVoltage() { return getRegister(0x2106) / 10.0f; }
+    uint16_t getVelocityPositionBits() { return getRegister(vfd_address, 0x2100); }
+    uint16_t getDriveErrorCodes() { return getRegister(vfd_address, 0x2101); }
+    float getTargetFrequency() { return getRegister(vfd_address, 0x2102) / 100.0f; }
+    float getOutputFrequency() { return getRegister(vfd_address, 0x2103) / 100.0f; }
+    float getOutputCurrent() { return getRegister(vfd_address, 0x2104) / 100.0f; }
+    uint16_t getDCBusVoltage() { return getRegister(vfd_address, 0x2105); }
+    float getOutputVoltage() { return getRegister(vfd_address, 0x2106) / 10.0f; }
 
-    void readParameters() { readHoldingRegisters(1, 50); }
+    void readParameters() { readHoldingRegisters(vfd_address, 1, 50); }
 
     /**
      * Reads VFD registers.
@@ -74,14 +74,16 @@ public:
      * 0x2105     | DC-BUS Voltage
      * 0x2106     | Output Voltage
      */
-    void update() { readHoldingRegisters(0x2101, 6); }
+    void update() { readHoldingRegisters(vfd_address, 0x2101, 6); }
 
     static const char* getDriveError(uint16_t code);
+
+    uint8_t vfd_address = 100;
 };
 
 class VFDPrint : public VFD {
 public:
-    VFDPrint(uint8_t bus, uint8_t mpu_address) : VFD(bus, mpu_address) {}
+    VFDPrint(uint8_t bus) : VFD(bus) {}
 
     void loopRead(bool timedout) override;
 };

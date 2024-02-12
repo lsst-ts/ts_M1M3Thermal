@@ -42,39 +42,31 @@ SimulatedFPGA::SimulatedFPGA() : ILC::ILCBusList(1), IFPGA(), ThermalILC(1), _U1
     }
 }
 
-void SimulatedFPGA::writeMPUFIFO(MPU& mpu) {
-    _mpuResponses[mpu.getBus()].clear();
+void SimulatedFPGA::writeMPUFIFO(uint8_t bus, std::vector<uint8_t> buf) {
+    _mpuResponses[bus].clear();
 
-    auto buf = mpu.getCommandVector();
     for (auto i = buf.begin(); i != buf.end(); i++) {
         switch (*i) {
-            case MPUCommands::WRITE:
+            case MPUCommands::MPU_WRITE:
                 i++;
-                _simulateMPU(mpu, &(*(i + 1)), *i);
+                _simulateMPU(bus, &(*(i + 1)), *i);
                 i += *i;
                 break;
-            case MPUCommands::READ_US:
-            case MPUCommands::READ_MS:
+            case MPUCommands::MPU_READ_US:
+            case MPUCommands::MPU_READ_MS:
                 i += 3;
                 break;
-            case MPUCommands::IRQ:
+            case MPUCommands::MPU_IRQ:
                 break;
         }
     }
 }
 
 std::vector<uint8_t> SimulatedFPGA::readMPUFIFO(MPU& mpu) {
-    // TODO shall go away once we have all buffers in uin8_t
-    auto mpuResponse = &(_mpuResponses[mpu.getBus()]);
-    auto buf = mpuResponse->getBuffer();
-    auto len = mpuResponse->getLength();
-    std::vector<uint8_t> u8_data(len);
-    for (size_t i = 0; i < len; i++) {
-        u8_data[i] = buf[i];
-    }
-    processMPUResponse(mpu, u8_data.data(), len);
+    auto buf = _mpuResponses[mpu.getBus()];
 
-    return u8_data;
+    mpu.parse(buf);
+    return buf;
 }
 
 LSST::cRIO::MPUTelemetry SimulatedFPGA::readMPUTelemetry(LSST::cRIO::MPU& mpu) {
@@ -241,11 +233,11 @@ void SimulatedFPGA::processReHeaterGains(uint8_t address, float proportionalGain
     _response.writeCRC();
 }
 
-void SimulatedFPGA::processMPURead(MPU& mpu, uint8_t address, uint16_t register_address, uint16_t len) {
+void SimulatedFPGA::processMPURead(uint8_t bus, uint8_t address, uint16_t register_address, uint16_t len) {
     static float simFlowMeter = 0;
     static uint16_t commandedFrequency = 0;
 
-    auto response = &(_mpuResponses[mpu.getBus()]);
+    auto response = &(_mpuResponses[bus]);
     response->write<uint8_t>(address);
     response->write<uint8_t>(3);
     response->write<uint8_t>(len * 2);
@@ -288,7 +280,7 @@ void SimulatedFPGA::processMPURead(MPU& mpu, uint8_t address, uint16_t register_
     response->writeCRC();
 }
 
-void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
+void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t len) {
     // reply format:
     // 4 bytes (forming uint64_t in low endian) beginning timestamp
     // data received from ILCs (& FIFO::TX_WAIT_LONG_RX)
@@ -297,7 +289,7 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
 
     _response.writeFPGATimestamp(Timestamp::toFPGA(TSPublisher::getTimestamp()));
 
-    SimulatedILC buf(data, length);
+    SimulatedILC buf(data, len);
     while (!buf.endOfBuffer()) {
         uint16_t p = buf.peek();
         if ((p & FIFO::CMD_MASK) != FIFO::WRITE) {
@@ -358,25 +350,19 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t length) {
     }
 }
 
-void SimulatedFPGA::_simulateMPU(MPU& mpu, uint8_t* data, size_t length) {
-    std::vector<uint16_t> u16_data(length);
-    for (size_t i = 0; i < length; i++) {
-        u16_data[i] = data[i];
-    }
-    SimulatedMPU buf(u16_data.data(), length);
-    while (!buf.endOfBuffer()) {
-        uint8_t address = buf.read<uint8_t>();
-        uint8_t func = buf.read<uint8_t>();
-        switch (func) {
-            case 3: {
-                uint16_t reg_add = buf.read<uint16_t>();
-                uint16_t reg_len = buf.read<uint16_t>();
-                processMPURead(mpu, address, reg_add, reg_len);
-                break;
-            }
-            default:
-                SPDLOG_WARN("SimulatedFPGA::_simulateMPU unknow/unsupported function {0:04x} ({0:d})", func);
+void SimulatedFPGA::_simulateMPU(uint8_t bus, uint8_t* data, size_t len) {
+    Modbus::Parser buf(std::vector<uint8_t>(data, data + len));
+    uint8_t address = buf.address();
+    uint8_t func = buf.func();
+    switch (func) {
+        case 3: {
+            uint16_t reg_add = buf.read<uint16_t>();
+            uint16_t reg_len = buf.read<uint16_t>();
+            processMPURead(bus, address, reg_add, reg_len);
+            break;
         }
-        buf.checkCRC();
+        default:
+            SPDLOG_WARN("SimulatedFPGA::_simulateMPU unknow/unsupported function {0:04x} ({0:d})", func);
     }
+    buf.checkCRC();
 }

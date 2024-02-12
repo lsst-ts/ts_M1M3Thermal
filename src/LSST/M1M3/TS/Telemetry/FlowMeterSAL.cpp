@@ -31,7 +31,7 @@
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-FlowMeterSAL::FlowMeterSAL(uint8_t bus, uint8_t mpu_address) : FlowMeter(bus, mpu_address) {
+FlowMeterSAL::FlowMeterSAL(uint8_t bus) : FlowMeter(bus) {
     signalStrength = NAN;
     flowRate = NAN;
     netTotalizer = NAN;

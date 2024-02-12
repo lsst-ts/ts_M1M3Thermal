@@ -111,11 +111,3 @@ void IFPGA::setHeartbeat(bool heartbeat) {
     buf[1] = heartbeat;
     writeCommandFIFO(buf, 2, 0);
 }
-
-void IFPGA::processMPUResponse(LSST::cRIO::MPU& mpu, uint8_t* data, uint16_t len) {
-    std::vector<uint16_t> u16_data(len);
-    for (int i = 0; i < len; i++) {
-        u16_data[i] = data[i];
-    }
-    mpu.processResponse(u16_data.data(), len);
-}

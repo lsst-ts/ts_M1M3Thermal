@@ -34,11 +34,11 @@ namespace TS {
  */
 class FlowMeter : public cRIO::MPU {
 public:
-    FlowMeter(uint8_t bus, uint8_t mpu_address) : MPU(bus, mpu_address) { setLoopTimeOut(1000ms); }
+    FlowMeter(uint8_t bus) : MPU(bus) { setLoopTimeOut(1000ms); }
 
     void loopWrite() override;
 
-    uint16_t getSignalStrength() { return getRegister(5500); }
+    uint16_t getSignalStrength() { return getRegister(flow_address, 5500); }
     double getFlowRate() { return _getFloatValue(1000); }
     double getNetTotalizer() { return _getFloatValue(2500); }
     double getPositiveTotalizer() { return _getFloatValue(2502); }
@@ -47,11 +47,13 @@ public:
 private:
     float _getFloatValue(uint16_t reg);
     double _getDoubleValue(uint16_t reg);
+
+    uint8_t flow_address = 1;
 };
 
 class FlowMeterPrint : public FlowMeter {
 public:
-    FlowMeterPrint(uint8_t bus, uint8_t mpu_address) : FlowMeter(bus, mpu_address) {}
+    FlowMeterPrint(uint8_t bus) : FlowMeter(bus) {}
 
     void loopRead(bool timedout) override;
 };

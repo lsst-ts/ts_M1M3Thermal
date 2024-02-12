@@ -41,7 +41,7 @@ public:
     void open() override;
     void close() override;
     void finalize() override;
-    void writeMPUFIFO(cRIO::MPU& mpu) override;
+    void writeMPUFIFO(uint8_t bus, std::vector<uint8_t> buffer) override;
     std::vector<uint8_t> readMPUFIFO(cRIO::MPU& mpu) override;
     LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) override;
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;

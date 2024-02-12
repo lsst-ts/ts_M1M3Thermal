@@ -69,26 +69,23 @@ void ThermalFPGA::finalize() {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_Finalize());
 }
 
-void ThermalFPGA::writeMPUFIFO(MPU& mpu) {
-    auto buf = mpu.getCommandVector();
+void ThermalFPGA::writeMPUFIFO(uint8_t bus, std::vector<uint8_t> mpu_data) {
+    uint8_t len = mpu_data.size();
 
-    uint8_t bus = mpu.getBus();
-    uint8_t len = buf.size();
-
-    writeDebugFile<uint8_t>("MPU<", buf.data(), len);
+    writeDebugFile<uint8_t>("MPU<", mpu_data.data(), len);
 
     NiThrowError(
             __PRETTY_FUNCTION__,
             NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
-                               &bus, 1, -1, NULL));
+                               &bus, 1, 0, NULL));
     NiThrowError(
             __PRETTY_FUNCTION__,
             NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
-                               &len, 1, -1, NULL));
+                               &len, 1, 0, NULL));
     NiThrowError(
             __PRETTY_FUNCTION__,
             NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
-                               buf.data(), len, -1, NULL));
+                               mpu_data.data(), len, 0, NULL));
 }
 
 std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU& mpu) {
@@ -114,7 +111,7 @@ std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU& mpu) {
 
     writeDebugFile<uint8_t>("MPU>", data, len);
 
-    processMPUResponse(mpu, data, len);
+    mpu.parse(data, len);
 
     std::vector<uint8_t> ret(data, data + len);
 
