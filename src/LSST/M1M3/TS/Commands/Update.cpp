@@ -136,6 +136,7 @@ void Update::_sendFCU() {
 }
 
 void Update::_sendFlowMeter() {
+#if 0
     try {
         bool finished = IFPGA::get().flowMeter->runLoop(IFPGA::get());
         if (finished) {
@@ -145,9 +146,11 @@ void Update::_sendFlowMeter() {
         SPDLOG_WARN("Cannot poll Flow Meter: {}", e.what());
         IFPGA::get().setNextFlowMeter();
     }
+#endif
 }
 
 void Update::_sendVFD() {
+#if 0
     try {
         bool finished = IFPGA::get().vfd->runLoop(IFPGA::get());
         if (finished) {
@@ -157,4 +160,5 @@ void Update::_sendVFD() {
         SPDLOG_WARN("Cannot poll VFD: {}", e.what());
         IFPGA::get().setNextVFD();
     }
+#endif
 }
