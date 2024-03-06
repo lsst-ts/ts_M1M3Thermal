@@ -9,6 +9,7 @@ v0.2.0
 
 * Report thermal status strings
 * Reports meaning of ILC status bites
+* CH3 control (ILC power on L5)
 * Improved makefile
 
 v0.1.0

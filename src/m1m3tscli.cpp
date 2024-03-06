@@ -68,6 +68,7 @@ public:
     int glycolTemperature(command_vec cmds);
     int glycolDebug(command_vec cmds);
     int slot4(command_vec);
+    int ilcPower(command_vec);
 
 protected:
     virtual FPGA* newFPGA(const char* dir) override;
@@ -158,6 +159,8 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
                "<heater PWM> <fan RPM> " ILC_ARG, "Sets FCU heater and fan");
     addCommand("slot4", std::bind(&M1M3TScli::slot4, this, std::placeholders::_1), "", NEED_FPGA, NULL,
                "Reads slot 4 inputs");
+    addCommand("ilc-power", std::bind(&M1M3TScli::ilcPower, this, std::placeholders::_1), "B", NEED_FPGA,
+               "<on/off>", "Sets ILC power at L5 (CH3 of Mod 5)");
 
     addILCCommand(
             "fcu-status",
@@ -271,9 +274,7 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 int M1M3TScli::printFlowMeter(command_vec cmds) {
     flowMeter->clearCommanded();
 
-    while (flowMeter->getLoopState() != loop_state_t::IDLE) {
-        flowMeter->runLoop(*getFPGA());
-    }
+    getFPGA()->mpuCommands(*flowMeter);
 
     return 0;
 }
@@ -304,9 +305,7 @@ int M1M3TScli::printPump(command_vec cmds) {
         }
     }
 
-    while (vfd->getLoopState() != loop_state_t::IDLE) {
-        vfd->runLoop(*fpga);
-    }
+    fpga->mpuCommands(*vfd);
 
     return 0;
 }
@@ -480,6 +479,12 @@ int M1M3TScli::slot4(command_vec) {
     return 0;
 }
 
+int M1M3TScli::ilcPower(command_vec cmds) {
+    uint16_t buf[2] = {FPGAAddress::ILC_POWER, onOff(cmds[0])};
+    dynamic_cast<IFPGA*>(getFPGA())->writeCommandFIFO(buf, 2, 10);
+    return 0;
+}
+
 ILCUnits M1M3TScli::getILCs(command_vec cmds) {
     ILCUnits units;
     int ret = -2;
@@ -495,7 +500,7 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
         } else {
             try {
                 int address = std::stoi(c);
-                if (address <= 0 || address > NUM_TS_ILC) {
+                if ((address <= 0 || address > NUM_TS_ILC) && (address != 255)) {
                     std::cerr << "Invalid address " << c << std::endl;
                     ret = -1;
                     continue;
