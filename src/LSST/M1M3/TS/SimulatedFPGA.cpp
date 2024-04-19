@@ -44,6 +44,57 @@ SimulatedFPGA::SimulatedFPGA() : ILC::ILCBusList(1), IFPGA(), ThermalILC(1), _U1
 
 SimulatedFPGA::~SimulatedFPGA() {}
 
+void SimulatedFPGA::writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) {
+    writeDebugFile<uint8_t>("MPU<", data);
+    enum { BUS, LEN } _state = BUS;
+
+    auto write_answers = [this](uint8_t bus, const uint8_t* data, uint8_t len) {
+        Modbus::Parser parser(std::vector<uint8_t>(data, data + len));
+        Modbus::Buffer response;
+        response.push_back(parser.address());
+        switch (parser.func()) {
+            case MPU::READ_HOLDING_REGISTERS: {
+                parser.read<uint16_t>();
+                uint16_t reg_len = parser.read<uint16_t>() * 2;
+                response.push_back(parser.func());
+                response.push_back(reg_len);
+                for (size_t i = 0; i < reg_len; i++) {
+                    response.push_back(i);
+                }
+                break;
+            }
+            default:
+                throw std::runtime_error(
+                        fmt::format("Response for function {} not implemented", parser.func()));
+        }
+        response.writeCRC();
+        _mpuResponses[bus] = response;
+    };
+
+    uint8_t bus;
+
+    for (auto i = (data.data()); i < data.data() + data.size(); i++) {
+        switch (_state) {
+            case BUS:
+                bus = *i;
+                _state = LEN;
+                break;
+            case LEN: {
+                write_answers(bus, i + 1, *i);
+                i += *i;
+                _state = BUS;
+                break;
+            }
+        }
+    }
+}
+
+std::vector<uint8_t> SimulatedFPGA::readMPUFIFO(cRIO::MPU& mpu) {
+    auto ret = _mpuResponses[mpu.getBus()];
+    _mpuResponses[mpu.getBus()].clear();
+    return ret;
+}
+
 void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     uint16_t* d = data;
     while (d < data + length) {

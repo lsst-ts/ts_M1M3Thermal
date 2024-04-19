@@ -49,12 +49,8 @@ const char *VFD::getDriveError(uint16_t code) {
     }
 }
 
-void VFDPrint::loopRead(bool timedout) {
+void VFDPrint::print() {
     SPDLOG_TRACE("Requesting glycol pump VFD registers");
-    if (timedout) {
-        std::cout << "VFD readout timed-out." << std::endl;
-        return;
-    }
 
     // status bits
     static const std::string status[16] = {"Ready",

@@ -83,7 +83,7 @@ class VFDPrint : public VFD {
 public:
     VFDPrint(uint8_t bus) : VFD(bus) {}
 
-    void loopRead(bool timedout);
+    void print();
 };
 
 }  // namespace TS

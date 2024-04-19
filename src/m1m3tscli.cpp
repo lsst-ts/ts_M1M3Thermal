@@ -77,8 +77,8 @@ protected:
 private:
     void printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu);
 
-    std::shared_ptr<FlowMeter> flowMeter;
-    std::shared_ptr<VFD> vfd;
+    std::shared_ptr<FlowMeterPrint> flowMeter;
+    std::shared_ptr<VFDPrint> vfd;
 };
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
@@ -95,7 +95,7 @@ class PrintTSFPGA : public FPGAClass {
 public:
     PrintTSFPGA() : ILCBusList(1), FPGAClass() { _cmd_start = std::chrono::steady_clock::now(); }
 
-    void writeMPUFIFO(MPU& mpu) override;
+    void writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) override;
     std::vector<uint8_t> readMPUFIFO(MPU& mpu) override;
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
@@ -114,7 +114,7 @@ private:
 
 class PrintMPUFactory : public FactoryInterface {
 public:
-    PrintMPUFactory(std::shared_ptr<FlowMeter> flowMeter, std::shared_ptr<VFD> vfd) {
+    PrintMPUFactory(std::shared_ptr<FlowMeterPrint> flowMeter, std::shared_ptr<VFDPrint> vfd) {
         _flowMeter = flowMeter;
         _vfd = vfd;
     }
@@ -123,8 +123,8 @@ public:
     std::shared_ptr<VFD> createVFD() override { return _vfd; }
 
 private:
-    std::shared_ptr<FlowMeter> _flowMeter;
-    std::shared_ptr<VFD> _vfd;
+    std::shared_ptr<FlowMeterPrint> _flowMeter;
+    std::shared_ptr<VFDPrint> _vfd;
 };
 
 #define ILC_ARG "<ILC..>"
@@ -267,16 +267,24 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 }
 
 int M1M3TScli::printFlowMeter(command_vec cmds) {
-    flowMeter->reset();
     flowMeter->clear();
-
+    flowMeter->readHoldingRegisters(1000, 4, 255);
     getFPGA()->mpuCommands(*flowMeter);
+
+    flowMeter->clear();
+    flowMeter->readHoldingRegisters(2500, 6, 255);
+    getFPGA()->mpuCommands(*flowMeter);
+
+    flowMeter->clear();
+    flowMeter->readHoldingRegisters(5500, 1, 255);
+    getFPGA()->mpuCommands(*flowMeter);
+
+    flowMeter->print();
 
     return 0;
 }
 
 int M1M3TScli::printPump(command_vec cmds) {
-    vfd->reset();
     vfd->clear();
 
     IFPGA* fpga = dynamic_cast<IFPGA*>(getFPGA());
@@ -300,9 +308,19 @@ int M1M3TScli::printPump(command_vec cmds) {
             std::cout << "Turned pump " << cmds[0] << std::endl;
             return 0;
         }
+
+        fpga->mpuCommands(*vfd);
     }
 
+    vfd->clear();
+    vfd->readHoldingRegisters(0x2000, 3, 255);
     fpga->mpuCommands(*vfd);
+
+    vfd->clear();
+    vfd->readHoldingRegisters(0x2100, 7, 255);
+    fpga->mpuCommands(*vfd);
+
+    vfd->print();
 
     return 0;
 }
@@ -544,12 +562,12 @@ void PrintThermalILC::processReHeaterGains(uint8_t address, float proportionalGa
 
 M1M3TScli cli("M1M3TS", "M1M3 Thermal System Command Line Interface");
 
-void PrintTSFPGA::writeMPUFIFO(MPU& mpu) {
-    if (mpu.size() != 1) {
+void PrintTSFPGA::writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) {
+    if (data.size() <= 0) {
         throw std::runtime_error("MPU - 0 buffer");
     }
-    _printBufferU8("MPU>", true, mpu[0].buffer);
-    FPGAClass::writeMPUFIFO(mpu);
+    _printBufferU8("MPU> ", true, data);
+    FPGAClass::writeMPUFIFO(data, timeout);
 }
 
 std::vector<uint8_t> PrintTSFPGA::readMPUFIFO(MPU& mpu) { return FPGAClass::readMPUFIFO(mpu); }

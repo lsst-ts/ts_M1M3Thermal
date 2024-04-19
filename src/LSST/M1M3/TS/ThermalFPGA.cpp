@@ -69,27 +69,15 @@ void ThermalFPGA::finalize() {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_Finalize());
 }
 
-void ThermalFPGA::writeMPUFIFO(cRIO::MPU& mpu) {
-#if 0
-    writeDebugFile<uint8_t>("MPU<", mpu_data.data(), len);
-
+void ThermalFPGA::writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) {
+    writeDebugFile<uint8_t>("MPU<", data);
     NiThrowError(
             __PRETTY_FUNCTION__,
             NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
-                               &bus, 1, 0, NULL));
-    NiThrowError(
-            __PRETTY_FUNCTION__,
-            NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
-                               &len, 1, 0, NULL));
-    NiThrowError(
-            __PRETTY_FUNCTION__,
-            NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
-                               mpu_data.data(), len, 0, NULL));
-#endif
+                               data.data(), data.size(), timeout, NULL));
 }
 
 std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU& mpu) {
-#if 0
     uint8_t req = mpu.getBus() + 10;
     NiThrowError(
             __PRETTY_FUNCTION__,
@@ -112,14 +100,11 @@ std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU& mpu) {
 
     writeDebugFile<uint8_t>("MPU>", data, len);
 
-    mpu.parse(data, len);
-
     std::vector<uint8_t> ret(data, data + len);
 
     delete[] data;
 
     return ret;
-#endif
 }
 
 LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
@@ -129,16 +114,14 @@ LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
             NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
                                req, 4, -1, NULL));
 
-#if 0
     bool timedout;
 
-    uint32_t irq = mpu.getIrq();
+    uint32_t irq = mpu.getBus();
 
     waitOnIrqs(irq, 1000, timedout);
     if (timedout == true) {
         throw std::runtime_error("Cannot retrieve telemetry within 1 second");
     }
-#endif
 
     uint8_t res = mpu.getBus() + 10;
     NiThrowError(
@@ -160,9 +143,7 @@ LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
             NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
                               buffer.data(), len, 10, NULL));
 
-#if 0
     ackIrqs(irq);
-#endif
 
     if (buffer.size() != 10) {
         throw std::runtime_error(

@@ -53,7 +53,7 @@ class FlowMeterPrint : public FlowMeter {
 public:
     FlowMeterPrint(uint8_t bus) : FlowMeter(bus) {}
 
-    void loopRead(bool timedout);
+    void print();
 };
 
 }  // namespace TS
