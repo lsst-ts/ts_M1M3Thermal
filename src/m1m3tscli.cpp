@@ -93,7 +93,11 @@ protected:
 
 class PrintTSFPGA : public FPGAClass {
 public:
+#ifdef SIMULATOR
     PrintTSFPGA() : ILCBusList(1), FPGAClass() { _cmd_start = std::chrono::steady_clock::now(); }
+#else
+    PrintTSFPGA() : FPGAClass() { _cmd_start = std::chrono::steady_clock::now(); }
+#endif
 
     void writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) override;
     std::vector<uint8_t> readMPUFIFO(MPU& mpu) override;
