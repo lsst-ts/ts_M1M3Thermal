@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v0.3.0
+------
+
+* Uses new cRIOcpp API
+
 v0.2.0
 ------
 
