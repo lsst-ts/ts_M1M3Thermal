@@ -29,6 +29,9 @@ using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
 
 class TestILC : public ThermalILC {
+public:
+    TestILC() : ILC::ILCBusList::ILCBusList(1), ThermalILC(1) {}
+
 protected:
     void processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcAppType, uint8_t networkNodeType,
                          uint8_t ilcSelectedOptions, uint8_t networkNodeOptions, uint8_t majorRev,
