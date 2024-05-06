@@ -22,9 +22,9 @@
 
 #include <map>
 
+#include <cRIO/MPU.h>
 #include <cRIO/NiError.h>
 #include <cRIO/SimulatedILC.h>
-#include <cRIO/SimulatedMPU.h>
 #include <cRIO/ThermalILC.h>
 
 #include <IFPGA.h>
@@ -39,14 +39,15 @@ namespace TS {
 class SimulatedFPGA : public IFPGA, public LSST::cRIO::ThermalILC {
 public:
     SimulatedFPGA();
-    virtual ~SimulatedFPGA() {}
+    virtual ~SimulatedFPGA();
+
     void initialize() override {}
     void open() override {}
     void close() override {}
     void finalize() override {}
-    void writeMPUFIFO(cRIO::MPU& mpu) override;
+    void writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) override;
     std::vector<uint8_t> readMPUFIFO(cRIO::MPU& mpu) override;
-    LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) override;
+    LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) override{};
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) override;
@@ -76,19 +77,19 @@ protected:
 
     void processReHeaterGains(uint8_t address, float proportionalGain, float integralGain) override;
 
-    void processMPURead(cRIO::MPU& mpu, uint8_t address, uint16_t register_address, uint16_t len);
+    void processMPURead(uint8_t bus, uint8_t address, uint16_t register_address, uint16_t len);
 
 private:
     uint8_t _broadcastCounter;
     LSST::cRIO::SimulatedILC _response;
-    std::map<uint8_t, cRIO::SimulatedMPU> _mpuResponses;
+    std::map<uint8_t, Modbus::Buffer> _mpuResponses;
 
     uint8_t _mode[cRIO::NUM_TS_ILC];
     uint8_t _heaterPWM[cRIO::NUM_TS_ILC];
     uint8_t _fanRPM[cRIO::NUM_TS_ILC];
 
-    void _simulateModbus(uint16_t* data, size_t length);
-    void _simulateMPU(cRIO::MPU& mpu, uint8_t* data, size_t length);
+    void _simulateModbus(uint16_t* data, size_t len);
+    void _simulateMPU(uint8_t bus, uint8_t* data, size_t len);
 
     enum { IDLE, LEN, DATA } _U16ResponseStatus;
 };

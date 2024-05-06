@@ -34,9 +34,9 @@ namespace Telemetry {
 
 class VFDSAL final : public VFD, MTM1M3TS_glycolPumpC {
 public:
-    VFDSAL(uint8_t bus, uint8_t mpu_address);
+    VFDSAL(uint8_t bus);
 
-    void loopRead(bool timedout) override;
+    void loopRead(bool timedout);
 };
 
 }  // namespace Telemetry

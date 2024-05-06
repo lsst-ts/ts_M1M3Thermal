@@ -58,12 +58,7 @@ double FlowMeter::_getDoubleValue(uint16_t reg) {
     return buffer.ddouble;
 }
 
-void FlowMeterPrint::loopRead(bool timedout) {
-    if (timedout) {
-        std::cout << "FlowMeter readout timedouted." << std::endl;
-        return;
-    }
-
+void FlowMeterPrint::print() {
     std::cout << std::setfill(' ') << std::fixed << "Signal Strength: " << getSignalStrength() << std::endl
               << std::setw(20) << "Flow Rate: " << getFlowRate() << std::endl
               << std::setw(20) << "Net Totalizer: " << getNetTotalizer() << std::endl

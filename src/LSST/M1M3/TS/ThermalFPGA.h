@@ -23,6 +23,8 @@
 #ifndef __TS_THERMALFPGA__
 #define __TS_THERMALFPGA__
 
+#include <cRIO/MPU.h>
+
 #include <IFPGA.h>
 
 namespace LSST {
@@ -41,7 +43,7 @@ public:
     void open() override;
     void close() override;
     void finalize() override;
-    void writeMPUFIFO(cRIO::MPU& mpu) override;
+    void writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) override;
     std::vector<uint8_t> readMPUFIFO(cRIO::MPU& mpu) override;
     LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) override;
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;

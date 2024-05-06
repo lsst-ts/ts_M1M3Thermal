@@ -69,26 +69,12 @@ void ThermalFPGA::finalize() {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_Finalize());
 }
 
-void ThermalFPGA::writeMPUFIFO(MPU& mpu) {
-    auto buf = mpu.getCommandVector();
-
-    uint8_t bus = mpu.getBus();
-    uint8_t len = buf.size();
-
-    writeDebugFile<uint8_t>("MPU<", buf.data(), len);
-
+void ThermalFPGA::writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) {
+    writeDebugFile<uint8_t>("MPU<", data);
     NiThrowError(
             __PRETTY_FUNCTION__,
             NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
-                               &bus, 1, -1, NULL));
-    NiThrowError(
-            __PRETTY_FUNCTION__,
-            NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
-                               &len, 1, -1, NULL));
-    NiThrowError(
-            __PRETTY_FUNCTION__,
-            NiFpga_WriteFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_SerialMultiplexRequest,
-                               buf.data(), len, -1, NULL));
+                               data.data(), data.size(), timeout, NULL));
 }
 
 std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU& mpu) {
@@ -114,8 +100,6 @@ std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU& mpu) {
 
     writeDebugFile<uint8_t>("MPU>", data, len);
 
-    processMPUResponse(mpu, data, len);
-
     std::vector<uint8_t> ret(data, data + len);
 
     delete[] data;
@@ -132,7 +116,7 @@ LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
 
     bool timedout;
 
-    uint32_t irq = mpu.getIrq();
+    uint32_t irq = mpu.getBus();
 
     waitOnIrqs(irq, 1000, timedout);
     if (timedout == true) {
