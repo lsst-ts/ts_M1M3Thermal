@@ -26,14 +26,14 @@ RUN source ~/.crio_setup.sh && cd $TS_XML_DIR \
 
 FROM crio-develop
 
-ARG cRIO_CPP=v1.10.0
-ARG M1M3_SUPPORT=develop
-ARG TARGET=simulator
+ARG cRIO_CPP=v1.11.0
+ARG M1M3_THERMAL=develop
+ARG TARGET="SIMULATOR=1"
 
 RUN cd repos && git clone --branch $cRIO_CPP https://github.com/lsst-ts/ts_cRIOcpp
 RUN source ~/.crio_setup.sh && cd repos/ts_cRIOcpp && make
 
-RUN cd repos && git clone --branch $M1M3_SUPPORT https://github.com/lsst-ts/ts_m1m3support
-RUN source ~/.crio_setup.sh && cd repos/ts_m1m3support && make $TARGET
+RUN cd repos && git clone --branch $M1M3_THERMAL https://github.com/lsst-ts/ts_m1m3thermal
+RUN source ~/.crio_setup.sh && cd repos/ts_m1m3thermal && make $TARGET
 
 SHELL ["/bin/bash", "-lc"]

@@ -71,7 +71,7 @@ public:
     int ilcPower(command_vec);
 
 protected:
-    virtual FPGA* newFPGA(const char* dir) override;
+    virtual FPGA* newFPGA(const char* dir, bool& fpga_singleton) override;
     virtual ILCUnits getILCs(command_vec cmds) override;
 
 private:
@@ -348,7 +348,7 @@ int M1M3TScli::fcuOnOff(command_vec cmds) {
 
 int M1M3TScli::pumpOnOff(command_vec cmds) { return 0; }
 
-FPGA* M1M3TScli::newFPGA(const char* dir) {
+FPGA* M1M3TScli::newFPGA(const char* dir, bool& fpga_singleton) {
     PrintTSFPGA* printFPGA = new PrintTSFPGA();
     printFPGA->setMPUFactory(std::make_shared<PrintMPUFactory>(flowMeter, vfd));
     return printFPGA;

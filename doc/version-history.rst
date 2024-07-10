@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v0.3.1
+======
+
+* Fixes Docker build
+
 v0.3.0
 ------
 
