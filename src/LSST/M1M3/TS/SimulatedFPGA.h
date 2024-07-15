@@ -47,7 +47,7 @@ public:
     void finalize() override {}
     void writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) override;
     std::vector<uint8_t> readMPUFIFO(cRIO::MPU& mpu) override;
-    LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) override{};
+    LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) override {};
     void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     void readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) override;
