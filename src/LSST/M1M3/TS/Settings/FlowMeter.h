@@ -26,8 +26,8 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <cRIO/Singleton.h>
 #include <TSPublisher.h>
+#include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {

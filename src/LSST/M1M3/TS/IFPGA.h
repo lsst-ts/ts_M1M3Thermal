@@ -1,10 +1,10 @@
 /*
  * Abstract FPGA interface.
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -70,10 +70,10 @@ public:
     void setNextFlowMeter();
     void setNextVFD();
 
-    static IFPGA& get();
+    static IFPGA &get();
 
-    virtual void readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) = 0;
-    virtual void readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) = 0;
+    virtual void readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) = 0;
+    virtual void readU8ResponseFIFO(uint8_t *data, size_t length, uint32_t timeout) = 0;
 
     uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
     uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }
@@ -91,7 +91,7 @@ public:
 
     void setHeartbeat(bool heartbeat);
 
-    virtual LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) = 0;
+    virtual LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU &mpu) = 0;
 
     std::shared_ptr<FactoryInterface> mpuFactory;
 

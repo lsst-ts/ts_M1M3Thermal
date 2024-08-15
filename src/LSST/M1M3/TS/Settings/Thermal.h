@@ -26,8 +26,8 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <cRIO/Singleton.h>
 #include <TSPublisher.h>
+#include <cRIO/Singleton.h>
 
 #include <SAL_MTM1M3TS.h>
 

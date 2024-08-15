@@ -1,10 +1,10 @@
 /*
  * Abstract FPGA interface.
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -38,7 +38,7 @@ using namespace LSST::M1M3::TS;
 
 IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
 
-IFPGA& IFPGA::get() {
+IFPGA &IFPGA::get() {
 #ifdef SIMULATOR
     static SimulatedFPGA simulatedfpga;
     return simulatedfpga;
@@ -87,7 +87,7 @@ uint32_t IFPGA::getSlot4DIs() {
     uint16_t buf = FPGAAddress::SLOT4_DIS;
     writeRequestFIFO(&buf, 1, 1);
     uint32_t ret;
-    readU8ResponseFIFO(reinterpret_cast<uint8_t*>(&ret), 4, 10);
+    readU8ResponseFIFO(reinterpret_cast<uint8_t *>(&ret), 4, 10);
     return ret;
 }
 
