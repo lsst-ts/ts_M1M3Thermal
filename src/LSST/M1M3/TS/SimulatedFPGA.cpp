@@ -44,8 +44,8 @@ SimulatedFPGA::SimulatedFPGA() : ILC::ILCBusList(1), IFPGA(), ThermalILC(1), _U1
 
 SimulatedFPGA::~SimulatedFPGA() {}
 
-void SimulatedFPGA::writeMPUFIFO(const std::vector<uint8_t> &data, uint32_t timeout) {
-    writeDebugFile<uint8_t>("MPU<", data);
+void SimulatedFPGA::writeMPUFIFO(MPU &mpu, const std::vector<uint8_t> &data, uint32_t timeout) {
+    writeDebugFile<uint8_t>(fmt::format("MPU {} <", mpu.getBus()), data);
 
     auto write_answers = [this](uint8_t bus, const uint8_t *data, uint8_t len) {
         Modbus::Parser parser(std::vector<uint8_t>(data, data + len));
@@ -70,25 +70,7 @@ void SimulatedFPGA::writeMPUFIFO(const std::vector<uint8_t> &data, uint32_t time
         _mpuResponses[bus] = response;
     };
 
-    uint8_t bus = data[0];
-    uint8_t len = data[1];
-
-    if (len != data.size() - 2) {
-        throw std::runtime_error(
-                fmt::format("Invalid length - commanded {}, but buffer has only {}", len, data.size() - 2));
-    }
-
-    for (auto i = (data.data() + 2); i < data.data() + data.size(); i++) {
-        switch (*i) {
-            case MPUCommands::WRITE:
-                i++;
-                write_answers(bus, i + 1, *i);
-                i += *i;
-                break;
-            default:
-                throw std::runtime_error(fmt::format("Unknow command {:d}", *i));
-        }
-    }
+    write_answers(mpu.getBus(), data.data(), data.size());
 }
 
 std::vector<uint8_t> SimulatedFPGA::readMPUFIFO(cRIO::MPU &mpu) {

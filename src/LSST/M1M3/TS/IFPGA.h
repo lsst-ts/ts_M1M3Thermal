@@ -54,6 +54,11 @@ constexpr uint16_t GLYCOLTEMP_DEBUG = 78;
 constexpr uint16_t GLYCOLTEMP_TEMPERATURES = 79;
 }  // namespace FPGAAddress
 
+namespace SerialBusses {
+constexpr int GLYCOOL_BUS = 1;
+constexpr int FLOWMETER_BUS = 2;
+}  // namespace SerialBusses
+
 /**
  * Abstract FPGA Interface. Provides common parent for real and simulated FPGA.
  */
