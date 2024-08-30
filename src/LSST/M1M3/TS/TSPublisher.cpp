@@ -22,13 +22,17 @@
 
 #include <spdlog/spdlog.h>
 
+#include <IFPGA.h>
 #include <TSPublisher.h>
 
 using namespace LSST::M1M3::TS;
 
 extern const char *VERSION;
 
-TSPublisher::TSPublisher(token) { _logLevel.level = -1; }
+TSPublisher::TSPublisher(token) {
+    _logLevel.level = -1;
+    _flowMeterThread = NULL;
+}
 
 void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
     _m1m3TSSAL = m1m3TSSAL;
@@ -84,3 +88,11 @@ void TSPublisher::logSimulationMode() {
 #endif
     _m1m3TSSAL->logEvent_simulationMode(&simulation, 0);
 }
+
+void TSPublisher::startFlowMeterThread() {
+    delete _flowMeterThread;
+    _flowMeterThread = new Telemetry::FlowMeterThread(IFPGA::get().flowMeter);
+    _flowMeterThread->start();
+}
+
+void TSPublisher::startPumpThread() {}

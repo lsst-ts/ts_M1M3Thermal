@@ -20,20 +20,49 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <chrono>
+
 #include <spdlog/spdlog.h>
 
 #include <Events/FlowMeterMPUStatus.h>
+#include <IFPGA.h>
 #include <TSPublisher.h>
 
 using namespace LSST::M1M3::TS;
 using namespace LSST::M1M3::TS::Events;
 
-FlowMeterMPUStatus::FlowMeterMPUStatus(token) {}
+using namespace std::chrono_literals;
 
-void FlowMeterMPUStatus::send(LSST::cRIO::MPUTelemetry *telemetry) {
-    if (telemetry->sendUpdates(this) == false) {
-        return;
+FlowMeterMPUStatus::FlowMeterMPUStatus() {}
+
+void FlowMeterMPUStatus::run(std::unique_lock<std::mutex>& lock) {
+    SPDLOG_INFO("Running flow meter");
+    while (keepRunning) {
+        auto start = std::chrono::steady_clock::now();
+
+        auto flowMeter = IFPGA::get().flowMeter;
+
+        flowMeter->clear();
+        flowMeter->readHoldingRegisters(1000, 4, 255);
+        IFPGA::get().mpuCommands(*flowMeter);
+
+        flowMeter->clear();
+        flowMeter->readHoldingRegisters(2500, 6, 255);
+        IFPGA::get().mpuCommands(*flowMeter);
+
+        flowMeter->clear();
+        flowMeter->readHoldingRegisters(5500, 1, 255);
+        IFPGA::get().mpuCommands(*flowMeter);
+
+        SPDLOG_INFO("Sending FlowMeterMPUStatus");
+
+        send();
+
+        runCondition.wait_for(lock, 2s - (std::chrono::steady_clock::now() - start));
     }
+}
+
+void FlowMeterMPUStatus::send() {
     salReturn ret = TSPublisher::SAL()->putSample_logevent_flowMeterMPUStatus(this);
     if (ret != SAL__OK) {
         SPDLOG_WARN("Cannot send flowMeterMPUStatus: {}", ret);

@@ -39,9 +39,12 @@ class EnterControl : public cRIO::Task {
 public:
     cRIO::task_return_t run() override {
         SPDLOG_DEBUG("EnterControl");
+
         TSPublisher::instance().logSoftwareVersions();
         TSPublisher::instance().logSimulationMode();
+
         Events::SummaryState::setState(MTM1M3TS::MTM1M3TS_shared_SummaryStates_StandbyState);
+
         return Task::DONT_RESCHEDULE;
     }
 };

@@ -52,20 +52,7 @@ void IFPGA::setMPUFactory(std::shared_ptr<FactoryInterface> _factory) {
     mpuFactory = _factory;
 
     flowMeter = mpuFactory->createFlowMeter();
-    next_flowMeter = mpuFactory->createFlowMeter();
-
     vfd = mpuFactory->createVFD();
-    next_vfd = mpuFactory->createVFD();
-}
-
-void IFPGA::setNextFlowMeter() {
-    flowMeter = next_flowMeter;
-    next_flowMeter = mpuFactory->createFlowMeter();
-}
-
-void IFPGA::setNextVFD() {
-    vfd = next_vfd;
-    next_vfd = mpuFactory->createVFD();
 }
 
 float IFPGA::getMixingValvePosition() {

@@ -25,18 +25,19 @@
 
 #include <SAL_MTM1M3TS.h>
 #include <cRIO/MPUTelemetry.h>
-#include <cRIO/Singleton.h>
+#include <cRIO/Thread.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Events {
 
-class FlowMeterMPUStatus final : public MTM1M3TS_logevent_flowMeterMPUStatusC,
-                                 public cRIO::Singleton<FlowMeterMPUStatus> {
+class FlowMeterMPUStatus final : public MTM1M3TS_logevent_flowMeterMPUStatusC, public cRIO::Thread {
 public:
-    FlowMeterMPUStatus(token);
-    void send(LSST::cRIO::MPUTelemetry *telemetry);
+    FlowMeterMPUStatus();
+
+    void run(std::unique_lock<std::mutex>& lock) override;
+    void send();
 };
 
 }  // namespace Events

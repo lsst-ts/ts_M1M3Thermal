@@ -24,7 +24,7 @@
 #define _TS_Telemetry_FlowMeter_
 
 #include <SAL_MTM1M3TS.h>
-#include <cRIO/Singleton.h>
+#include <cRIO/Thread.h>
 
 #include <MPU/FlowMeter.h>
 
@@ -33,11 +33,14 @@ namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
-class FlowMeterSAL final : public FlowMeter, MTM1M3TS_flowMeterC {
+class FlowMeterThread final : public cRIO::Thread, MTM1M3TS_flowMeterC {
 public:
-    FlowMeterSAL(uint8_t bus);
+    FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter);
 
-    void loopRead(bool timedout);
+    void run(std::unique_lock<std::mutex>& lock) override;
+
+private:
+    std::shared_ptr<FlowMeter> _flowMeter;
 };
 
 }  // namespace Telemetry

@@ -31,6 +31,9 @@
 
 #include <cRIO/Singleton.h>
 
+#include <Events/FlowMeterMPUStatus.h>
+#include <Telemetry/FlowMeterSAL.h>
+
 namespace LSST {
 namespace M1M3 {
 namespace TS {
@@ -48,6 +51,9 @@ public:
     void logSoftwareVersions();
     void logSimulationMode();
     void logThermalInfo(MTM1M3TS_logevent_thermalInfoC *data) { _m1m3TSSAL->logEvent_thermalInfo(data, 0); }
+
+    void startFlowMeterThread();
+    void startPumpThread();
 
     static double getTimestamp() {
 #ifdef SIMULATOR
@@ -69,6 +75,9 @@ private:
     std::shared_ptr<SAL_MTM1M3TS> _m1m3TSSAL;
 
     MTM1M3TS_logevent_logLevelC _logLevel;
+
+    Events::FlowMeterMPUStatus _flowMeterMPUStatus;
+    Telemetry::FlowMeterThread *_flowMeterThread;
 };
 
 }  // namespace TS

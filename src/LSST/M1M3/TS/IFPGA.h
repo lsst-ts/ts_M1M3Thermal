@@ -69,12 +69,6 @@ public:
 
     void setMPUFactory(std::shared_ptr<FactoryInterface> _factory);
 
-    /**
-     * Switch to use next flow meter.
-     */
-    void setNextFlowMeter();
-    void setNextVFD();
-
     static IFPGA &get();
 
     virtual void readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) = 0;
@@ -100,8 +94,8 @@ public:
 
     std::shared_ptr<FactoryInterface> mpuFactory;
 
-    std::shared_ptr<VFD> vfd, next_vfd;
-    std::shared_ptr<FlowMeter> flowMeter, next_flowMeter;
+    std::shared_ptr<VFD> vfd;
+    std::shared_ptr<FlowMeter> flowMeter;
 };
 
 }  // namespace TS

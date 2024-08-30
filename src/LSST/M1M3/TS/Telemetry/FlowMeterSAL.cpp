@@ -31,7 +31,8 @@
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-FlowMeterSAL::FlowMeterSAL(uint8_t bus) : FlowMeter(bus) {
+FlowMeterThread::FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter) {
+    _flowMeter = flowMeter;
     signalStrength = NAN;
     flowRate = NAN;
     netTotalizer = NAN;
@@ -39,22 +40,37 @@ FlowMeterSAL::FlowMeterSAL(uint8_t bus) : FlowMeter(bus) {
     negativeTotalizer = NAN;
 }
 
-void FlowMeterSAL::loopRead(bool timedout) {
-    if (timedout) {
-        return;
-    }
+void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
+    SPDLOG_INFO("Running flow meter");
+    while (keepRunning) {
+        auto start = std::chrono::steady_clock::now();
 
-    SPDLOG_TRACE("Sending FlowMeter updates");
+        _flowMeter->clear();
+        _flowMeter->readHoldingRegisters(1000, 4, 255);
+        IFPGA::get().mpuCommands(*_flowMeter);
 
-    signalStrength = getSignalStrength();
-    flowRate = getFlowRate();
-    netTotalizer = getNetTotalizer();
-    positiveTotalizer = getPositiveTotalizer();
-    negativeTotalizer = getNegativeTotalizer();
+        _flowMeter->clear();
+        _flowMeter->readHoldingRegisters(2500, 6, 255);
+        IFPGA::get().mpuCommands(*_flowMeter);
 
-    salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
-    if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot send FlowMeter: {}", ret);
-        return;
+        _flowMeter->clear();
+        _flowMeter->readHoldingRegisters(5500, 1, 255);
+        IFPGA::get().mpuCommands(*_flowMeter);
+
+        SPDLOG_INFO("Sending FlowMeterMPUStatus");
+
+        signalStrength = _flowMeter->getSignalStrength();
+        flowRate = _flowMeter->getFlowRate();
+        netTotalizer = _flowMeter->getNetTotalizer();
+        positiveTotalizer = _flowMeter->getPositiveTotalizer();
+        negativeTotalizer = _flowMeter->getNegativeTotalizer();
+
+        salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
+        if (ret != SAL__OK) {
+            SPDLOG_WARN("Cannot send FlowMeter: {}", ret);
+            return;
+        }
+
+        runCondition.wait_for(lock, 2s - (std::chrono::steady_clock::now() - start));
     }
 }
