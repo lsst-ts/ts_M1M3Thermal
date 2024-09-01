@@ -106,6 +106,9 @@ void SAL_disable::execute() {
 }
 
 void SAL_standby::execute() {
+    TSPublisher::instance().stopFlowMeterThread();
+    TSPublisher::instance().stopPumpThread();
+
     changeAllILCsMode(ILC::Mode::ClearFaults);
     changeAllILCsMode(ILC::Mode::Standby);
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_StandbyState);

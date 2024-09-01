@@ -42,6 +42,7 @@ namespace TS {
 class TSPublisher final : public cRIO::Singleton<TSPublisher> {
 public:
     TSPublisher(token);
+    ~TSPublisher();
 
     void setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL);
 
@@ -55,6 +56,9 @@ public:
 
     void startFlowMeterThread();
     void startPumpThread();
+
+    void stopFlowMeterThread();
+    void stopPumpThread();
 
     static double getTimestamp() {
 #ifdef SIMULATOR

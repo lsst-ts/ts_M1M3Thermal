@@ -32,6 +32,12 @@ extern const char *VERSION;
 TSPublisher::TSPublisher(token) {
     _logLevel.level = -1;
     _flowMeterThread = NULL;
+    _pumpThread = NULL;
+}
+
+TSPublisher::~TSPublisher() {
+    stopFlowMeterThread();
+    stopPumpThread();
 }
 
 void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
@@ -99,4 +105,24 @@ void TSPublisher::startPumpThread() {
     delete _pumpThread;
     _pumpThread = new Telemetry::PumpThread(IFPGA::get().vfd);
     _pumpThread->start();
+}
+
+void TSPublisher::stopFlowMeterThread() {
+    if (_flowMeterThread == NULL) {
+        return;
+    }
+
+    _flowMeterThread->stop();
+    delete _flowMeterThread;
+    _flowMeterThread = NULL;
+}
+
+void TSPublisher::stopPumpThread() {
+    if (_pumpThread == NULL) {
+        return;
+    }
+
+    _pumpThread->stop();
+    delete _pumpThread;
+    _pumpThread = NULL;
 }
