@@ -29,13 +29,6 @@
 
 using namespace LSST::M1M3::TS;
 
-void FlowMeter::loopWrite() {
-    SPDLOG_TRACE("Requesting FlowMeter registers");
-    readHoldingRegisters(1000, 4, 255);
-    readHoldingRegisters(2500, 6, 255);
-    readHoldingRegisters(5500, 1, 255);
-}
-
 float FlowMeter::_getFloatValue(uint16_t reg) {
     union {
         uint16_t data[2];

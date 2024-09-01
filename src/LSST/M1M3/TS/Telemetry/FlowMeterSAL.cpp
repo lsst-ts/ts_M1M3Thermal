@@ -41,7 +41,7 @@ FlowMeterThread::FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter) {
 }
 
 void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
-    SPDLOG_INFO("Running flow meter");
+    SPDLOG_DEBUG("Running flow meter");
     while (keepRunning) {
         auto start = std::chrono::steady_clock::now();
 
@@ -57,7 +57,7 @@ void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
         _flowMeter->readHoldingRegisters(5500, 1, 255);
         IFPGA::get().mpuCommands(*_flowMeter);
 
-        SPDLOG_INFO("Sending FlowMeterMPUStatus");
+        SPDLOG_TRACE("Sending FlowMeterMPUStatus");
 
         signalStrength = _flowMeter->getSignalStrength();
         flowRate = _flowMeter->getFlowRate();

@@ -40,6 +40,8 @@ SimulatedFPGA::SimulatedFPGA() : ILC::ILCBusList(1), IFPGA(), ThermalILC(1), _U1
         _heaterPWM[i] = 0;
         _fanRPM[i] = 0;
     }
+
+    _flowmeter_net_totalizer = 100.0;
 }
 
 SimulatedFPGA::~SimulatedFPGA() {}
@@ -53,12 +55,32 @@ void SimulatedFPGA::writeMPUFIFO(MPU &mpu, const std::vector<uint8_t> &data, uin
         response.push_back(parser.address());
         switch (parser.func()) {
             case MPU::READ_HOLDING_REGISTERS: {
-                parser.read<uint16_t>();
+                uint16_t reg = parser.read<uint16_t>();
                 uint16_t reg_len = parser.read<uint16_t>() * 2;
                 response.push_back(parser.func());
                 response.push_back(reg_len);
-                for (size_t i = 0; i < reg_len; i++) {
-                    response.push_back(i);
+                for (size_t i = 0; i < reg_len; i += 2, reg++) {
+                    // simulates various registers
+                    switch (reg) {
+                        case 2500:
+                            response.write<float>(_flowmeter_net_totalizer);
+                            break;
+                        case 2501:
+                            _flowmeter_net_totalizer += 11.1;
+                            break;
+                        case 2502:
+                            response.write<float>(_flowmeter_net_totalizer + 50);
+                            break;
+                        case 2504:
+                            response.write<float>(_flowmeter_net_totalizer - 50);
+                            break;
+                        case 2503:
+                        case 2505:
+                            break;
+                        default:
+                            response.push_back(i);
+                            response.push_back(i + 1);
+                    }
                 }
                 break;
             }

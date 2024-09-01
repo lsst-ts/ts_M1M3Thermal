@@ -92,6 +92,8 @@ private:
     void _simulateMPU(uint8_t bus, uint8_t *data, size_t len);
 
     enum { IDLE, LEN, DATA } _U16ResponseStatus;
+
+    float _flowmeter_net_totalizer;
 };
 
 }  // namespace TS
