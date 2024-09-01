@@ -95,4 +95,8 @@ void TSPublisher::startFlowMeterThread() {
     _flowMeterThread->start();
 }
 
-void TSPublisher::startPumpThread() {}
+void TSPublisher::startPumpThread() {
+    delete _pumpThread;
+    _pumpThread = new Telemetry::PumpThread(IFPGA::get().vfd);
+    _pumpThread->start();
+}

@@ -36,6 +36,8 @@ class FlowMeter : public cRIO::MPU {
 public:
     FlowMeter(uint8_t bus) : MPU(bus, 1) {}
 
+    void readInfo();
+
     uint16_t getSignalStrength() { return getRegister(5500); }
     double getFlowRate() { return _getFloatValue(1000); }
     double getNetTotalizer() { return _getFloatValue(2500); }

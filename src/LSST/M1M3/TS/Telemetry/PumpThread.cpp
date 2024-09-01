@@ -1,5 +1,5 @@
 /*
- * Flow Meter telemetry handling class.
+ * VFD telemetry handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,57 +20,50 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cmath>
-
 #include <spdlog/spdlog.h>
 
+#include <Events/GlycolPumpStatus.h>
 #include <IFPGA.h>
 #include <TSPublisher.h>
-#include <Telemetry/FlowMeterSAL.h>
+#include <Telemetry/PumpThread.h>
 
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-FlowMeterThread::FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter) {
-    _flowMeter = flowMeter;
-    signalStrength = NAN;
-    flowRate = NAN;
-    netTotalizer = NAN;
-    positiveTotalizer = NAN;
-    negativeTotalizer = NAN;
+PumpThread::PumpThread(std::shared_ptr<VFD> vfd) {
+    _vfd = vfd;
+    commandedFrequency = NAN;
+    targetFrequency = NAN;
+    outputFrequency = NAN;
+    outputCurrent = NAN;
+    busVoltage = NAN;
+    outputVoltage = NAN;
 }
 
-void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
-    SPDLOG_DEBUG("Running flow meter");
+void PumpThread::run(std::unique_lock<std::mutex>& lock) {
+    SPDLOG_DEBUG("Running Pump Thread.");
     while (keepRunning) {
         auto start = std::chrono::steady_clock::now();
 
-        _flowMeter->clear();
-        _flowMeter->readHoldingRegisters(1000, 4, 255);
-        IFPGA::get().mpuCommands(*_flowMeter);
+        _vfd->readInfo();
 
-        _flowMeter->clear();
-        _flowMeter->readHoldingRegisters(2500, 6, 255);
-        IFPGA::get().mpuCommands(*_flowMeter);
+        IFPGA::get().mpuCommands(*_vfd);
 
-        _flowMeter->clear();
-        _flowMeter->readHoldingRegisters(5500, 1, 255);
-        IFPGA::get().mpuCommands(*_flowMeter);
+        commandedFrequency = _vfd->getCommandedFrequency();
+        targetFrequency = _vfd->getTargetFrequency();
+        outputFrequency = _vfd->getOutputFrequency();
+        outputCurrent = _vfd->getOutputCurrent();
+        busVoltage = _vfd->getDCBusVoltage();
+        outputVoltage = _vfd->getOutputVoltage();
 
-        SPDLOG_TRACE("Sending FlowMeterMPUStatus");
-
-        signalStrength = _flowMeter->getSignalStrength();
-        flowRate = _flowMeter->getFlowRate();
-        netTotalizer = _flowMeter->getNetTotalizer();
-        positiveTotalizer = _flowMeter->getPositiveTotalizer();
-        negativeTotalizer = _flowMeter->getNegativeTotalizer();
-
-        salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
+        salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
         if (ret != SAL__OK) {
-            SPDLOG_WARN("Cannot send FlowMeter: {}", ret);
+            SPDLOG_WARN("Cannot send VFD: {}", ret);
             return;
         }
 
         runCondition.wait_for(lock, 2s - (std::chrono::steady_clock::now() - start));
     }
+
+    SPDLOG_DEBUG("Pump Thread Stopped.");
 }

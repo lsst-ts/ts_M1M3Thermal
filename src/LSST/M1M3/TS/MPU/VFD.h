@@ -42,7 +42,7 @@ class VFD : public cRIO::MPU {
 public:
     VFD(uint8_t bus) : MPU(bus, 100) {}
 
-    void loopWrite();
+    void readInfo();
 
     void start() { presetHoldingRegister(0x2000, 0x1a); }
     void stop() { presetHoldingRegister(0x2000, 0x01); }

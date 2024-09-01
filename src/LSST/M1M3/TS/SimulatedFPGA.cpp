@@ -42,6 +42,7 @@ SimulatedFPGA::SimulatedFPGA() : ILC::ILCBusList(1), IFPGA(), ThermalILC(1), _U1
     }
 
     _flowmeter_net_totalizer = 100.0;
+    _pump_voltage = 1;
 }
 
 SimulatedFPGA::~SimulatedFPGA() {}
@@ -77,11 +78,25 @@ void SimulatedFPGA::writeMPUFIFO(MPU &mpu, const std::vector<uint8_t> &data, uin
                         case 2503:
                         case 2505:
                             break;
+                        case 0x2106:
+                            response.write<uint16_t>(_pump_voltage);
+                            _pump_voltage += 1;
+                            break;
                         default:
                             response.push_back(i);
                             response.push_back(i + 1);
                     }
                 }
+                break;
+            }
+            case MPU::PRESET_HOLDING_REGISTER: {
+                uint16_t reg = parser.read<uint16_t>();
+                uint16_t reg_len = parser.read<uint16_t>();
+
+                response.push_back(parser.func());
+                response.write(reg);
+                response.write(reg_len);
+
                 break;
             }
             default:

@@ -1,5 +1,5 @@
 /*
- * Flow Meter telemetry handling class.
+ * VFD/pump motor controller telemetry handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,27 +20,28 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Telemetry_FlowMeter_
-#define _TS_Telemetry_FlowMeter_
+#ifndef _TS_Telemetry_PumpThread_
+#define _TS_Telemetry_PumpThread_
 
 #include <SAL_MTM1M3TS.h>
+
 #include <cRIO/Thread.h>
 
-#include <MPU/FlowMeter.h>
+#include <MPU/VFD.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
-class FlowMeterThread final : public cRIO::Thread, MTM1M3TS_flowMeterC {
+class PumpThread final : public cRIO::Thread, MTM1M3TS_glycolPumpC {
 public:
-    FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter);
+    PumpThread(std::shared_ptr<VFD> vfd);
 
     void run(std::unique_lock<std::mutex>& lock) override;
 
 private:
-    std::shared_ptr<FlowMeter> _flowMeter;
+    std::shared_ptr<VFD> _vfd;
 };
 
 }  // namespace Telemetry
@@ -48,4 +49,4 @@ private:
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !_TS_Telemetry_FlowMeter_
+#endif  // !_TS_Telemetry_VFD_

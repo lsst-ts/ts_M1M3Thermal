@@ -39,7 +39,6 @@
 #include "Telemetry/GlycolLoopTemperature.h"
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
-#include "Telemetry/VFDSAL.h"
 
 #include "TSApplication.h"
 

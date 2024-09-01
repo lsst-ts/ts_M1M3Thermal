@@ -94,6 +94,7 @@ private:
     enum { IDLE, LEN, DATA } _U16ResponseStatus;
 
     float _flowmeter_net_totalizer;
+    uint16_t _pump_voltage;
 };
 
 }  // namespace TS

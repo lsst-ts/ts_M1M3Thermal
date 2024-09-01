@@ -271,16 +271,8 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 }
 
 int M1M3TScli::printFlowMeter(command_vec cmds) {
-    flowMeter->clear();
-    flowMeter->readHoldingRegisters(1000, 4, 255);
-    getFPGA()->mpuCommands(*flowMeter);
+    flowMeter->readInfo();
 
-    flowMeter->clear();
-    flowMeter->readHoldingRegisters(2500, 6, 255);
-    getFPGA()->mpuCommands(*flowMeter);
-
-    flowMeter->clear();
-    flowMeter->readHoldingRegisters(5500, 1, 255);
     getFPGA()->mpuCommands(*flowMeter);
 
     flowMeter->print();
@@ -316,12 +308,8 @@ int M1M3TScli::printPump(command_vec cmds) {
         fpga->mpuCommands(*vfd);
     }
 
-    vfd->clear();
-    vfd->readHoldingRegisters(0x2000, 3, 255);
-    fpga->mpuCommands(*vfd);
+    vfd->readInfo();
 
-    vfd->clear();
-    vfd->readHoldingRegisters(0x2100, 7, 255);
     fpga->mpuCommands(*vfd);
 
     vfd->print();
@@ -574,7 +562,11 @@ void PrintTSFPGA::writeMPUFIFO(MPU &mpu, const std::vector<uint8_t> &data, uint3
     FPGAClass::writeMPUFIFO(mpu, data, timeout);
 }
 
-std::vector<uint8_t> PrintTSFPGA::readMPUFIFO(MPU &mpu) { return FPGAClass::readMPUFIFO(mpu); }
+std::vector<uint8_t> PrintTSFPGA::readMPUFIFO(MPU &mpu) {
+    auto ret = FPGAClass::readMPUFIFO(mpu);
+    _printBufferU8(fmt::format("MPU {}< ", mpu.getBus()), true, ret);
+    return ret;
+}
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) {
     _printBufferU16("C>", true, data, length);

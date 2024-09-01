@@ -32,7 +32,8 @@
 #include <cRIO/Singleton.h>
 
 #include <Events/FlowMeterMPUStatus.h>
-#include <Telemetry/FlowMeterSAL.h>
+#include <Telemetry/FlowMeterThread.h>
+#include <Telemetry/PumpThread.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -78,6 +79,8 @@ private:
 
     Events::FlowMeterMPUStatus _flowMeterMPUStatus;
     Telemetry::FlowMeterThread *_flowMeterThread;
+
+    Telemetry::PumpThread *_pumpThread;
 };
 
 }  // namespace TS
