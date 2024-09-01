@@ -34,6 +34,10 @@ namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
+/**
+ * Thread reading out pump values. Started from TSPublisher when CSC
+ * enteres disabled state, updates SAL VFD pump telemetery.
+ */
 class PumpThread final : public cRIO::Thread, MTM1M3TS_glycolPumpC {
 public:
     PumpThread(std::shared_ptr<VFD> vfd);

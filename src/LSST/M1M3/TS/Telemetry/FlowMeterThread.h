@@ -33,6 +33,10 @@ namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
+/**
+ * Thread reading out flow meter values. Started from TSPublisher when CSC
+ * enteres disabled state, updates SAL flow meter telemetery.
+ */
 class FlowMeterThread final : public cRIO::Thread, MTM1M3TS_flowMeterC {
 public:
     FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter);
