@@ -116,7 +116,44 @@ std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU &mpu) {
     return ret;
 }
 
-LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(LSST::cRIO::MPU &mpu) {}
+LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(LSST::cRIO::MPU &mpu) {
+    MPUTelemetry telemetry;
+
+    int32_t readCount;
+    int32_t transmitCount;
+    NiFpga_Bool timeout;
+
+    switch (mpu.getBus()) {
+        case SerialBusses::GLYCOOL_BUS:
+            NiThrowError(
+                    __PRETTY_FUNCTION__,
+                    NiFpga_ReadI32(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_GlycoolRead, &readCount));
+            NiThrowError(__PRETTY_FUNCTION__,
+                         NiFpga_ReadI32(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_GlycoolTransmitted,
+                                        &transmitCount));
+            NiThrowError(__PRETTY_FUNCTION__,
+                         NiFpga_ReadBool(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorBool_GlycoolTimeout,
+                                         &timeout));
+            break;
+        case SerialBusses::FLOWMETER_BUS:
+            NiThrowError(__PRETTY_FUNCTION__,
+                         NiFpga_ReadI32(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_FlowMeterRead,
+                                        &readCount));
+            NiThrowError(__PRETTY_FUNCTION__,
+                         NiFpga_ReadI32(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_FlowMeterTransmitted,
+                                        &transmitCount));
+            NiThrowError(__PRETTY_FUNCTION__,
+                         NiFpga_ReadBool(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorBool_FlowMeterTimeout,
+                                         &timeout));
+            break;
+    }
+
+    telemetry.readBytes = readCount;
+    telemetry.writeBytes = transmitCount;
+    telemetry.readTimedout = timeout;
+
+    return telemetry;
+}
 
 void ThermalFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
