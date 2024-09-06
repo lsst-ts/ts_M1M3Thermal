@@ -31,7 +31,6 @@
 
 #include <cRIO/Singleton.h>
 
-#include <Events/FlowMeterMPUStatus.h>
 #include <Telemetry/FlowMeterThread.h>
 #include <Telemetry/PumpThread.h>
 
@@ -81,7 +80,6 @@ private:
 
     MTM1M3TS_logevent_logLevelC _logLevel;
 
-    Events::FlowMeterMPUStatus _flowMeterMPUStatus;
     Telemetry::FlowMeterThread *_flowMeterThread;
 
     Telemetry::PumpThread *_pumpThread;
