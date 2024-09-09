@@ -116,6 +116,15 @@ std::vector<uint8_t> SimulatedFPGA::readMPUFIFO(cRIO::MPU &mpu) {
     return ret;
 }
 
+MPUTelemetry SimulatedFPGA::readMPUTelemetry(LSST::cRIO::MPU &mpu) {
+    static uint64_t data[2] = {0, 0};
+
+    data[0] += 2;
+    data[1] += 3;
+
+    return MPUTelemetry(reinterpret_cast<uint8_t *>(data));
+}
+
 void SimulatedFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) {
     uint16_t *d = data;
     while (d < data + length) {

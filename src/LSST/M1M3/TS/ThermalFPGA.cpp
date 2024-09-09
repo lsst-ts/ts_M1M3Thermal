@@ -84,32 +84,66 @@ void ThermalFPGA::writeMPUFIFO(MPU &mpu, const std::vector<uint8_t> &data, uint3
             throw std::runtime_error(fmt::format("Invalid bus number - {}", mpu.getBus()));
     }
 
+    uint8_t header[2] = {1, static_cast<uint8_t>(data.size())};
+    NiThrowError(__PRETTY_FUNCTION__, NiFpga_WriteFifoU8(_session, bus_id, header, 2, timeout, NULL));
+
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU8(_session, bus_id, data.data(), data.size(), timeout, NULL));
 }
 
 std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU &mpu) {
+    uint32_t instr_bus = 0;
     uint32_t bus_id = 0;
     switch (mpu.getBus()) {
         case SerialBusses::GLYCOOL_BUS:
+            instr_bus = NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite;
             bus_id = NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead;
             break;
         case SerialBusses::FLOWMETER_BUS:
+            instr_bus = NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeterWrite;
             bus_id = NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeterRead;
             break;
         default:
             throw std::runtime_error(fmt::format("Invalid bus number - {}", mpu.getBus()));
     }
 
-    size_t len = 255;
-
     uint8_t data[255];
+    size_t len = 0;
 
-    NiThrowError(__PRETTY_FUNCTION__, NiFpga_ReadFifoU8(_session, bus_id, data, 0, 0, &len));
+    int remaining_time = 2000;
 
-    NiThrowError(__PRETTY_FUNCTION__, NiFpga_ReadFifoU8(_session, bus_id, data, len, -1, NULL));
+    // bussy wait for data
+    while (remaining_time > 0) {
+        uint8_t req = 2;
+        uint8_t response[2];
 
-    writeDebugFile<uint8_t>("MPU>", data, len);
+        NiThrowError("ThermalFPGA::readMPUFIFO: requesting response",
+                     NiFpga_WriteFifoU8(_session, instr_bus, &req, 1, 0, NULL));
+
+        NiThrowError("ThermalFPGA::readMPUFIFO: reading response and its length",
+                     NiFpga_ReadFifoU8(_session, bus_id, response, 2, 10, NULL));
+
+        if (response[0] != 2) {
+            throw std::runtime_error(fmt::format("Invalid reply from bus - {}, expected 2", response[0]));
+        }
+        if (response[1] == 0) {
+            // if there isn't reply and some data were received, process those - don't read further
+            if (len > 0) {
+                break;
+            }
+            continue;
+        }
+
+        NiThrowError("ThermalFPGA::readMPUFIFO: reading response",
+                     NiFpga_ReadFifoU8(_session, bus_id, data + len, response[1], 10, NULL));
+
+        len += response[1];
+
+        writeDebugFile<uint8_t>("MPU>", data, len);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        remaining_time -= 1000;
+    }
 
     std::vector<uint8_t> ret(data, data + len);
 
@@ -117,42 +151,41 @@ std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU &mpu) {
 }
 
 LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(LSST::cRIO::MPU &mpu) {
-    MPUTelemetry telemetry;
-
-    int32_t readCount;
-    int32_t transmitCount;
-    NiFpga_Bool timeout;
-
+    uint32_t instr_bus = 0;
+    uint32_t bus_id = 0;
     switch (mpu.getBus()) {
         case SerialBusses::GLYCOOL_BUS:
-            NiThrowError(
-                    __PRETTY_FUNCTION__,
-                    NiFpga_ReadI32(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_GlycoolRead, &readCount));
-            NiThrowError(__PRETTY_FUNCTION__,
-                         NiFpga_ReadI32(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_GlycoolTransmitted,
-                                        &transmitCount));
-            NiThrowError(__PRETTY_FUNCTION__,
-                         NiFpga_ReadBool(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorBool_GlycoolTimeout,
-                                         &timeout));
+            instr_bus = NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite;
+            bus_id = NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead;
             break;
         case SerialBusses::FLOWMETER_BUS:
-            NiThrowError(__PRETTY_FUNCTION__,
-                         NiFpga_ReadI32(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_FlowMeterRead,
-                                        &readCount));
-            NiThrowError(__PRETTY_FUNCTION__,
-                         NiFpga_ReadI32(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_FlowMeterTransmitted,
-                                        &transmitCount));
-            NiThrowError(__PRETTY_FUNCTION__,
-                         NiFpga_ReadBool(_session, NiFpga_ts_M1M3ThermalFPGA_IndicatorBool_FlowMeterTimeout,
-                                         &timeout));
+            instr_bus = NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeterWrite;
+            bus_id = NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeterRead;
             break;
+        default:
+            throw std::runtime_error(fmt::format("Invalid bus number - {}", mpu.getBus()));
     }
 
-    telemetry.readBytes = readCount;
-    telemetry.writeBytes = transmitCount;
-    telemetry.readTimedout = timeout;
+    uint8_t data[255];
 
-    return telemetry;
+    data[0] = 0;
+
+    NiThrowError("ThermalFPGA::readMPUTelemetry: writing telemetry command",
+                 NiFpga_WriteFifoU8(_session, instr_bus, data, 1, 0, NULL));
+
+    NiThrowError("ThermalFPGA::readMPUTelemetry: reading telemetry command response",
+                 NiFpga_ReadFifoU8(_session, bus_id, data, 1, 200, NULL));
+
+    if (data[0] != 0) {
+        throw std::runtime_error(fmt::format("Invalid reply from bus - {}, expected 0", data[0]));
+    }
+
+    std::cout << "Getting reply:" << std::endl;
+
+    NiThrowError("ThermalFPGA::readMPUTelemetry: reading telemetry data",
+                 NiFpga_ReadFifoU8(_session, bus_id, data, 16, 0, NULL));
+
+    return MPUTelemetry(data);
 }
 
 void ThermalFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) {

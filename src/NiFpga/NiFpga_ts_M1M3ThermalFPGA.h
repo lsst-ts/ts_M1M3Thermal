@@ -23,23 +23,11 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "E512D0EBAF61A28351D1B42190EDA7BA";
+static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "ED0F19AAFA7D700679F77FE9F50B1FFE";
 
 #if NiFpga_Cpp
 extern "C" {
 #endif
-
-typedef enum {
-    NiFpga_ts_M1M3ThermalFPGA_IndicatorBool_FlowMeterTimeout = 0x1801A,
-    NiFpga_ts_M1M3ThermalFPGA_IndicatorBool_GlycoolTimeout = 0x1800E
-} NiFpga_ts_M1M3ThermalFPGA_IndicatorBool;
-
-typedef enum {
-    NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_FlowMeterRead = 0x18014,
-    NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_FlowMeterTransmitted = 0x18010,
-    NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_GlycoolRead = 0x18008,
-    NiFpga_ts_M1M3ThermalFPGA_IndicatorI32_GlycoolTransmitted = 0x18004
-} NiFpga_ts_M1M3ThermalFPGA_IndicatorI32;
 
 typedef enum {
     NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeterRead = 8,

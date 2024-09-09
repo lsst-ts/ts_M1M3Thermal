@@ -44,10 +44,10 @@ public:
     void readInfo();
 
     uint16_t getSignalStrength() { return getRegister(5500); }
-    double getFlowRate() { return _getFloatValue(1000); }
-    double getNetTotalizer() { return _getFloatValue(2500); }
-    double getPositiveTotalizer() { return _getFloatValue(2502); }
-    double getNegativeTotalizer() { return _getFloatValue(2504); }
+    double getFlowRate() { return _getFloatValue(1600); }
+    double getNetTotalizer() { return _getDoubleValue(2600); }
+    double getPositiveTotalizer() { return _getDoubleValue(2604); }
+    double getNegativeTotalizer() { return _getDoubleValue(2608); }
 
 private:
     float _getFloatValue(uint16_t reg);
