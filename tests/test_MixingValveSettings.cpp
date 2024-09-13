@@ -1,10 +1,10 @@
 /*
  * This file is part of LSST cRIOcpp test suite. Tests MixingVakve settings.
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,8 +20,8 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <SAL_MTM1M3TS.h>
 

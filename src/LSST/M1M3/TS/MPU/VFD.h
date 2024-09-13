@@ -1,10 +1,10 @@
 /*
  * Glycol Pump VFD MPU
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -76,7 +76,7 @@ public:
      */
     void update() { readHoldingRegisters(0x2101, 6); }
 
-    static const char* getDriveError(uint16_t code);
+    static const char *getDriveError(uint16_t code);
 };
 
 class VFDPrint : public VFD {

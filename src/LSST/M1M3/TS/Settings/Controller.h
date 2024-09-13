@@ -24,8 +24,8 @@
 #ifndef _TS_Settings_Controller_h
 #define _TS_Settings_Controller_h
 
-#include <cRIO/Singleton.h>
 #include <cRIO/Settings/Path.h>
+#include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -39,7 +39,7 @@ class Controller : public cRIO::Singleton<Controller> {
 public:
     Controller(token) {}
 
-    void load(const std::string& label);
+    void load(const std::string &label);
 };
 
 }  // namespace Settings

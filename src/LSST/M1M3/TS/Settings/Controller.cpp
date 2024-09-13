@@ -32,7 +32,7 @@
 
 using namespace LSST::M1M3::TS::Settings;
 
-void Controller::load(const std::string& label) {
+void Controller::load(const std::string &label) {
     std::string filename = cRIO::Settings::Path::getFilePath("v1/_init.yaml");
     SPDLOG_DEBUG("Using configuration file \"{}\"", filename);
     try {
@@ -42,7 +42,7 @@ void Controller::load(const std::string& label) {
         GlycolPump::instance().load(doc["GlycolPump"]);
         MixingValve::instance().load(doc["MixingValve"]);
         Thermal::instance().load(doc["FCU"]);
-    } catch (YAML::Exception& ex) {
+    } catch (YAML::Exception &ex) {
         throw std::runtime_error(fmt::format("YAML Loading {}: {}", filename, ex.what()));
     }
 }

@@ -1,10 +1,10 @@
 /*
  * Publish MPU Glycol Pump status.
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -37,7 +37,7 @@ class GlycolPumpStatus final : MTM1M3TS_logevent_glycolPumpStatusC, public cRIO:
 public:
     GlycolPumpStatus(token);
 
-    void update(VFD& vfd);
+    void update(VFD &vfd);
 
 private:
     uint16_t _last_status;

@@ -1,10 +1,10 @@
 /*
  * EnabledILCs event.
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,10 +20,10 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cRIO/ThermalILC.h>
+#include <Events/Heartbeat.h>
 #include <IFPGA.h>
 #include <TSPublisher.h>
-#include <Events/Heartbeat.h>
+#include <cRIO/ThermalILC.h>
 
 #include <spdlog/spdlog.h>
 

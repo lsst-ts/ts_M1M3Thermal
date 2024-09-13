@@ -1,10 +1,10 @@
 /*
  * Simulated thermal FPGA class.
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -23,8 +23,8 @@
 #include <cstring>
 #include <spdlog/spdlog.h>
 
-#include <cRIO/Timestamp.h>
 #include <cRIO/ModbusBuffer.h>
+#include <cRIO/Timestamp.h>
 
 #include "SimulatedFPGA.h"
 #include "TSPublisher.h"
@@ -44,10 +44,10 @@ SimulatedFPGA::SimulatedFPGA() : ILC::ILCBusList(1), IFPGA(), ThermalILC(1), _U1
 
 SimulatedFPGA::~SimulatedFPGA() {}
 
-void SimulatedFPGA::writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) {
+void SimulatedFPGA::writeMPUFIFO(const std::vector<uint8_t> &data, uint32_t timeout) {
     writeDebugFile<uint8_t>("MPU<", data);
 
-    auto write_answers = [this](uint8_t bus, const uint8_t* data, uint8_t len) {
+    auto write_answers = [this](uint8_t bus, const uint8_t *data, uint8_t len) {
         Modbus::Parser parser(std::vector<uint8_t>(data, data + len));
         Modbus::Buffer response;
         response.push_back(parser.address());
@@ -91,14 +91,14 @@ void SimulatedFPGA::writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t time
     }
 }
 
-std::vector<uint8_t> SimulatedFPGA::readMPUFIFO(cRIO::MPU& mpu) {
+std::vector<uint8_t> SimulatedFPGA::readMPUFIFO(cRIO::MPU &mpu) {
     auto ret = _mpuResponses[mpu.getBus()];
     _mpuResponses[mpu.getBus()].clear();
     return ret;
 }
 
-void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
-    uint16_t* d = data;
+void SimulatedFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) {
+    uint16_t *d = data;
     while (d < data + length) {
         size_t dl;
         switch (*d) {
@@ -121,7 +121,8 @@ void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t tim
                 break;
             default:
                 SPDLOG_WARN(
-                        "SimulatedFPGA::writeCommandFIFO unknown/unimplemented instruction: {0:04x} ({0:d})",
+                        "SimulatedFPGA::writeCommandFIFO unknown/unimplemented "
+                        "instruction: {0:04x} ({0:d})",
                         *d);
                 d++;
                 break;
@@ -129,23 +130,23 @@ void SimulatedFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t tim
     }
 }
 
-void SimulatedFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
+void SimulatedFPGA::writeRequestFIFO(uint16_t *data, size_t length, uint32_t timeout) {
     _U16ResponseStatus = LEN;
 }
 
-void SimulatedFPGA::readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) {
+void SimulatedFPGA::readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) {
     for (size_t i = 0; i < length; i++) {
         data[i] = i + random() / (float)RAND_MAX;
     }
 }
 
-void SimulatedFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) {
+void SimulatedFPGA::readU8ResponseFIFO(uint8_t *data, size_t length, uint32_t timeout) {
     for (size_t i = 0; i < length; i++) {
         data[i] = 255 * (random() / RAND_MAX);
     }
 }
 
-void SimulatedFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
+void SimulatedFPGA::readU16ResponseFIFO(uint16_t *data, size_t length, uint32_t timeout) {
     switch (_U16ResponseStatus) {
         case IDLE:
             break;
@@ -173,7 +174,7 @@ void SimulatedFPGA::processServerID(uint8_t address, uint64_t uniqueID, uint8_t 
     _response.write<uint8_t>(12 + firmwareName.length());
 
     // uniqueID
-    _response.writeBuffer(reinterpret_cast<uint8_t*>(&uniqueID), 6);
+    _response.writeBuffer(reinterpret_cast<uint8_t *>(&uniqueID), 6);
 
     _response.write<uint8_t>(ilcAppType);
     _response.write<uint8_t>(networkNodeType);
@@ -288,7 +289,7 @@ void SimulatedFPGA::processMPURead(uint8_t bus, uint8_t address, uint16_t regist
     response->writeCRC();
 }
 
-void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t len) {
+void SimulatedFPGA::_simulateModbus(uint16_t *data, size_t len) {
     // reply format:
     // 4 bytes (forming uint64_t in low endian) beginning timestamp
     // data received from ILCs (& FIFO::TX_WAIT_LONG_RX)
@@ -346,8 +347,10 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t len) {
                                          _fanRPM[address - 1], 20 * random() / float(RAND_MAX));
                     break;
                 default:
-                    SPDLOG_WARN("SimulatedFPGA::_simulateModbus unknown/unsupported function {0:04x} ({0:d})",
-                                func);
+                    SPDLOG_WARN(
+                            "SimulatedFPGA::_simulateModbus unknown/unsupported "
+                            "function {0:04x} ({0:d})",
+                            func);
             }
 
             _response.writeRxTimestamp(Timestamp::toFPGA(TSPublisher::getTimestamp()));
@@ -358,7 +361,7 @@ void SimulatedFPGA::_simulateModbus(uint16_t* data, size_t len) {
     }
 }
 
-void SimulatedFPGA::_simulateMPU(uint8_t bus, uint8_t* data, size_t len) {
+void SimulatedFPGA::_simulateMPU(uint8_t bus, uint8_t *data, size_t len) {
     Modbus::Parser buf(std::vector<uint8_t>(data, data + len));
     uint8_t address = buf.address();
     uint8_t func = buf.func();
@@ -370,7 +373,10 @@ void SimulatedFPGA::_simulateMPU(uint8_t bus, uint8_t* data, size_t len) {
             break;
         }
         default:
-            SPDLOG_WARN("SimulatedFPGA::_simulateMPU unknow/unsupported function {0:04x} ({0:d})", func);
+            SPDLOG_WARN(
+                    "SimulatedFPGA::_simulateMPU unknow/unsupported function "
+                    "{0:04x} ({0:d})",
+                    func);
     }
     buf.checkCRC();
 }

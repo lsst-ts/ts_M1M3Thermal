@@ -1,10 +1,10 @@
 /*
  * Thermal FPGA class.
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -43,16 +43,16 @@ public:
     void open() override;
     void close() override;
     void finalize() override;
-    void writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) override;
-    std::vector<uint8_t> readMPUFIFO(cRIO::MPU& mpu) override;
-    LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU& mpu) override;
-    void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
-    void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
-    void readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) override;
-    void readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) override;
-    void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
+    void writeMPUFIFO(const std::vector<uint8_t> &data, uint32_t timeout) override;
+    std::vector<uint8_t> readMPUFIFO(cRIO::MPU &mpu) override;
+    LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU &mpu) override;
+    void writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
+    void writeRequestFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
+    void readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) override;
+    void readU8ResponseFIFO(uint8_t *data, size_t length, uint32_t timeout) override;
+    void readU16ResponseFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
     float chassisTemperature() override;
-    void waitOnIrqs(uint32_t irqs, uint32_t timeout, bool& timedout, uint32_t* triggered = NULL) override;
+    void waitOnIrqs(uint32_t irqs, uint32_t timeout, bool &timedout, uint32_t *triggered = NULL) override;
     void ackIrqs(uint32_t irqs) override;
 
 private:

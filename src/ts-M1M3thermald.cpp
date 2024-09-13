@@ -1,10 +1,10 @@
 /*
  * Thermal CSC.
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,21 +20,21 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <getopt.h>
 #include <csignal>
+#include <getopt.h>
 
 #include <chrono>
 #include <thread>
 
-#include <spdlog/spdlog.h>
-#include <spdlog/async.h>
-#include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/daily_file_sink.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include <spdlog/async.h>
+#include <spdlog/spdlog.h>
 
 #include <SAL_MTM1M3TS.h>
 
-#include <cRIO/ControllerThread.h>
 #include <cRIO/CSC.h>
+#include <cRIO/ControllerThread.h>
 #include <cRIO/FPGA.h>
 #include <cRIO/NiError.h>
 #include <cRIO/SALSink.h>
@@ -49,22 +49,22 @@
 #include <OuterLoopClockThread.h>
 #include <Settings/Controller.h>
 
-#include <Commands/SAL.h>
 #include <Commands/EnterControl.h>
+#include <Commands/SAL.h>
 #include <SALThermalILC.h>
-#include <Telemetry/SALMPUFactory.h>
 #include <TSApplication.h>
 #include <TSPublisher.h>
 #include <TSSubscriber.h>
+#include <Telemetry/SALMPUFactory.h>
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
 
-extern const char* VERSION;
+extern const char *VERSION;
 
 class M1M3thermald : public LSST::cRIO::CSC {
 public:
-    M1M3thermald(const char* name, const char* description) : CSC(name, description) {}
+    M1M3thermald(const char *name, const char *description) : CSC(name, description) {}
 
 protected:
     void init() override;
@@ -90,7 +90,7 @@ void M1M3thermald::init() {
 
     addSink(std::make_shared<SALSink_mt>(_m1m3tsSAL));
 
-    SALThermalILC* ilc = new SALThermalILC(_m1m3tsSAL);
+    SALThermalILC *ilc = new SALThermalILC(_m1m3tsSAL);
 
     TSApplication::instance().setILC(ilc);
 
@@ -135,14 +135,14 @@ int M1M3thermald::runLoop() {
     return LSST::cRIO::ControllerThread::exitRequested() ? 0 : 1;
 }
 
-int main(int argc, char* const argv[]) {
+int main(int argc, char *const argv[]) {
     M1M3thermald csc("M1M3TS", "M1M3 Thermal System CSC");
 
     csc.processArgs(argc, argv);
 
     try {
         csc.run(&IFPGA::get());
-    } catch (LSST::cRIO::NiError& nie) {
+    } catch (LSST::cRIO::NiError &nie) {
         SPDLOG_CRITICAL("Main: Error initializing ThermalFPGA: {}", nie.what());
     }
 

@@ -1,10 +1,10 @@
 /*
  * Thermal System SAL publisher.
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -26,7 +26,7 @@
 
 using namespace LSST::M1M3::TS;
 
-extern const char* VERSION;
+extern const char *VERSION;
 
 TSPublisher::TSPublisher(token) { _logLevel.level = -1; }
 
@@ -34,27 +34,27 @@ void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
     _m1m3TSSAL = m1m3TSSAL;
 
     SPDLOG_DEBUG("TSPublisher: Initializing SAL Telemetry");
-    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_thermalData");
-    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_mixingValve");
-    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_glycolLoopTemperature");
-    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_flowMeter");
-    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_glycolPump");
+    _m1m3TSSAL->salTelemetryPub((char *)"MTM1M3TS_thermalData");
+    _m1m3TSSAL->salTelemetryPub((char *)"MTM1M3TS_mixingValve");
+    _m1m3TSSAL->salTelemetryPub((char *)"MTM1M3TS_glycolLoopTemperature");
+    _m1m3TSSAL->salTelemetryPub((char *)"MTM1M3TS_flowMeter");
+    _m1m3TSSAL->salTelemetryPub((char *)"MTM1M3TS_glycolPump");
 
     SPDLOG_DEBUG("TSPublisher: Initializing SAL Events");
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_engineeringMode");
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_enabledILC");
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_heartbeat");
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_logLevel");
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_summaryState");
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_softwareVersions");
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_simulationMode");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_engineeringMode");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_enabledILC");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_heartbeat");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_logLevel");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_summaryState");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_softwareVersions");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_simulationMode");
 
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_thermalInfo");
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_glycolPumpStatus");
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_flowMeterMPUStatus");
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_glycolPumpMPUStatus");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalInfo");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_glycolPumpStatus");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_flowMeterMPUStatus");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_glycolPumpMPUStatus");
 
-    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_thermalSettings");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalSettings");
 }
 
 void TSPublisher::setLogLevel(int newLevel) {

@@ -1,10 +1,10 @@
 /*
  * Thread to catch outer loop clock interrupts.
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -25,15 +25,16 @@
 
 #include <spdlog/spdlog.h>
 
-#include <cRIO/ControllerThread.h>
-#include <OuterLoopClockThread.h>
 #include <Commands/Update.h>
+#include <Events/Heartbeat.h>
 #include <Events/SummaryState.h>
+#include <OuterLoopClockThread.h>
+#include <cRIO/ControllerThread.h>
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
 
-void OuterLoopClockThread::run(std::unique_lock<std::mutex>& lock) {
+void OuterLoopClockThread::run(std::unique_lock<std::mutex> &lock) {
     SPDLOG_INFO("OuterLoopClockThread: Run");
 
     while (keepRunning) {
@@ -41,6 +42,7 @@ void OuterLoopClockThread::run(std::unique_lock<std::mutex>& lock) {
         if (Events::SummaryState::instance().active()) {
             cRIO::ControllerThread::instance().enqueue(std::make_shared<Commands::Update>());
         }
+        Events::Heartbeat::instance().tryToggle();
     }
     SPDLOG_INFO("OuterLoopClockThread: Completed");
 }

@@ -1,10 +1,10 @@
 /*
  * Thermal FPGA class.
  *
- * Developed for the Vera C. Rubin Observatory Telescope & Site Software Systems.
- * This product includes software developed by the Vera C.Rubin Observatory Project
- * (https://www.lsst.org). See the COPYRIGHT file at the top-level directory of
- * this distribution for details of code ownership.
+ * Developed for the Vera C. Rubin Observatory Telescope & Site Software
+ * Systems. This product includes software developed by the Vera C.Rubin
+ * Observatory Project (https://www.lsst.org). See the COPYRIGHT file at the
+ * top-level directory of this distribution for details of code ownership.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -27,8 +27,8 @@
 
 #include <cRIO/NiError.h>
 
-#include "ThermalFPGA.h"
 #include "NiFpga_ts_M1M3ThermalFPGA.h"
+#include "ThermalFPGA.h"
 
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
@@ -69,7 +69,7 @@ void ThermalFPGA::finalize() {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_Finalize());
 }
 
-void ThermalFPGA::writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeout) {
+void ThermalFPGA::writeMPUFIFO(const std::vector<uint8_t> &data, uint32_t timeout) {
     writeDebugFile<uint8_t>("MPU<", data);
     NiThrowError(
             __PRETTY_FUNCTION__,
@@ -77,7 +77,7 @@ void ThermalFPGA::writeMPUFIFO(const std::vector<uint8_t>& data, uint32_t timeou
                                data.data(), data.size(), timeout, NULL));
 }
 
-std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU& mpu) {
+std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU &mpu) {
     uint8_t req = mpu.getBus() + 10;
     NiThrowError(
             __PRETTY_FUNCTION__,
@@ -89,9 +89,9 @@ std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU& mpu) {
     NiThrowError(
             __PRETTY_FUNCTION__,
             NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
-                              reinterpret_cast<uint8_t*>(&len), 2, 1000, NULL));
+                              reinterpret_cast<uint8_t *>(&len), 2, 1000, NULL));
     len = ntohs(len);
-    uint8_t* data = new uint8_t[len];
+    uint8_t *data = new uint8_t[len];
 
     NiThrowError(
             __PRETTY_FUNCTION__,
@@ -107,7 +107,7 @@ std::vector<uint8_t> ThermalFPGA::readMPUFIFO(MPU& mpu) {
     return ret;
 }
 
-LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
+LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU &mpu) {
     uint8_t req[4] = {mpu.getBus(), 2, 254, 240};
     NiThrowError(
             __PRETTY_FUNCTION__,
@@ -133,7 +133,7 @@ LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
     NiThrowError(
             __PRETTY_FUNCTION__,
             NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_SerialMultiplexResponse,
-                              reinterpret_cast<uint8_t*>(&len), 2, 1, NULL));
+                              reinterpret_cast<uint8_t *>(&len), 2, 1, NULL));
 
     len = ntohs(len);
     std::vector<uint8_t> buffer(len);
@@ -153,7 +153,7 @@ LSST::cRIO::MPUTelemetry ThermalFPGA::readMPUTelemetry(MPU& mpu) {
     return MPUTelemetry(buffer.data());
 }
 
-void ThermalFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
+void ThermalFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO,
                                      data, length, timeout, NULL));
@@ -161,7 +161,7 @@ void ThermalFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeo
     writeDebugFile<uint16_t>("CMD<", data, length);
 }
 
-void ThermalFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
+void ThermalFPGA::writeRequestFIFO(uint16_t *data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO,
                                      data, length, timeout, NULL));
@@ -169,13 +169,13 @@ void ThermalFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeo
     writeDebugFile<uint16_t>("REQ<", data, length);
 }
 
-void ThermalFPGA::readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) {
+void ThermalFPGA::readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoSgl(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoSgl_SGLResponseFIFO,
                                     data, length, timeout, NULL));
 }
 
-void ThermalFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) {
+void ThermalFPGA::readU8ResponseFIFO(uint8_t *data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_U8ResponseFIFO,
                                    data, length, timeout, NULL));
@@ -183,7 +183,7 @@ void ThermalFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t time
     writeDebugFile<uint8_t>("U8>", data, length);
 }
 
-void ThermalFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
+void ThermalFPGA::readU16ResponseFIFO(uint16_t *data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU16_U16ResponseFIFO,
                                     data, length, timeout, NULL));
@@ -201,13 +201,13 @@ float ThermalFPGA::chassisTemperature() {
                                         temperature);
 }
 
-void ThermalFPGA::waitOnIrqs(uint32_t irqs, uint32_t timeout, bool& timedout, uint32_t* triggered) {
+void ThermalFPGA::waitOnIrqs(uint32_t irqs, uint32_t timeout, bool &timedout, uint32_t *triggered) {
     static std::hash<std::thread::id> hasher;
     size_t k = hasher(std::this_thread::get_id());
     NiFpga_IrqContext contex;
     try {
         contex = _contexes.at(k);
-    } catch (std::out_of_range& e) {
+    } catch (std::out_of_range &e) {
         NiFpga_ReserveIrqContext(_session, &contex);
         _contexes[k] = contex;
     }
