@@ -79,6 +79,9 @@ void SAL_start::execute() {
 
     Events::ThermalInfo::instance().log();
 
+    TSPublisher::instance().startFlowMeterThread();
+    TSPublisher::instance().startPumpThread();
+
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
     SPDLOG_INFO("Started");
@@ -103,6 +106,9 @@ void SAL_disable::execute() {
 }
 
 void SAL_standby::execute() {
+    TSPublisher::instance().stopFlowMeterThread();
+    TSPublisher::instance().stopPumpThread();
+
     changeAllILCsMode(ILC::Mode::ClearFaults);
     changeAllILCsMode(ILC::Mode::Standby);
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_StandbyState);
@@ -177,13 +183,13 @@ void SAL_coolantPumpPower::execute() {
 }
 
 void SAL_coolantPumpStart::execute() {
-    IFPGA::get().next_vfd->start();
+    IFPGA::get().vfd->start();
     ackComplete();
     SPDLOG_INFO("Glycol coolant pump started");
 }
 
 void SAL_coolantPumpStop::execute() {
-    IFPGA::get().next_vfd->stop();
+    IFPGA::get().vfd->stop();
     ackComplete();
     SPDLOG_INFO("Glycol coolant pump stopped");
 }
@@ -197,13 +203,13 @@ bool SAL_coolantPumpFrequency::validate() {
 }
 
 void SAL_coolantPumpFrequency::execute() {
-    IFPGA::get().next_vfd->setFrequency(params.targetFrequency);
+    IFPGA::get().vfd->setFrequency(params.targetFrequency);
     ackComplete();
     SPDLOG_INFO("Changed coolant pump target frequency to {:0.02f} Hz", params.targetFrequency);
 }
 
 void SAL_coolantPumpReset::execute() {
-    IFPGA::get().next_vfd->resetCommand();
+    IFPGA::get().vfd->resetCommand();
     ackComplete();
     SPDLOG_INFO("Coolant pump reseted");
 }

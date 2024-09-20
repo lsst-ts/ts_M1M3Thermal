@@ -22,13 +22,23 @@
 
 #include <spdlog/spdlog.h>
 
+#include <IFPGA.h>
 #include <TSPublisher.h>
 
 using namespace LSST::M1M3::TS;
 
 extern const char *VERSION;
 
-TSPublisher::TSPublisher(token) { _logLevel.level = -1; }
+TSPublisher::TSPublisher(token) {
+    _logLevel.level = -1;
+    _flowMeterThread = NULL;
+    _pumpThread = NULL;
+}
+
+TSPublisher::~TSPublisher() {
+    stopFlowMeterThread();
+    stopPumpThread();
+}
 
 void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
     _m1m3TSSAL = m1m3TSSAL;
@@ -51,8 +61,6 @@ void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
 
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalInfo");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_glycolPumpStatus");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_flowMeterMPUStatus");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_glycolPumpMPUStatus");
 
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalSettings");
 }
@@ -83,4 +91,36 @@ void TSPublisher::logSimulationMode() {
     simulation.mode = 0;
 #endif
     _m1m3TSSAL->logEvent_simulationMode(&simulation, 0);
+}
+
+void TSPublisher::startFlowMeterThread() {
+    delete _flowMeterThread;
+    _flowMeterThread = new Telemetry::FlowMeterThread(IFPGA::get().flowMeter);
+    _flowMeterThread->start();
+}
+
+void TSPublisher::startPumpThread() {
+    delete _pumpThread;
+    _pumpThread = new Telemetry::PumpThread(IFPGA::get().vfd);
+    _pumpThread->start();
+}
+
+void TSPublisher::stopFlowMeterThread() {
+    if (_flowMeterThread == NULL) {
+        return;
+    }
+
+    _flowMeterThread->stop();
+    delete _flowMeterThread;
+    _flowMeterThread = NULL;
+}
+
+void TSPublisher::stopPumpThread() {
+    if (_pumpThread == NULL) {
+        return;
+    }
+
+    _pumpThread->stop();
+    delete _pumpThread;
+    _pumpThread = NULL;
 }

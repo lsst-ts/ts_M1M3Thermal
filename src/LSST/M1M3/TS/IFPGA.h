@@ -54,6 +54,11 @@ constexpr uint16_t GLYCOLTEMP_DEBUG = 78;
 constexpr uint16_t GLYCOLTEMP_TEMPERATURES = 79;
 }  // namespace FPGAAddress
 
+namespace SerialBusses {
+constexpr int GLYCOOL_BUS = 1;
+constexpr int FLOWMETER_BUS = 2;
+}  // namespace SerialBusses
+
 /**
  * Abstract FPGA Interface. Provides common parent for real and simulated FPGA.
  */
@@ -63,12 +68,6 @@ public:
     virtual ~IFPGA() {}
 
     void setMPUFactory(std::shared_ptr<FactoryInterface> _factory);
-
-    /**
-     * Switch to use next flow meter.
-     */
-    void setNextFlowMeter();
-    void setNextVFD();
 
     static IFPGA &get();
 
@@ -95,8 +94,8 @@ public:
 
     std::shared_ptr<FactoryInterface> mpuFactory;
 
-    std::shared_ptr<VFD> vfd, next_vfd;
-    std::shared_ptr<FlowMeter> flowMeter, next_flowMeter;
+    std::shared_ptr<VFD> vfd;
+    std::shared_ptr<FlowMeter> flowMeter;
 };
 
 }  // namespace TS

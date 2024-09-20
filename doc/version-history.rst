@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v0.4.0
+------
+
+* Simplify MPU (FlowMeter, Pump) communication
+
 v0.3.1
 ======
 

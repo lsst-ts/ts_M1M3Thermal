@@ -31,24 +31,32 @@ namespace TS {
 
 /**
  * Reads FlowMeter values.
+ * [Documentation](https://rubinobs.atlassian.net/wiki/spaces/LTS/pages/50081742/Datasheets?preview=/50081742/50505733/FDT40%20Users%20Guide.pdf)
+ * [Datasheets](https://confluence.lsstcorp.org/display/LTS/Datasheets).
  */
 class FlowMeter : public cRIO::MPU {
 public:
     FlowMeter(uint8_t bus) : MPU(bus, 1) {}
 
-    void loopWrite();
+    /**
+     * Push calls to readout FlowMeter registers.
+     */
+    void readInfo();
 
     uint16_t getSignalStrength() { return getRegister(5500); }
-    double getFlowRate() { return _getFloatValue(1000); }
-    double getNetTotalizer() { return _getFloatValue(2500); }
-    double getPositiveTotalizer() { return _getFloatValue(2502); }
-    double getNegativeTotalizer() { return _getFloatValue(2504); }
+    double getFlowRate() { return _getFloatValue(1600); }
+    double getNetTotalizer() { return _getDoubleValue(2600); }
+    double getPositiveTotalizer() { return _getDoubleValue(2604); }
+    double getNegativeTotalizer() { return _getDoubleValue(2608); }
 
 private:
     float _getFloatValue(uint16_t reg);
     double _getDoubleValue(uint16_t reg);
 };
 
+/**
+ * Add print() method to print readout values.
+ */
 class FlowMeterPrint : public FlowMeter {
 public:
     FlowMeterPrint(uint8_t bus) : FlowMeter(bus) {}

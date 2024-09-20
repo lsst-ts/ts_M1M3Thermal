@@ -20,10 +20,12 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Telemetry_VFD_
-#define _TS_Telemetry_VFD_
+#ifndef _TS_Telemetry_PumpThread_
+#define _TS_Telemetry_PumpThread_
 
 #include <SAL_MTM1M3TS.h>
+
+#include <cRIO/Thread.h>
 
 #include <MPU/VFD.h>
 
@@ -32,11 +34,18 @@ namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
-class VFDSAL final : public VFD, MTM1M3TS_glycolPumpC {
+/**
+ * Thread reading out pump values. Started from TSPublisher when CSC
+ * enteres disabled state, updates SAL VFD pump telemetery.
+ */
+class PumpThread final : public cRIO::Thread, MTM1M3TS_glycolPumpC {
 public:
-    VFDSAL(uint8_t bus);
+    PumpThread(std::shared_ptr<VFD> vfd);
 
-    void loopRead(bool timedout);
+    void run(std::unique_lock<std::mutex>& lock) override;
+
+private:
+    std::shared_ptr<VFD> _vfd;
 };
 
 }  // namespace Telemetry

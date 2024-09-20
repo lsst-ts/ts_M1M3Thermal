@@ -99,7 +99,7 @@ public:
     PrintTSFPGA() : FPGAClass() { _cmd_start = std::chrono::steady_clock::now(); }
 #endif
 
-    void writeMPUFIFO(const std::vector<uint8_t> &data, uint32_t timeout) override;
+    void writeMPUFIFO(MPU &mpu, const std::vector<uint8_t> &data, uint32_t timeout) override;
     std::vector<uint8_t> readMPUFIFO(MPU &mpu) override;
     void writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
@@ -185,10 +185,10 @@ M1M3TScli::M1M3TScli(const char *name, const char *description) : FPGACliApp(nam
 
     addILC(std::make_shared<PrintThermalILC>(1));
 
-    flowMeter = std::make_shared<FlowMeterPrint>(2);
+    flowMeter = std::make_shared<FlowMeterPrint>(SerialBusses::FLOWMETER_BUS);
     addMPU("flow", flowMeter);
 
-    vfd = std::make_shared<VFDPrint>(1);
+    vfd = std::make_shared<VFDPrint>(SerialBusses::GLYCOOL_BUS);
     addMPU("vfd", vfd);
 
 #ifdef SIMULATOR
@@ -271,16 +271,8 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 }
 
 int M1M3TScli::printFlowMeter(command_vec cmds) {
-    flowMeter->clear();
-    flowMeter->readHoldingRegisters(1000, 4, 255);
-    getFPGA()->mpuCommands(*flowMeter);
+    flowMeter->readInfo();
 
-    flowMeter->clear();
-    flowMeter->readHoldingRegisters(2500, 6, 255);
-    getFPGA()->mpuCommands(*flowMeter);
-
-    flowMeter->clear();
-    flowMeter->readHoldingRegisters(5500, 1, 255);
     getFPGA()->mpuCommands(*flowMeter);
 
     flowMeter->print();
@@ -316,12 +308,8 @@ int M1M3TScli::printPump(command_vec cmds) {
         fpga->mpuCommands(*vfd);
     }
 
-    vfd->clear();
-    vfd->readHoldingRegisters(0x2000, 3, 255);
-    fpga->mpuCommands(*vfd);
+    vfd->readInfo();
 
-    vfd->clear();
-    vfd->readHoldingRegisters(0x2100, 7, 255);
     fpga->mpuCommands(*vfd);
 
     vfd->print();
@@ -566,15 +554,19 @@ void PrintThermalILC::processReHeaterGains(uint8_t address, float proportionalGa
 
 M1M3TScli cli("M1M3TS", "M1M3 Thermal System Command Line Interface");
 
-void PrintTSFPGA::writeMPUFIFO(const std::vector<uint8_t> &data, uint32_t timeout) {
+void PrintTSFPGA::writeMPUFIFO(MPU &mpu, const std::vector<uint8_t> &data, uint32_t timeout) {
     if (data.size() <= 0) {
-        throw std::runtime_error("MPU - 0 buffer");
+        throw std::runtime_error(fmt::format("MPU {} - 0 buffer", mpu.getBus()));
     }
-    _printBufferU8("MPU> ", true, data);
-    FPGAClass::writeMPUFIFO(data, timeout);
+    _printBufferU8(fmt::format("MPU {}> ", mpu.getBus()), true, data);
+    FPGAClass::writeMPUFIFO(mpu, data, timeout);
 }
 
-std::vector<uint8_t> PrintTSFPGA::readMPUFIFO(MPU &mpu) { return FPGAClass::readMPUFIFO(mpu); }
+std::vector<uint8_t> PrintTSFPGA::readMPUFIFO(MPU &mpu) {
+    auto ret = FPGAClass::readMPUFIFO(mpu);
+    _printBufferU8(fmt::format("MPU {}< ", mpu.getBus()), true, ret);
+    return ret;
+}
 
 void PrintTSFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) {
     _printBufferU16("C>", true, data, length);

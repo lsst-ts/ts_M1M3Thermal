@@ -25,12 +25,13 @@
 #include <Events/GlycolPumpStatus.h>
 #include <IFPGA.h>
 #include <TSPublisher.h>
-#include <Telemetry/VFDSAL.h>
+#include <Telemetry/PumpThread.h>
 
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-VFDSAL::VFDSAL(uint8_t bus) : VFD(bus) {
+PumpThread::PumpThread(std::shared_ptr<VFD> vfd) {
+    _vfd = vfd;
     commandedFrequency = NAN;
     targetFrequency = NAN;
     outputFrequency = NAN;
@@ -39,23 +40,30 @@ VFDSAL::VFDSAL(uint8_t bus) : VFD(bus) {
     outputVoltage = NAN;
 }
 
-void VFDSAL::loopRead(bool timedout) {
-    Events::GlycolPumpStatus::instance().update(*this);
+void PumpThread::run(std::unique_lock<std::mutex>& lock) {
+    SPDLOG_DEBUG("Running Pump Thread.");
+    while (keepRunning) {
+        auto start = std::chrono::steady_clock::now();
 
-    if (timedout) {
-        return;
+        _vfd->readInfo();
+
+        IFPGA::get().mpuCommands(*_vfd);
+
+        commandedFrequency = _vfd->getCommandedFrequency();
+        targetFrequency = _vfd->getTargetFrequency();
+        outputFrequency = _vfd->getOutputFrequency();
+        outputCurrent = _vfd->getOutputCurrent();
+        busVoltage = _vfd->getDCBusVoltage();
+        outputVoltage = _vfd->getOutputVoltage();
+
+        salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
+        if (ret != SAL__OK) {
+            SPDLOG_WARN("Cannot send VFD: {}", ret);
+            return;
+        }
+
+        runCondition.wait_for(lock, 2s - (std::chrono::steady_clock::now() - start));
     }
 
-    commandedFrequency = getCommandedFrequency();
-    targetFrequency = getTargetFrequency();
-    outputFrequency = getOutputFrequency();
-    outputCurrent = getOutputCurrent();
-    busVoltage = getDCBusVoltage();
-    outputVoltage = getOutputVoltage();
-
-    salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
-    if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot send VFD: {}", ret);
-        return;
-    }
+    SPDLOG_DEBUG("Pump Thread Stopped.");
 }

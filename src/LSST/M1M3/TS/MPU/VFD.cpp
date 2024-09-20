@@ -29,7 +29,9 @@
 
 using namespace LSST::M1M3::TS;
 
-void VFD::loopWrite() {
+void VFD::readInfo() {
+    clear();
+
     readHoldingRegisters(0x2000, 3, 255);
     readHoldingRegisters(0x2100, 7, 255);
 }

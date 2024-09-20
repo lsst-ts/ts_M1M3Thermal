@@ -120,6 +120,8 @@ void M1M3thermald::init() {
 
 void M1M3thermald::done() {
     LSST::cRIO::ControllerThread::instance().stop();
+    TSPublisher::instance().stopFlowMeterThread();
+    TSPublisher::instance().stopPumpThread();
 
     SPDLOG_INFO("Shutting down M1M3thermald");
     removeSink();

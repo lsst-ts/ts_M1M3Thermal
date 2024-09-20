@@ -1,5 +1,5 @@
 /*
- * Publish MPU Flow Meter Telemetry.
+ * Flow Meter telemetry handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,28 +20,36 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Event_FlowMeterMPUStatus_
-#define _TS_Event_FlowMeterMPUStatus_
+#ifndef _TS_Telemetry_FlowMeterThread_
+#define _TS_Telemetry_FlowMeterThread_
 
 #include <SAL_MTM1M3TS.h>
-#include <cRIO/MPUTelemetry.h>
-#include <cRIO/Singleton.h>
+#include <cRIO/Thread.h>
+
+#include <MPU/FlowMeter.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace Events {
+namespace Telemetry {
 
-class FlowMeterMPUStatus final : public MTM1M3TS_logevent_flowMeterMPUStatusC,
-                                 public cRIO::Singleton<FlowMeterMPUStatus> {
+/**
+ * Thread reading out flow meter values. Started from TSPublisher when CSC
+ * enteres disabled state, updates SAL flow meter telemetery.
+ */
+class FlowMeterThread final : public cRIO::Thread, MTM1M3TS_flowMeterC {
 public:
-    FlowMeterMPUStatus(token);
-    void send(LSST::cRIO::MPUTelemetry *telemetry);
+    FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter);
+
+    void run(std::unique_lock<std::mutex>& lock) override;
+
+private:
+    std::shared_ptr<FlowMeter> _flowMeter;
 };
 
-}  // namespace Events
+}  // namespace Telemetry
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif /* _TS_Event_FlowMeterMPUStatus_ */
+#endif  // !_TS_Telemetry_FlowMeterThread_

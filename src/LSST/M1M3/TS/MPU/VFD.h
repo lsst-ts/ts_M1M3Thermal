@@ -42,14 +42,33 @@ class VFD : public cRIO::MPU {
 public:
     VFD(uint8_t bus) : MPU(bus, 100) {}
 
-    void loopWrite();
+    void readInfo();
 
+    /**
+     * Starts pump - make sure it is running.
+     */
     void start() { presetHoldingRegister(0x2000, 0x1a); }
+
+    /**
+     * Stops pump - stop its motor.
+     */
     void stop() { presetHoldingRegister(0x2000, 0x01); }
+
+    /**
+     * Reset pump state - clear all errors.
+     */
     void resetCommand() { presetHoldingRegister(0x2000, 0x08); }
+
+    /**
+     * Set pump output frequency.
+     */
     void setFrequency(float freq) { presetHoldingRegister(0x2001, freq * 100.0f); }
 
+    /**
+     * Returns pump status.
+     */
     uint16_t getStatus() { return getRegister(0x2000); }
+
     float getCommandedFrequency() { return getRegister(0x2001) / 100.0f; }
 
     uint16_t getVelocityPositionBits() { return getRegister(0x2100); }

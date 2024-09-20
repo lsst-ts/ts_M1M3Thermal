@@ -25,8 +25,8 @@
 
 #include <MPU/FactoryInterface.h>
 
-#include "FlowMeterSAL.h"
-#include "VFDSAL.h"
+#include <MPU/FlowMeter.h>
+#include <MPU/VFD.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -35,8 +35,8 @@ namespace Telemetry {
 
 class SALMPUFactory : public FactoryInterface {
 public:
-    std::shared_ptr<FlowMeter> createFlowMeter() override { return std::make_shared<FlowMeterSAL>(2); }
-    std::shared_ptr<VFD> createVFD() override { return std::make_shared<VFDSAL>(1); }
+    std::shared_ptr<FlowMeter> createFlowMeter() override { return std::make_shared<FlowMeter>(2); }
+    std::shared_ptr<VFD> createVFD() override { return std::make_shared<VFD>(1); }
 };
 
 }  // namespace Telemetry

@@ -39,7 +39,6 @@
 #include "Telemetry/GlycolLoopTemperature.h"
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
-#include "Telemetry/VFDSAL.h"
 
 #include "TSApplication.h"
 
@@ -57,14 +56,6 @@ LSST::cRIO::task_return_t Update::run() {
     _sendMixingValve();
 
     Events::EnabledILC::instance().send();
-
-    if (Settings::FlowMeter::instance().enabled) {
-        _sendFlowMeter();
-    }
-
-    if (Settings::GlycolPump::instance().enabled) {
-        _sendVFD();
-    }
 
     SPDLOG_TRACE("Commands::Update leaving execute");
 
@@ -131,32 +122,4 @@ void Update::_sendFCU() {
     } catch (std::exception &e) {
         SPDLOG_WARN("Cannot poll FCU: {}", e.what());
     }
-}
-
-void Update::_sendFlowMeter() {
-#if 0
-    try {
-        bool finished = IFPGA::get().flowMeter->runLoop(IFPGA::get());
-        if (finished) {
-            IFPGA::get().setNextFlowMeter();
-        }
-    } catch (std::exception &e) {
-        SPDLOG_WARN("Cannot poll Flow Meter: {}", e.what());
-        IFPGA::get().setNextFlowMeter();
-    }
-#endif
-}
-
-void Update::_sendVFD() {
-#if 0
-    try {
-        bool finished = IFPGA::get().vfd->runLoop(IFPGA::get());
-        if (finished) {
-            IFPGA::get().setNextVFD();
-        }
-    } catch (std::exception &e) {
-        SPDLOG_WARN("Cannot poll VFD: {}", e.what());
-        IFPGA::get().setNextVFD();
-    }
-#endif
 }
