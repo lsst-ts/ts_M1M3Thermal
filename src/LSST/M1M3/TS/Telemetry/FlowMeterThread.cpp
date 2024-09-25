@@ -31,8 +31,10 @@
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-FlowMeterThread::FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter) {
+FlowMeterThread::FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter,
+                                 std::shared_ptr<Transports::Transport> transport) {
     _flowMeter = flowMeter;
+    _transport = transport;
     signalStrength = NAN;
     flowRate = NAN;
     netTotalizer = NAN;
@@ -43,11 +45,11 @@ FlowMeterThread::FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter) {
 void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
     SPDLOG_DEBUG("Running Flow Meter Thread.");
     while (keepRunning) {
-        auto start = std::chrono::steady_clock::now();
+        auto end = std::chrono::steady_clock::now() + 2s;
 
         _flowMeter->readInfo();
 
-        IFPGA::get().mpuCommands(*_flowMeter);
+        _transport->commands(*_flowMeter, 2s, this);
 
         SPDLOG_TRACE("Sending FlowMeterMPUStatus");
 
@@ -63,7 +65,7 @@ void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
             return;
         }
 
-        runCondition.wait_for(lock, 2s - (std::chrono::steady_clock::now() - start));
+        runCondition.wait_until(lock, end);
     }
     SPDLOG_DEBUG("Flow Meter Thread Stopped.");
 }

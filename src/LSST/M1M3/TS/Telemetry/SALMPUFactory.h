@@ -35,8 +35,8 @@ namespace Telemetry {
 
 class SALMPUFactory : public FactoryInterface {
 public:
-    std::shared_ptr<FlowMeter> createFlowMeter() override { return std::make_shared<FlowMeter>(2); }
-    std::shared_ptr<VFD> createVFD() override { return std::make_shared<VFD>(1); }
+    std::shared_ptr<FlowMeter> createFlowMeter() override { return std::make_shared<FlowMeter>(); }
+    std::shared_ptr<VFD> createVFD() override { return std::make_shared<VFD>(); }
 };
 
 }  // namespace Telemetry

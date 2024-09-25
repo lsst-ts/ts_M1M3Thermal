@@ -43,9 +43,6 @@ public:
     void open() override;
     void close() override;
     void finalize() override;
-    void writeMPUFIFO(cRIO::MPU &mpu, const std::vector<uint8_t> &data, uint32_t timeout) override;
-    std::vector<uint8_t> readMPUFIFO(cRIO::MPU &mpu) override;
-    LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU &mpu) override;
     void writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
     void writeRequestFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
     void readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) override;
@@ -55,10 +52,14 @@ public:
     void waitOnIrqs(uint32_t irqs, uint32_t timeout, bool &timedout, uint32_t *triggered = NULL) override;
     void ackIrqs(uint32_t irqs) override;
 
+    uint32_t getSession() { return _session; }
+
 private:
     uint32_t _session;
 
     std::map<size_t, NiFpga_IrqContext> _contexes;
+
+    void _busFifos(uint8_t bus_number, uint32_t &write_bus, uint32_t &read_bus);
 };
 
 }  // namespace TS

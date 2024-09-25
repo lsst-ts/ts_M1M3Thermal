@@ -40,7 +40,7 @@ namespace TS {
  */
 class VFD : public cRIO::MPU {
 public:
-    VFD(uint8_t bus) : MPU(bus, 100) {}
+    VFD() : MPU(100) {}
 
     void readInfo();
 
@@ -100,8 +100,6 @@ public:
 
 class VFDPrint : public VFD {
 public:
-    VFDPrint(uint8_t bus) : VFD(bus) {}
-
     void print();
 };
 

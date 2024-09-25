@@ -40,90 +40,9 @@ SimulatedFPGA::SimulatedFPGA() : ILC::ILCBusList(1), IFPGA(), ThermalILC(1), _U1
         _heaterPWM[i] = 0;
         _fanRPM[i] = 0;
     }
-
-    _flowmeter_net_totalizer = 100.0;
-    _pump_voltage = 1;
 }
 
 SimulatedFPGA::~SimulatedFPGA() {}
-
-void SimulatedFPGA::writeMPUFIFO(MPU &mpu, const std::vector<uint8_t> &data, uint32_t timeout) {
-    writeDebugFile<uint8_t>(fmt::format("MPU {} <", mpu.getBus()), data);
-
-    auto write_answers = [this](uint8_t bus, const uint8_t *data, uint8_t len) {
-        Modbus::Parser parser(std::vector<uint8_t>(data, data + len));
-        Modbus::Buffer response;
-        response.push_back(parser.address());
-        switch (parser.func()) {
-            case MPU::READ_HOLDING_REGISTERS: {
-                uint16_t reg = parser.read<uint16_t>();
-                uint16_t reg_len = parser.read<uint16_t>() * 2;
-                response.push_back(parser.func());
-                response.push_back(reg_len);
-                for (size_t i = 0; i < reg_len; i += 2, reg++) {
-                    // simulates various registers
-                    switch (reg) {
-                        case 2500:
-                            response.write<float>(_flowmeter_net_totalizer);
-                            break;
-                        case 2501:
-                            _flowmeter_net_totalizer += 11.1;
-                            break;
-                        case 2502:
-                            response.write<float>(_flowmeter_net_totalizer + 50);
-                            break;
-                        case 2504:
-                            response.write<float>(_flowmeter_net_totalizer - 50);
-                            break;
-                        case 2503:
-                        case 2505:
-                            break;
-                        case 0x2106:
-                            response.write<uint16_t>(_pump_voltage);
-                            _pump_voltage += 1;
-                            break;
-                        default:
-                            response.push_back(i);
-                            response.push_back(i + 1);
-                    }
-                }
-                break;
-            }
-            case MPU::PRESET_HOLDING_REGISTER: {
-                uint16_t reg = parser.read<uint16_t>();
-                uint16_t reg_len = parser.read<uint16_t>();
-
-                response.push_back(parser.func());
-                response.write(reg);
-                response.write(reg_len);
-
-                break;
-            }
-            default:
-                throw std::runtime_error(
-                        fmt::format("Response for function {} not implemented", parser.func()));
-        }
-        response.writeCRC();
-        _mpuResponses[bus] = response;
-    };
-
-    write_answers(mpu.getBus(), data.data(), data.size());
-}
-
-std::vector<uint8_t> SimulatedFPGA::readMPUFIFO(cRIO::MPU &mpu) {
-    auto ret = _mpuResponses[mpu.getBus()];
-    _mpuResponses[mpu.getBus()].clear();
-    return ret;
-}
-
-MPUTelemetry SimulatedFPGA::readMPUTelemetry(LSST::cRIO::MPU &mpu) {
-    static uint64_t data[2] = {0, 0};
-
-    data[0] += 2;
-    data[1] += 3;
-
-    return MPUTelemetry(reinterpret_cast<uint8_t *>(data));
-}
 
 void SimulatedFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) {
     uint16_t *d = data;

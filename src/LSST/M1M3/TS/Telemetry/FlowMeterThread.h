@@ -27,6 +27,7 @@
 #include <cRIO/Thread.h>
 
 #include <MPU/FlowMeter.h>
+#include <Transports/Transport.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -39,12 +40,13 @@ namespace Telemetry {
  */
 class FlowMeterThread final : public cRIO::Thread, MTM1M3TS_flowMeterC {
 public:
-    FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter);
+    FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter, std::shared_ptr<Transports::Transport> transport);
 
     void run(std::unique_lock<std::mutex>& lock) override;
 
 private:
     std::shared_ptr<FlowMeter> _flowMeter;
+    std::shared_ptr<Transports::Transport> _transport;
 };
 
 }  // namespace Telemetry

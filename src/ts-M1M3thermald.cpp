@@ -40,12 +40,6 @@
 #include <cRIO/SALSink.h>
 #include <cRIO/Settings/Path.h>
 
-#ifdef SIMULATOR
-#include <SimulatedFPGA.h>
-#else
-#include <ThermalFPGA.h>
-#endif
-
 #include <OuterLoopClockThread.h>
 #include <Settings/Controller.h>
 

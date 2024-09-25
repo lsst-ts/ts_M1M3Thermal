@@ -21,7 +21,7 @@ properties(
 node {
     def SALUSER_HOME = "/home/saluser"
     def BRANCH = (env.CHANGE_BRANCH != null) ? env.CHANGE_BRANCH : env.BRANCH_NAME
-    def SAME_CRIO_BRANCH = ["main", "tickets/DM-45837"]
+    def SAME_CRIO_BRANCH = ["main", "tickets/DM-46500"]
     def CRIO_BRANCH=(BRANCH in SAME_CRIO_BRANCH) ? BRANCH : "develop"
 
     stage('Cloning sources')
