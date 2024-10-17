@@ -42,10 +42,26 @@ GlycolTemperature::GlycolTemperature(std::shared_ptr<Transports::Transport> tran
 void GlycolTemperature::run(std::unique_lock<std::mutex>& lock) {
     SPDLOG_DEBUG("Running Glycol Temperature thread.");
 
+    int error_count = 0;
+
     while (keepRunning) {
         auto end = std::chrono::steady_clock::now() + 2s;
 
-        auto new_data = _transport->read(10, 1s, this);
+        std::vector<uint8_t> new_data;
+
+        try {
+            new_data = _transport->read(10, 1s, this);
+            error_count = 0;
+        } catch (std::runtime_error& er) {
+            if (error_count == 0) {
+                SPDLOG_WARN("Cannot read Glycol temperature data: {}", er.what());
+            }
+            error_count++;
+
+            runCondition.wait_until(lock, end);
+
+            continue;
+        }
 
         {
             SPDLOG_TRACE("Received temperature data: {}, so far: {}", new_data.size(), _data_buffer.size());
