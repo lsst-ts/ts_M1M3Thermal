@@ -74,8 +74,8 @@ void VFDPrint::print() {
 
     uint16_t bits = getVelocityPositionBits();
 
-    std::cout << std::setfill(' ') << std::setw(20) << "Status: " << "0x" << std::hex << getStatus()
-              << std::endl
+    std::cout << std::setfill(' ') << std::setw(20) << "Status: "
+              << "0x" << std::hex << getStatus() << std::endl
               << std::setw(20) << "Commanded Freq.: " << std::fixed << std::setprecision(2)
               << getCommandedFrequency() << std::endl
               << std::setw(20) << "Vel./Pos. Bits: " << std::hex << bits << std::dec << std::endl;

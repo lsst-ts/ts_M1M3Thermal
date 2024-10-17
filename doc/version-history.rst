@@ -4,6 +4,13 @@
 Version History
 ===============
 
+v1.0.0
+------
+
+* First official summit release
+* Simplified temperature sensor communication
+* Fixes threads, reaction to ILC errors
+
 v0.4.0
 ------
 

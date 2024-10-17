@@ -36,7 +36,7 @@ namespace TS {
  */
 class FlowMeter : public cRIO::MPU {
 public:
-    FlowMeter(uint8_t bus) : MPU(bus, 1) {}
+    FlowMeter() : MPU(1) {}
 
     /**
      * Push calls to readout FlowMeter registers.
@@ -59,8 +59,6 @@ private:
  */
 class FlowMeterPrint : public FlowMeter {
 public:
-    FlowMeterPrint(uint8_t bus) : FlowMeter(bus) {}
-
     void print();
 };
 

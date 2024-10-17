@@ -26,6 +26,7 @@
 #include <SAL_MTM1M3TS.h>
 
 #include <cRIO/Thread.h>
+#include <Transports/Transport.h>
 
 #include <MPU/VFD.h>
 
@@ -40,12 +41,13 @@ namespace Telemetry {
  */
 class PumpThread final : public cRIO::Thread, MTM1M3TS_glycolPumpC {
 public:
-    PumpThread(std::shared_ptr<VFD> vfd);
+    PumpThread(std::shared_ptr<VFD> vfd, std::shared_ptr<Transports::Transport> transport);
 
     void run(std::unique_lock<std::mutex>& lock) override;
 
 private:
     std::shared_ptr<VFD> _vfd;
+    std::shared_ptr<Transports::Transport> _transport;
 };
 
 }  // namespace Telemetry

@@ -57,6 +57,7 @@ constexpr uint16_t GLYCOLTEMP_TEMPERATURES = 79;
 namespace SerialBusses {
 constexpr int GLYCOOL_BUS = 1;
 constexpr int FLOWMETER_BUS = 2;
+constexpr int TEMPERATURE_BUS = 3;
 }  // namespace SerialBusses
 
 /**
@@ -89,8 +90,6 @@ public:
     void setCoolantPumpPower(bool on);
 
     void setHeartbeat(bool heartbeat);
-
-    virtual LSST::cRIO::MPUTelemetry readMPUTelemetry(LSST::cRIO::MPU &mpu) = 0;
 
     std::shared_ptr<FactoryInterface> mpuFactory;
 
