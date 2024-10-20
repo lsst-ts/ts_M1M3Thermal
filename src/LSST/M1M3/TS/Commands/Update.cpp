@@ -36,7 +36,6 @@
 #include "Settings/FlowMeter.h"
 #include "Settings/GlycolPump.h"
 
-#include "Telemetry/GlycolLoopTemperature.h"
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
 
@@ -52,7 +51,6 @@ LSST::cRIO::task_return_t Update::run() {
 
     _sendFCU();
 
-    _sendGlycolLoopTemperature();
     _sendMixingValve();
 
     Events::EnabledILC::instance().send();
@@ -60,15 +58,6 @@ LSST::cRIO::task_return_t Update::run() {
     SPDLOG_TRACE("Commands::Update leaving execute");
 
     return Task::DONT_RESCHEDULE;
-}
-
-void Update::_sendGlycolLoopTemperature() {
-    try {
-        Telemetry::GlycolLoopTemperature::instance().update();
-        Telemetry::GlycolLoopTemperature::instance().send();
-    } catch (std::exception &e) {
-        SPDLOG_WARN("Cannot poll Glycol loop: {}", e.what());
-    }
 }
 
 void Update::_sendMixingValve() {
@@ -116,7 +105,7 @@ void Update::_sendFCU() {
             }
         });
 
-        IFPGA::get().ilcCommands(*TSApplication::ilc(), 400);
+        IFPGA::get().ilcCommands(*TSApplication::ilc(), 800);
 
         Telemetry::ThermalData::instance().send();
     } catch (std::exception &e) {

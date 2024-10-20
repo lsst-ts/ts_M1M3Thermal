@@ -32,6 +32,7 @@
 #include <cRIO/Singleton.h>
 
 #include <Telemetry/FlowMeterThread.h>
+#include <Telemetry/GlycolTemperatureThread.h>
 #include <Telemetry/PumpThread.h>
 
 namespace LSST {
@@ -54,9 +55,11 @@ public:
     void logThermalInfo(MTM1M3TS_logevent_thermalInfoC *data) { _m1m3TSSAL->logEvent_thermalInfo(data, 0); }
 
     void startFlowMeterThread();
+    void startGlycolTemperatureThread();
     void startPumpThread();
 
     void stopFlowMeterThread();
+    void stopGlycolTemperatureThread();
     void stopPumpThread();
 
     static double getTimestamp() {
@@ -81,7 +84,7 @@ private:
     MTM1M3TS_logevent_logLevelC _logLevel;
 
     Telemetry::FlowMeterThread *_flowMeterThread;
-
+    Telemetry::GlycolTemperatureThread *_glycolTemperatureThread;
     Telemetry::PumpThread *_pumpThread;
 };
 

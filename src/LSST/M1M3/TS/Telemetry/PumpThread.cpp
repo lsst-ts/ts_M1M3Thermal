@@ -30,8 +30,9 @@
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-PumpThread::PumpThread(std::shared_ptr<VFD> vfd) {
+PumpThread::PumpThread(std::shared_ptr<VFD> vfd, std::shared_ptr<Transports::Transport> transport) {
     _vfd = vfd;
+    _transport = transport;
     commandedFrequency = NAN;
     targetFrequency = NAN;
     outputFrequency = NAN;
@@ -41,13 +42,15 @@ PumpThread::PumpThread(std::shared_ptr<VFD> vfd) {
 }
 
 void PumpThread::run(std::unique_lock<std::mutex>& lock) {
-    SPDLOG_DEBUG("Running Pump Thread.");
+    runCondition.wait_for(lock, std::chrono::seconds(3));
+
+    SPDLOG_INFO("Running Pump Thread.");
     while (keepRunning) {
-        auto start = std::chrono::steady_clock::now();
+        auto end = std::chrono::steady_clock::now() + 2s;
 
         _vfd->readInfo();
 
-        IFPGA::get().mpuCommands(*_vfd);
+        _transport->commands(*_vfd, 2s, this);
 
         commandedFrequency = _vfd->getCommandedFrequency();
         targetFrequency = _vfd->getTargetFrequency();
@@ -62,7 +65,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
             return;
         }
 
-        runCondition.wait_for(lock, 2s - (std::chrono::steady_clock::now() - start));
+        runCondition.wait_until(lock, end);
     }
 
     SPDLOG_DEBUG("Pump Thread Stopped.");
