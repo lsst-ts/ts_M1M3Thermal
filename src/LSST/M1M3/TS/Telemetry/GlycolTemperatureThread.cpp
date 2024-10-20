@@ -24,9 +24,10 @@
 
 #include <spdlog/spdlog.h>
 
-#include <IFPGA.h>
-#include <TSPublisher.h>
-#include <Telemetry/GlycolTemperatureThread.h>
+#include "Events/SummaryState.h"
+#include "IFPGA.h"
+#include "TSPublisher.h"
+#include "Telemetry/GlycolTemperatureThread.h"
 
 using namespace LSST::M1M3::TS;
 using namespace LSST::M1M3::TS::Telemetry;
@@ -44,6 +45,9 @@ GlycolTemperatureThread::GlycolTemperatureThread(std::shared_ptr<Transports::Tra
 }
 
 void GlycolTemperatureThread::updated() {
+    if (Events::SummaryState::instance().active() == false) {
+        return;
+    }
     auto temp = getTemperatures();
     aboveMirrorTemperature = temp[0];
     insideCellTemperature1 = temp[1];

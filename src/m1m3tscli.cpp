@@ -118,7 +118,7 @@ private:
 
     std::shared_ptr<FlowMeterPrint> flowMeter;
     std::shared_ptr<VFDPrint> vfd;
-    GlycolTemperature *glycolTemperatureBus;
+    std::shared_ptr<GlycolTemperature> glycolTemperatureBus;
 
     std::shared_ptr<Transports::Transport> _flow_meter_device, _vfd_device, _glycol_temperature_device;
 };
@@ -230,8 +230,6 @@ M1M3TScli::M1M3TScli(const char *name, const char *description) : FPGACliApp(nam
 int M1M3TScli::openFPGA(command_vec cmds) {
     int ret = FPGACliApp::openFPGA(cmds);
 
-    delete glycolTemperatureBus;
-
 #ifdef SIMULATOR
     _flow_meter_device = std::make_shared<SimulatedFlowMeter>();
     _vfd_device = std::make_shared<SimulatedVFDPump>();
@@ -252,10 +250,10 @@ int M1M3TScli::openFPGA(command_vec cmds) {
             NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_CoolantTempRead, 1ms);
 #endif
 
-    glycolTemperatureBus = new GlycolTemperature(_glycol_temperature_device);
+    glycolTemperatureBus = std::make_shared<GlycolTemperature>(_glycol_temperature_device);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    addThread(glycolTemperatureBus);
+    addThread(glycolTemperatureBus.get());
 
     return ret;
 }
@@ -304,6 +302,7 @@ int M1M3TScli::mpuTelemetry(command_vec cmds) {
     if (cmds.size() == 0) {
         printTelemetry("Flow meter", getMPU("flow"));
         printTelemetry("Pump (VFD)", getMPU("vfd"));
+        printTelemetry("Glycol temperature", glycolTemperatureBus);
     } else {
         printTelemetry(cmds[0], getMPU(cmds[0]));
     }
@@ -469,7 +468,7 @@ int M1M3TScli::glycolTemperature(command_vec) {
                             "Mirror Coolant Supply", "Mirror Coolant Return"};
     for (int i = 0; i < 8; i++) {
         std::cout << std::right << std::setw(30) << names[i] << ": " << std::setw(6) << std::fixed
-                  << std::setprecision(2) << temp[i] << std::endl;
+                  << std::setprecision(4) << temp[i] << std::endl;
     }
     return 0;
 }
@@ -579,7 +578,7 @@ void M1M3TScli::printTelemetry(const std::string &name, std::shared_ptr<MPU> mpu
     auto transport = get_transport(mpu);
     transport->telemetry(send, received);
     std::cout << name << std::endl
-              << std::string(name.length(), '-') << std::endl
+              << std::string(name.length(), '_') << std::endl
               << "Send: " << send << std::endl
               << "Received: " << received << std::endl;
 }
@@ -589,8 +588,10 @@ std::shared_ptr<Transports::Transport> M1M3TScli::get_transport(std::shared_ptr<
         return _vfd_device;
     } else if (mpu == flowMeter) {
         return _flow_meter_device;
+    } else if (mpu == glycolTemperatureBus) {
+        return _glycol_temperature_device;
     }
-    return NULL;
+    throw std::runtime_error("Unknow serial device");
 }
 
 void PrintThermalILC::processThermalStatus(uint8_t address, uint8_t status, float differentialTemperature,

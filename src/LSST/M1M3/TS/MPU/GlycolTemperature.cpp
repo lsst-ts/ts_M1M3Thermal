@@ -42,75 +42,87 @@ GlycolTemperature::GlycolTemperature(std::shared_ptr<Transports::Transport> tran
 void GlycolTemperature::run(std::unique_lock<std::mutex>& lock) {
     SPDLOG_DEBUG("Running Glycol Temperature thread.");
 
-    int error_count = 0;
+    auto last_data = std::chrono::steady_clock::now();
+    int proc_error_count = 0;
+    int rec_error_count = 0;
 
     while (keepRunning) {
-        auto end = std::chrono::steady_clock::now() + 2s;
+        auto end = std::chrono::steady_clock::now() + 100ms;
 
         std::vector<uint8_t> new_data;
 
         try {
-            new_data = _transport->read(10, 1s, this);
-            error_count = 0;
+            new_data = _transport->read(10, 400ms, this);
+            rec_error_count = 0;
         } catch (std::runtime_error& er) {
-            if (error_count == 0) {
+            if (rec_error_count == 0) {
                 SPDLOG_WARN("Cannot read Glycol temperature data: {}", er.what());
             }
-            error_count++;
+            rec_error_count++;
 
             runCondition.wait_until(lock, end);
 
             continue;
         }
 
-        {
+        if (new_data.size() > 0) {
             SPDLOG_TRACE("Received temperature data: {}, so far: {}", new_data.size(), _data_buffer.size());
             _data_buffer += std::string(new_data.begin(), new_data.end());
+        }
 
-            auto new_line = _data_buffer.find('\r');
+        auto new_line = _data_buffer.find('\r');
 
-            if (new_line != std::string::npos) {
-                {
-                    std::lock_guard<std::mutex> guard(_temperature_mutex);
+        if (new_line != std::string::npos && new_line + 1 < _data_buffer.size()) {
+            {
+                last_data = std::chrono::steady_clock::now();
 
-                    _last_processed = _data_buffer.substr(0, new_line + 1);
-                    std::stringstream ss(_last_processed);
+                std::lock_guard<std::mutex> guard(_temperature_mutex);
 
-                    int i;
-                    for (i = 0; i < 8; i++) {
-                        _temperatures[i] = NAN;
-                    }
+                _last_processed = _data_buffer.substr(0, new_line + 1);
+                std::stringstream ss(_last_processed);
 
-                    i = 0;
-                    while (ss.good()) {
-                        char c;
-                        int num;
-                        char eq;
-                        float v;
-                        ss >> c >> num >> eq >> v;
-
-                        // SPDLOG_TRACE("c:{} num:{} eq:{} v:{}", c, num, eq, v);
-
-                        if (ss.good() && c == 'C' && eq == '=' && num == i + 1) {
-                            _temperatures[i] = v < 900 ? v : NAN;
-                            ss >> c;
-                        } else {
-                            break;
-                        }
-
-                        if ((!ss.good() && i < 7 && c != ',') || (i == 7 && !ss.eof())) {
-                            SPDLOG_WARN("Cannot parse {} at position {}", _last_processed.substr(0, new_line),
-                                        static_cast<int>(ss.tellg()));
-                            break;
-                        }
-
-                        i++;
-                    }
-                    _data_buffer = _data_buffer.substr(new_line + 2);
+                int i;
+                for (i = 0; i < 8; i++) {
+                    _temperatures[i] = NAN;
                 }
 
-                // updates must be called without hold of the _temperature_mutex
-                updated();
+                i = 0;
+                while (ss.good()) {
+                    char c;
+                    int num;
+                    char eq;
+                    float v;
+                    ss >> c >> num >> eq >> v;
+
+                    // SPDLOG_TRACE("c:{} num:{} eq:{} v:{}", c, num, eq, v);
+
+                    if (ss.good() && c == 'C' && eq == '=' && num == i + 1) {
+                        _temperatures[i] = v < 900 ? v : NAN;
+                        ss >> c;
+                    } else {
+                        break;
+                    }
+
+                    if ((!ss.good() && i < 7 && c != ',') || (i == 7 && !ss.eof())) {
+                        SPDLOG_WARN("Cannot parse {} at position {}", _last_processed.substr(0, new_line),
+                                    static_cast<int>(ss.tellg()));
+                        break;
+                    }
+
+                    i++;
+                }
+                _data_buffer = _data_buffer.substr(new_line + 2);
+            }
+
+            // updates must be called without hold of the _temperature_mutex
+            updated();
+            proc_error_count = 0;
+        } else {
+            if (std::chrono::steady_clock::now() > last_data + 4s) {
+                if (proc_error_count == 0) {
+                    SPDLOG_WARN("Empty glycol temp buffer: {}", _data_buffer);
+                }
+                proc_error_count++;
             }
         }
 

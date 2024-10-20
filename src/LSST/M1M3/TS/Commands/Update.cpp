@@ -105,7 +105,7 @@ void Update::_sendFCU() {
             }
         });
 
-        IFPGA::get().ilcCommands(*TSApplication::ilc(), 400);
+        IFPGA::get().ilcCommands(*TSApplication::ilc(), 800);
 
         Telemetry::ThermalData::instance().send();
     } catch (std::exception &e) {

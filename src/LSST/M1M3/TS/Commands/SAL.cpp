@@ -74,7 +74,6 @@ void SAL_start::execute() {
 
     Events::ThermalInfo::instance().log();
 
-    TSPublisher::instance().startGlycolTemperatureThread();
     TSPublisher::instance().startFlowMeterThread();
 
     if (Settings::GlycolPump::instance().enabled) {
