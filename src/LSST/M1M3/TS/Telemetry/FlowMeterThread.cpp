@@ -31,8 +31,10 @@
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-FlowMeterThread::FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter) {
+FlowMeterThread::FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter,
+                                 std::shared_ptr<Transports::Transport> transport) {
     _flowMeter = flowMeter;
+    _transport = transport;
     signalStrength = NAN;
     flowRate = NAN;
     netTotalizer = NAN;
@@ -42,28 +44,37 @@ FlowMeterThread::FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter) {
 
 void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
     SPDLOG_DEBUG("Running Flow Meter Thread.");
+    int error_count = 0;
+
     while (keepRunning) {
-        auto start = std::chrono::steady_clock::now();
+        auto end = std::chrono::steady_clock::now() + 2s;
 
-        _flowMeter->readInfo();
+        try {
+            _flowMeter->readInfo();
 
-        IFPGA::get().mpuCommands(*_flowMeter);
+            _transport->commands(*_flowMeter, 2s, this);
 
-        SPDLOG_TRACE("Sending FlowMeterMPUStatus");
+            SPDLOG_TRACE("Sending FlowMeterMPUStatus");
 
-        signalStrength = _flowMeter->getSignalStrength();
-        flowRate = _flowMeter->getFlowRate();
-        netTotalizer = _flowMeter->getNetTotalizer();
-        positiveTotalizer = _flowMeter->getPositiveTotalizer();
-        negativeTotalizer = _flowMeter->getNegativeTotalizer();
+            signalStrength = _flowMeter->getSignalStrength();
+            flowRate = _flowMeter->getFlowRate();
+            netTotalizer = _flowMeter->getNetTotalizer();
+            positiveTotalizer = _flowMeter->getPositiveTotalizer();
+            negativeTotalizer = _flowMeter->getNegativeTotalizer();
 
-        salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
-        if (ret != SAL__OK) {
-            SPDLOG_WARN("Cannot send FlowMeter: {}", ret);
-            return;
+            salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
+            if (ret != SAL__OK) {
+                SPDLOG_WARN("Cannot send FlowMeter: {}", ret);
+            }
+            error_count = 0;
+        } catch (std::runtime_error& er) {
+            if (error_count == 0) {
+                SPDLOG_ERROR("Error in Flow Meter telemetry readout: {}", er.what());
+            }
+            error_count++;
         }
 
-        runCondition.wait_for(lock, 2s - (std::chrono::steady_clock::now() - start));
+        runCondition.wait_until(lock, end);
     }
     SPDLOG_DEBUG("Flow Meter Thread Stopped.");
 }

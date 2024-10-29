@@ -22,6 +22,17 @@
 
 #include <spdlog/spdlog.h>
 
+#ifdef SIMULATOR
+#include <MPU/SimulatedFlowMeter.h>
+#include <MPU/SimulatedGlycolTemperature.h>
+#include <MPU/SimulatedVFDPump.h>
+#else
+#include <Transports/FPGASerialDevice.h>
+#include <ThermalFPGA.h>
+#endif
+
+#include <NiFpga/NiFpga_ts_M1M3ThermalFPGA.h>
+
 #include <IFPGA.h>
 #include <TSPublisher.h>
 
@@ -31,8 +42,10 @@ extern const char *VERSION;
 
 TSPublisher::TSPublisher(token) {
     _logLevel.level = -1;
+
     _flowMeterThread = NULL;
     _pumpThread = NULL;
+    _glycolTemperatureThread = NULL;
 }
 
 TSPublisher::~TSPublisher() {
@@ -95,13 +108,46 @@ void TSPublisher::logSimulationMode() {
 
 void TSPublisher::startFlowMeterThread() {
     delete _flowMeterThread;
-    _flowMeterThread = new Telemetry::FlowMeterThread(IFPGA::get().flowMeter);
+#ifdef SIMULATOR
+    _flowMeterThread =
+            new Telemetry::FlowMeterThread(IFPGA::get().flowMeter, std::make_shared<SimulatedFlowMeter>());
+#else
+    _flowMeterThread = new Telemetry::FlowMeterThread(
+            IFPGA::get().flowMeter,
+            std::make_shared<Transports::FPGASerialDevice>(
+                    dynamic_cast<ThermalFPGA *>(&IFPGA::get())->getSession(),
+                    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeterWrite,
+                    NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeterRead, 100ms));
+#endif
     _flowMeterThread->start();
+}
+
+void TSPublisher::startGlycolTemperatureThread() {
+    delete _glycolTemperatureThread;
+#ifdef SIMULATOR
+    _glycolTemperatureThread =
+            new Telemetry::GlycolTemperatureThread(std::make_shared<SimulatedGlycolTemperature>());
+#else
+    _glycolTemperatureThread =
+            new Telemetry::GlycolTemperatureThread(std::make_shared<Transports::FPGASerialDevice>(
+                    dynamic_cast<ThermalFPGA *>(&IFPGA::get())->getSession(),
+                    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_CoolantTempWrite,
+                    NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_CoolantTempRead, 1ms));
+#endif
+    _glycolTemperatureThread->start();
 }
 
 void TSPublisher::startPumpThread() {
     delete _pumpThread;
-    _pumpThread = new Telemetry::PumpThread(IFPGA::get().vfd);
+#ifdef SIMULATOR
+    _pumpThread = new Telemetry::PumpThread(IFPGA::get().vfd, std::make_shared<SimulatedVFDPump>());
+#else
+    _pumpThread = new Telemetry::PumpThread(
+            IFPGA::get().vfd, std::make_shared<Transports::FPGASerialDevice>(
+                                      dynamic_cast<ThermalFPGA *>(&IFPGA::get())->getSession(),
+                                      NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite,
+                                      NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead, 10ms));
+#endif
     _pumpThread->start();
 }
 
@@ -113,6 +159,16 @@ void TSPublisher::stopFlowMeterThread() {
     _flowMeterThread->stop();
     delete _flowMeterThread;
     _flowMeterThread = NULL;
+}
+
+void TSPublisher::stopGlycolTemperatureThread() {
+    if (_glycolTemperatureThread == NULL) {
+        return;
+    }
+
+    _glycolTemperatureThread->stop();
+    delete _glycolTemperatureThread;
+    _glycolTemperatureThread = NULL;
 }
 
 void TSPublisher::stopPumpThread() {

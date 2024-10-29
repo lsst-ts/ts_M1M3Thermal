@@ -40,12 +40,6 @@
 #include <cRIO/SALSink.h>
 #include <cRIO/Settings/Path.h>
 
-#ifdef SIMULATOR
-#include <SimulatedFPGA.h>
-#else
-#include <ThermalFPGA.h>
-#endif
-
 #include <OuterLoopClockThread.h>
 #include <Settings/Controller.h>
 
@@ -106,8 +100,10 @@ void M1M3thermald::init() {
     TSPublisher::instance().setSAL(_m1m3tsSAL);
     TSPublisher::instance().setLogLevel(static_cast<int>(getSpdLogLogLevel()) * 10);
 
+    TSPublisher::instance().startGlycolTemperatureThread();
+
     SPDLOG_INFO("Starting controller thread");
-    LSST::cRIO::ControllerThread::instance().start();
+    LSST::cRIO::ControllerThread::instance().start(500ms);
     addThread(new OuterLoopClockThread());
 
     SPDLOG_INFO("Creating subscriber");

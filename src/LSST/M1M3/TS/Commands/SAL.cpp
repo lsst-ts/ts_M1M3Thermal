@@ -64,11 +64,6 @@ void SAL_start::execute() {
     SPDLOG_INFO("Starting, settings={}", params.configurationOverride);
     Settings::Controller::instance().load(params.configurationOverride);
 
-    if (Settings::GlycolPump::instance().enabled) {
-        IFPGA::get().setCoolantPumpPower(true);
-        SPDLOG_INFO("Glycol pump turned on.");
-    }
-
     changeAllILCsMode(ILC::Mode::Disabled);
 
     TSApplication::ilc()->clear();
@@ -80,7 +75,12 @@ void SAL_start::execute() {
     Events::ThermalInfo::instance().log();
 
     TSPublisher::instance().startFlowMeterThread();
-    TSPublisher::instance().startPumpThread();
+
+    if (Settings::GlycolPump::instance().enabled) {
+        IFPGA::get().setCoolantPumpPower(true);
+        SPDLOG_INFO("Glycol pump turned on.");
+        TSPublisher::instance().startPumpThread();
+    }
 
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
@@ -108,6 +108,7 @@ void SAL_disable::execute() {
 void SAL_standby::execute() {
     TSPublisher::instance().stopFlowMeterThread();
     TSPublisher::instance().stopPumpThread();
+    TSPublisher::instance().stopGlycolTemperatureThread();
 
     changeAllILCsMode(ILC::Mode::ClearFaults);
     changeAllILCsMode(ILC::Mode::Standby);
