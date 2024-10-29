@@ -57,22 +57,14 @@ void ThermalFPGA::open() {
         case NiFpga_FpgaViState_Invalid:
             NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Download", NiFpga_Download(_session));
         case NiFpga_FpgaViState_NaturallyStopped:
-            NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Reset", NiFpga_Reset(_session));
         case NiFpga_FpgaViState_NotRunning:
-            NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Run", NiFpga_Run(_session, 0));
-            break;
         case NiFpga_FpgaViState_Running:
             NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Reset", NiFpga_Reset(_session));
             NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Run", NiFpga_Run(_session, 0));
             break;
+        default:
+            throw std::runtime_error(fmt::format("Unknow FPGA state: {}", ni_state));
     }
-    // NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Abort", NiFpga_Abort(_session));
-    // NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Download", NiFpga_Download(_session));
-    // NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Reset", NiFpga_Reset(_session));
-
-    // std::this_thread::sleep_for(2s);
-
-    // TSPublisher::instance().startGlycolTemperatureThread();
 }
 
 void ThermalFPGA::close() {
