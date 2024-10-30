@@ -42,52 +42,60 @@ PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
 
 void PumpThread::run(std::unique_lock<std::mutex>& lock) {
     runCondition.wait_for(lock, std::chrono::seconds(3));
+    int error_count = 0;
 
     SPDLOG_INFO("Running Pump Thread.");
     while (keepRunning) {
         auto end = std::chrono::steady_clock::now() + 2s;
 
-        vfd.clear();
+        try {
+            vfd.clear();
 
-        switch (_next_request) {
-            case START:
-                vfd.start();
-                break;
-            case STOP:
-                vfd.stop();
-                break;
-            case RESET:
-                vfd.reset();
-                break;
-            case FREQ:
-                vfd.setFrequency(_target_frequency);
-                break;
-            case NOP:
-                break;
-        }
+            switch (_next_request) {
+                case START:
+                    vfd.start();
+                    break;
+                case STOP:
+                    vfd.stop();
+                    break;
+                case RESET:
+                    vfd.reset();
+                    break;
+                case FREQ:
+                    vfd.setFrequency(_target_frequency);
+                    break;
+                case NOP:
+                    break;
+            }
 
-        if (_next_request != NOP) {
+            if (_next_request != NOP) {
+                _transport->commands(vfd, 2s, this);
+                _next_request = NOP;
+            }
+
+            vfd.readInfo();
+
             _transport->commands(vfd, 2s, this);
-            _next_request = NOP;
-        }
 
-        vfd.readInfo();
+            Events::GlycolPumpStatus::instance().update(&vfd);
 
-        _transport->commands(vfd, 2s, this);
+            commandedFrequency = vfd.getCommandedFrequency();
+            targetFrequency = vfd.getTargetFrequency();
+            outputFrequency = vfd.getOutputFrequency();
+            outputCurrent = vfd.getOutputCurrent();
+            busVoltage = vfd.getDCBusVoltage();
+            outputVoltage = vfd.getOutputVoltage();
 
-        Events::GlycolPumpStatus::instance().update(&vfd);
-
-        commandedFrequency = vfd.getCommandedFrequency();
-        targetFrequency = vfd.getTargetFrequency();
-        outputFrequency = vfd.getOutputFrequency();
-        outputCurrent = vfd.getOutputCurrent();
-        busVoltage = vfd.getDCBusVoltage();
-        outputVoltage = vfd.getOutputVoltage();
-
-        salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
-        if (ret != SAL__OK) {
-            SPDLOG_WARN("Cannot send VFD: {}", ret);
-            return;
+            salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
+            if (ret != SAL__OK) {
+                SPDLOG_WARN("Cannot send VFD: {}", ret);
+            }
+            error_count = 0;
+        } catch (std::runtime_error& er) {
+            if (error_count == 0) {
+                SPDLOG_ERROR("Error in running Glycol Pump thread: {}", er.what());
+            }
+            error_count++;
         }
 
         runCondition.wait_until(lock, end);
