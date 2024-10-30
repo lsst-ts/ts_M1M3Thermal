@@ -33,9 +33,9 @@ GlycolPumpStatus::GlycolPumpStatus(token) {
     _last_errorCode = 0xFFFF;
 }
 
-void GlycolPumpStatus::update(VFD &vfd) {
-    auto status = vfd.getStatus();
-    auto errorCode = vfd.getDriveErrorCodes();
+void GlycolPumpStatus::update(std::shared_ptr<VFD> vfd) {
+    auto status = vfd->getStatus();
+    auto errorCode = vfd->getDriveErrorCodes();
     if (status != _last_status || errorCode != _last_errorCode) {
         // bits are from VFD manual
         ready = status & 0x0001;

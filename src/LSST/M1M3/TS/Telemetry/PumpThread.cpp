@@ -52,6 +52,8 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
 
         _transport->commands(*_vfd, 2s, this);
 
+        Events::GlycolPumpStatus::instance().update(_vfd);
+
         commandedFrequency = _vfd->getCommandedFrequency();
         targetFrequency = _vfd->getTargetFrequency();
         outputFrequency = _vfd->getOutputFrequency();
