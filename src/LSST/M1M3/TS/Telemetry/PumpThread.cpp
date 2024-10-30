@@ -30,8 +30,7 @@
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-PumpThread::PumpThread(std::shared_ptr<VFD> vfd, std::shared_ptr<Transports::Transport> transport) {
-    _vfd = vfd;
+PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
     _transport = transport;
     commandedFrequency = NAN;
     targetFrequency = NAN;
@@ -48,18 +47,42 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
     while (keepRunning) {
         auto end = std::chrono::steady_clock::now() + 2s;
 
-        _vfd->readInfo();
+        vfd.clear();
 
-        _transport->commands(*_vfd, 2s, this);
+        switch (_next_request) {
+            case START:
+                vfd.start();
+                break;
+            case STOP:
+                vfd.stop();
+                break;
+            case RESET:
+                vfd.reset();
+                break;
+            case FREQ:
+                vfd.setFrequency(_target_frequency);
+                break;
+            case NOP:
+                break;
+        }
 
-        Events::GlycolPumpStatus::instance().update(_vfd);
+        if (_next_request != NOP) {
+            _transport->commands(vfd, 2s, this);
+            _next_request = NOP;
+        }
 
-        commandedFrequency = _vfd->getCommandedFrequency();
-        targetFrequency = _vfd->getTargetFrequency();
-        outputFrequency = _vfd->getOutputFrequency();
-        outputCurrent = _vfd->getOutputCurrent();
-        busVoltage = _vfd->getDCBusVoltage();
-        outputVoltage = _vfd->getOutputVoltage();
+        vfd.readInfo();
+
+        _transport->commands(vfd, 2s, this);
+
+        Events::GlycolPumpStatus::instance().update(&vfd);
+
+        commandedFrequency = vfd.getCommandedFrequency();
+        targetFrequency = vfd.getTargetFrequency();
+        outputFrequency = vfd.getOutputFrequency();
+        outputCurrent = vfd.getOutputCurrent();
+        busVoltage = vfd.getDCBusVoltage();
+        outputVoltage = vfd.getOutputVoltage();
 
         salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
         if (ret != SAL__OK) {
@@ -71,4 +94,13 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
     }
 
     SPDLOG_DEBUG("Pump Thread Stopped.");
+}
+
+void PumpThread::start_pump() { _next_request = START; }
+
+void PumpThread::stop_pump() { _next_request = STOP; }
+void PumpThread::reset_pump() { _next_request = RESET; }
+void PumpThread::set_target_frequency(float frequency) {
+    _target_frequency = frequency;
+    _next_request = FREQ;
 }

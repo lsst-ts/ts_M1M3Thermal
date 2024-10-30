@@ -49,7 +49,6 @@
 #include <TSApplication.h>
 #include <TSPublisher.h>
 #include <TSSubscriber.h>
-#include <Telemetry/SALMPUFactory.h>
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
@@ -87,8 +86,6 @@ void M1M3thermald::init() {
     SALThermalILC *ilc = new SALThermalILC(_m1m3tsSAL);
 
     TSApplication::instance().setILC(ilc);
-
-    IFPGA::get().setMPUFactory(std::make_shared<Telemetry::SALMPUFactory>());
 
 #ifdef SIMULATOR
     SPDLOG_WARN("Starting Simulator version! Version {}", VERSION);

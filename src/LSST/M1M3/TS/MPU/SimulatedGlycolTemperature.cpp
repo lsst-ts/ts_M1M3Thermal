@@ -72,6 +72,8 @@ void SimulatedGlycolTemperature::commands(Modbus::BusList& bus_list, std::chrono
     throw std::runtime_error("The code shall not command the glycol temperature device");
 }
 
+void SimulatedGlycolTemperature::flush() {}
+
 void SimulatedGlycolTemperature::telemetry(uint64_t& write_bytes, uint64_t& read_bytes) {
     write_bytes = _bytes_written;
     read_bytes = _bytes_read;

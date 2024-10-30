@@ -184,13 +184,13 @@ void SAL_coolantPumpPower::execute() {
 }
 
 void SAL_coolantPumpStart::execute() {
-    IFPGA::get().vfd->start();
+    TSPublisher::instance().pump_thread->start_pump();
     ackComplete();
     SPDLOG_INFO("Glycol coolant pump started");
 }
 
 void SAL_coolantPumpStop::execute() {
-    IFPGA::get().vfd->stop();
+    TSPublisher::instance().pump_thread->stop_pump();
     ackComplete();
     SPDLOG_INFO("Glycol coolant pump stopped");
 }
@@ -204,13 +204,13 @@ bool SAL_coolantPumpFrequency::validate() {
 }
 
 void SAL_coolantPumpFrequency::execute() {
-    IFPGA::get().vfd->setFrequency(params.targetFrequency);
+    TSPublisher::instance().pump_thread->set_target_frequency(params.targetFrequency);
     ackComplete();
     SPDLOG_INFO("Changed coolant pump target frequency to {:0.02f} Hz", params.targetFrequency);
 }
 
 void SAL_coolantPumpReset::execute() {
-    IFPGA::get().vfd->resetCommand();
+    TSPublisher::instance().pump_thread->reset_pump();
     ackComplete();
     SPDLOG_INFO("Coolant pump reseted");
 }

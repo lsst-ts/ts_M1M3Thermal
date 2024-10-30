@@ -31,9 +31,7 @@
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-FlowMeterThread::FlowMeterThread(std::shared_ptr<FlowMeter> flowMeter,
-                                 std::shared_ptr<Transports::Transport> transport) {
-    _flowMeter = flowMeter;
+FlowMeterThread::FlowMeterThread(std::shared_ptr<Transports::Transport> transport) {
     _transport = transport;
     signalStrength = NAN;
     flowRate = NAN;
@@ -50,17 +48,17 @@ void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
         auto end = std::chrono::steady_clock::now() + 2s;
 
         try {
-            _flowMeter->readInfo();
+            readInfo();
 
-            _transport->commands(*_flowMeter, 2s, this);
+            _transport->commands(*this, 2s, this);
 
             SPDLOG_TRACE("Sending FlowMeterMPUStatus");
 
-            signalStrength = _flowMeter->getSignalStrength();
-            flowRate = _flowMeter->getFlowRate();
-            netTotalizer = _flowMeter->getNetTotalizer();
-            positiveTotalizer = _flowMeter->getPositiveTotalizer();
-            negativeTotalizer = _flowMeter->getNegativeTotalizer();
+            signalStrength = getSignalStrength();
+            flowRate = getFlowRate();
+            netTotalizer = getNetTotalizer();
+            positiveTotalizer = getPositiveTotalizer();
+            negativeTotalizer = getNegativeTotalizer();
 
             salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
             if (ret != SAL__OK) {

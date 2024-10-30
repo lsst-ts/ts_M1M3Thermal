@@ -46,7 +46,6 @@
 #define FPGAClass ThermalFPGA
 #endif
 
-#include <MPU/FactoryInterface.h>
 #include <MPU/FlowMeter.h>
 #include <MPU/GlycolTemperature.h>
 #ifdef SIMULATOR
@@ -148,21 +147,6 @@ public:
 
 private:
     void _printTimestamp(std::string prefix, bool nullTimer);
-};
-
-class PrintMPUFactory : public FactoryInterface {
-public:
-    PrintMPUFactory(std::shared_ptr<FlowMeterPrint> flowMeter, std::shared_ptr<VFDPrint> vfd) {
-        _flowMeter = flowMeter;
-        _vfd = vfd;
-    }
-
-    std::shared_ptr<FlowMeter> createFlowMeter() override { return _flowMeter; }
-    std::shared_ptr<VFD> createVFD() override { return _vfd; }
-
-private:
-    std::shared_ptr<FlowMeterPrint> _flowMeter;
-    std::shared_ptr<VFDPrint> _vfd;
 };
 
 #define ILC_ARG "<ILC..>"
@@ -418,11 +402,7 @@ int M1M3TScli::fcuOnOff(command_vec cmds) {
 
 int M1M3TScli::pumpOnOff(command_vec cmds) { return 0; }
 
-FPGA *M1M3TScli::newFPGA(const char *dir, bool &fpga_singleton) {
-    PrintTSFPGA *printFPGA = new PrintTSFPGA();
-    printFPGA->setMPUFactory(std::make_shared<PrintMPUFactory>(flowMeter, vfd));
-    return printFPGA;
-}
+FPGA *M1M3TScli::newFPGA(const char *dir, bool &fpga_singleton) { return new PrintTSFPGA(); }
 
 int M1M3TScli::fcuBroadcast(command_vec cmds) {
     uint8_t heater = std::stoi(cmds[0]);

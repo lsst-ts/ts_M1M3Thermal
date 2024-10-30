@@ -33,7 +33,7 @@ GlycolPumpStatus::GlycolPumpStatus(token) {
     _last_errorCode = 0xFFFF;
 }
 
-void GlycolPumpStatus::update(std::shared_ptr<VFD> vfd) {
+void GlycolPumpStatus::update(VFD *vfd) {
     auto status = vfd->getStatus();
     auto errorCode = vfd->getDriveErrorCodes();
     if (status != _last_status || errorCode != _last_errorCode) {
