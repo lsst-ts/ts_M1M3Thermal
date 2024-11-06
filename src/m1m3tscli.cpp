@@ -242,6 +242,8 @@ int M1M3TScli::openFPGA(command_vec cmds) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     addThread(glycolTemperatureBus.get());
 
+    addMPU("temp", glycolTemperatureBus);
+
     return ret;
 }
 

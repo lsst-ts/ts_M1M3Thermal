@@ -32,6 +32,19 @@ ThermalInfo::ThermalInfo(token) {
         xPosition[i] = Settings::FCUApplicationSettings::Table[i].xPosition;
         yPosition[i] = Settings::FCUApplicationSettings::Table[i].yPosition;
     };
+    reset();
+}
+
+void ThermalInfo::reset() {
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        referenceId[i] = 0;
+        modbusAddress[i] = 0;
+        ilcUniqueId[i] = 0;
+        ilcApplicationType[i] = 0;
+        networkNodeType[i] = 0;
+        majorRevision[i] = 0;
+        minorRevision[i] = 0;
+    };
 }
 
 void ThermalInfo::processServerID(uint8_t _address, uint8_t ilcIndex, uint64_t _uniqueID, uint8_t _ilcAppType,

@@ -31,6 +31,7 @@
 #include "Events/EnabledILC.h"
 #include "Events/Heartbeat.h"
 #include "Events/SummaryState.h"
+#include "Events/ThermalInfo.h"
 
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
@@ -91,19 +92,22 @@ void Update::_sendFCU() {
     }
 
     try {
+        Events::ThermalInfo::instance().reset();
+        Telemetry::ThermalData::instance().reset();
         TSApplication::ilc()->clear();
 
         TSApplication::instance().callFunctionOnIlcs([](uint8_t address) -> void {
+            TSApplication::ilc()->reportServerStatus(address);
             if (Events::SummaryState::instance().enabled()) {
                 TSApplication::ilc()->reportThermalStatus(address);
-            } else {
-                TSApplication::ilc()->reportServerStatus(address);
             }
         });
 
         IFPGA::get().ilcCommands(*TSApplication::ilc(), 800);
 
-        Telemetry::ThermalData::instance().send();
+        if (Events::SummaryState::instance().enabled()) {
+            Telemetry::ThermalData::instance().send();
+        }
     } catch (std::exception &e) {
         SPDLOG_WARN("Cannot poll FCU: {}", e.what());
     }

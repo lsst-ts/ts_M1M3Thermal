@@ -96,6 +96,8 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
                 SPDLOG_ERROR("Error in running Glycol Pump thread: {}", er.what());
             }
             error_count++;
+            std::this_thread::sleep_for(2s);
+            _transport->flush();
         }
 
         runCondition.wait_until(lock, end);

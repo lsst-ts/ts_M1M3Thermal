@@ -35,6 +35,11 @@ class ThermalData final : MTM1M3TS_thermalDataC, public cRIO::Singleton<ThermalD
 public:
     ThermalData(token);
 
+    /**
+     * Resets stored values to NAN/0.
+     */
+    void reset();
+
     void update(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
                 float absoluteTemperature);
 

@@ -108,7 +108,6 @@ void SAL_disable::execute() {
 void SAL_standby::execute() {
     TSPublisher::instance().stopFlowMeterThread();
     TSPublisher::instance().stopPumpThread();
-    TSPublisher::instance().stopGlycolTemperatureThread();
 
     changeAllILCsMode(ILC::Mode::ClearFaults);
     changeAllILCsMode(ILC::Mode::Standby);
