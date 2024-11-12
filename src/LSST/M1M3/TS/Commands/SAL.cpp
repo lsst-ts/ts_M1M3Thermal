@@ -46,7 +46,12 @@ void changeAllILCsMode(uint16_t mode) {
     TSApplication::instance().callFunctionOnIlcs(
             [mode](uint8_t address) -> void { TSApplication::ilc()->changeILCMode(address, mode); });
 
-    IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
+    try {
+        IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
+
+    } catch (std::exception &ex) {
+        SPDLOG_WARN(ex.what());
+    }
 }
 
 bool SAL_start::validate() {
@@ -64,15 +69,19 @@ void SAL_start::execute() {
     SPDLOG_INFO("Starting, settings={}", params.configurationOverride);
     Settings::Controller::instance().load(params.configurationOverride);
 
-    changeAllILCsMode(ILC::Mode::Disabled);
+    try {
+        changeAllILCsMode(ILC::Mode::Disabled);
 
-    TSApplication::ilc()->clear();
-    TSApplication::instance().callFunctionOnIlcs(
-            [](uint8_t address) -> void { TSApplication::ilc()->reportServerID(address); });
+        TSApplication::ilc()->clear();
+        TSApplication::instance().callFunctionOnIlcs(
+                [](uint8_t address) -> void { TSApplication::ilc()->reportServerID(address); });
 
-    IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
+        IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
 
-    Events::ThermalInfo::instance().log();
+        Events::ThermalInfo::instance().log();
+    } catch (std::exception &ex) {
+        SPDLOG_WARN("Cannot communicate with FCU's ILCs on startup: {}", ex.what());
+    }
 
     TSPublisher::instance().startFlowMeterThread();
 
@@ -83,6 +92,7 @@ void SAL_start::execute() {
     }
 
     Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
+    Events::EngineeringMode::instance().send();
     ackComplete();
     SPDLOG_INFO("Started");
 }
@@ -178,6 +188,12 @@ bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance
 
 void SAL_coolantPumpPower::execute() {
     IFPGA::get().setCoolantPumpPower(params.power);
+    if (params.power) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+        TSPublisher::instance().startPumpThread();
+    } else {
+        TSPublisher::instance().stopPumpThread();
+    }
     ackComplete();
     SPDLOG_INFO("Glycol coolant pump powered {}", params.power ? "on" : "off");
 }

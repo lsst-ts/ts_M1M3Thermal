@@ -97,15 +97,16 @@ void Update::_sendFCU() {
         TSApplication::ilc()->clear();
 
         TSApplication::instance().callFunctionOnIlcs([](uint8_t address) -> void {
-            TSApplication::ilc()->reportServerStatus(address);
-            if (Events::SummaryState::instance().enabled()) {
+            if (Events::SummaryState::instance().active()) {
                 TSApplication::ilc()->reportThermalStatus(address);
+            } else {
+                TSApplication::ilc()->reportServerStatus(address);
             }
         });
 
         IFPGA::get().ilcCommands(*TSApplication::ilc(), 800);
 
-        if (Events::SummaryState::instance().enabled()) {
+        if (Events::SummaryState::instance().active()) {
             Telemetry::ThermalData::instance().send();
         }
     } catch (std::exception &e) {

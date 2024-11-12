@@ -135,7 +135,11 @@ void TSPublisher::startGlycolTemperatureThread() {
 }
 
 void TSPublisher::startPumpThread() {
-    delete pump_thread;
+    if (pump_thread != NULL) {
+        pump_thread->stop();
+        delete pump_thread;
+        pump_thread = NULL;
+    }
 #ifdef SIMULATOR
     pump_thread = new Telemetry::PumpThread(std::make_shared<SimulatedVFDPump>());
 #else

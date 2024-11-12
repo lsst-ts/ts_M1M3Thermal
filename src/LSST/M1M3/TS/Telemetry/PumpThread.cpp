@@ -91,13 +91,20 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
                 SPDLOG_WARN("Cannot send VFD: {}", ret);
             }
             error_count = 0;
-        } catch (std::runtime_error& er) {
-            if (error_count == 0) {
-                SPDLOG_ERROR("Error in running Glycol Pump thread: {}", er.what());
-            }
+        } catch (std::exception& ex) {
+            // if (error_count == 0) {
+            SPDLOG_ERROR("Error in running Glycol Pump thread: {}", ex.what());
+            //}
             error_count++;
             std::this_thread::sleep_for(2s);
-            _transport->flush();
+            //	    try {
+            //               _transport->flush();
+            //	       SPDLOG_INFO("Flushed Pump FIFOs");
+            //	    } catch (std::runtime_error& er) {
+            //	SPDLOG_WARN("Error in flushing data: {}", er.what());
+
+            //            }
+            //	    std::this_thread::sleep_for(100ms);
         }
 
         runCondition.wait_until(lock, end);
