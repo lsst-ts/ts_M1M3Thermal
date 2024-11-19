@@ -30,8 +30,7 @@
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-PumpThread::PumpThread(std::shared_ptr<VFD> vfd, std::shared_ptr<Transports::Transport> transport) {
-    _vfd = vfd;
+PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
     _transport = transport;
     commandedFrequency = NAN;
     targetFrequency = NAN;
@@ -43,30 +42,82 @@ PumpThread::PumpThread(std::shared_ptr<VFD> vfd, std::shared_ptr<Transports::Tra
 
 void PumpThread::run(std::unique_lock<std::mutex>& lock) {
     runCondition.wait_for(lock, std::chrono::seconds(3));
+    int error_count = 0;
 
     SPDLOG_INFO("Running Pump Thread.");
     while (keepRunning) {
         auto end = std::chrono::steady_clock::now() + 2s;
 
-        _vfd->readInfo();
+        try {
+            vfd.clear();
 
-        _transport->commands(*_vfd, 2s, this);
+            switch (_next_request) {
+                case START:
+                    vfd.start();
+                    break;
+                case STOP:
+                    vfd.stop();
+                    break;
+                case RESET:
+                    vfd.reset();
+                    break;
+                case FREQ:
+                    vfd.setFrequency(_target_frequency);
+                    break;
+                case NOP:
+                    break;
+            }
 
-        commandedFrequency = _vfd->getCommandedFrequency();
-        targetFrequency = _vfd->getTargetFrequency();
-        outputFrequency = _vfd->getOutputFrequency();
-        outputCurrent = _vfd->getOutputCurrent();
-        busVoltage = _vfd->getDCBusVoltage();
-        outputVoltage = _vfd->getOutputVoltage();
+            if (_next_request != NOP) {
+                _transport->commands(vfd, 2s, this);
+                _next_request = NOP;
+            }
 
-        salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
-        if (ret != SAL__OK) {
-            SPDLOG_WARN("Cannot send VFD: {}", ret);
-            return;
+            vfd.readInfo();
+
+            _transport->commands(vfd, 2s, this);
+
+            Events::GlycolPumpStatus::instance().update(&vfd);
+
+            commandedFrequency = vfd.getCommandedFrequency();
+            targetFrequency = vfd.getTargetFrequency();
+            outputFrequency = vfd.getOutputFrequency();
+            outputCurrent = vfd.getOutputCurrent();
+            busVoltage = vfd.getDCBusVoltage();
+            outputVoltage = vfd.getOutputVoltage();
+
+            salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
+            if (ret != SAL__OK) {
+                SPDLOG_WARN("Cannot send VFD: {}", ret);
+            }
+            error_count = 0;
+        } catch (std::exception& ex) {
+            // if (error_count == 0) {
+            SPDLOG_ERROR("Error in running Glycol Pump thread: {}", ex.what());
+            //}
+            error_count++;
+            std::this_thread::sleep_for(2s);
+            //	    try {
+            //               _transport->flush();
+            //	       SPDLOG_INFO("Flushed Pump FIFOs");
+            //	    } catch (std::runtime_error& er) {
+            //	SPDLOG_WARN("Error in flushing data: {}", er.what());
+
+            //            }
+            //	    std::this_thread::sleep_for(100ms);
         }
 
         runCondition.wait_until(lock, end);
     }
 
     SPDLOG_DEBUG("Pump Thread Stopped.");
+}
+
+void PumpThread::start_pump() { _next_request = START; }
+
+void PumpThread::stop_pump() { _next_request = STOP; }
+void PumpThread::reset_pump() { _next_request = RESET; }
+void PumpThread::set_target_frequency(float frequency) {
+    _target_frequency = frequency;
+    _next_request = FREQ;
 }

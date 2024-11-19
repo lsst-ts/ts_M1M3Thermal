@@ -58,8 +58,6 @@ private:
     uint32_t _session;
 
     std::map<size_t, NiFpga_IrqContext> _contexes;
-
-    void _busFifos(uint8_t bus_number, uint32_t &write_bus, uint32_t &read_bus);
 };
 
 }  // namespace TS

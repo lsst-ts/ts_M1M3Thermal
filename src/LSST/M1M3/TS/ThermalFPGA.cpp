@@ -42,7 +42,6 @@ ThermalFPGA::ThermalFPGA() : IFPGA() {
 }
 
 ThermalFPGA::~ThermalFPGA() {}
-
 void ThermalFPGA::initialize() {
     SPDLOG_DEBUG("ThermalFPGA: initialize()");
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_Initialize());
@@ -57,22 +56,14 @@ void ThermalFPGA::open() {
         case NiFpga_FpgaViState_Invalid:
             NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Download", NiFpga_Download(_session));
         case NiFpga_FpgaViState_NaturallyStopped:
-            NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Reset", NiFpga_Reset(_session));
         case NiFpga_FpgaViState_NotRunning:
-            NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Run", NiFpga_Run(_session, 0));
-            break;
         case NiFpga_FpgaViState_Running:
             NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Reset", NiFpga_Reset(_session));
             NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Run", NiFpga_Run(_session, 0));
             break;
+        default:
+            throw std::runtime_error(fmt::format("Unknow FPGA state: {}", ni_state));
     }
-    // NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Abort", NiFpga_Abort(_session));
-    // NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Download", NiFpga_Download(_session));
-    // NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Reset", NiFpga_Reset(_session));
-
-    // std::this_thread::sleep_for(2s);
-
-    // TSPublisher::instance().startGlycolTemperatureThread();
 }
 
 void ThermalFPGA::close() {
@@ -157,23 +148,4 @@ void ThermalFPGA::waitOnIrqs(uint32_t irqs, uint32_t timeout, bool &timedout, ui
 
 void ThermalFPGA::ackIrqs(uint32_t irqs) {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_AcknowledgeIrqs(_session, irqs));
-}
-
-void ThermalFPGA::_busFifos(uint8_t bus_number, uint32_t &write_bus, uint32_t &read_bus) {
-    switch (bus_number) {
-        case SerialBusses::GLYCOOL_BUS:
-            write_bus = NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite;
-            read_bus = NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead;
-            break;
-        case SerialBusses::FLOWMETER_BUS:
-            write_bus = NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeterWrite;
-            read_bus = NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeterRead;
-            break;
-        case SerialBusses::TEMPERATURE_BUS:
-            write_bus = NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_CoolantTempWrite;
-            read_bus = NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_CoolantTempRead;
-            break;
-        default:
-            throw std::runtime_error(fmt::format("Invalid bus number - {}", bus_number));
-    }
 }

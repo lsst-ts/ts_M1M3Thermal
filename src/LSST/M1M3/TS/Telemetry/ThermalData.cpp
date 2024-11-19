@@ -30,7 +30,9 @@
 using namespace LSST::M1M3::TS;
 using namespace LSST::M1M3::TS::Telemetry;
 
-ThermalData::ThermalData(token) {
+ThermalData::ThermalData(token) { reset(); }
+
+void ThermalData::reset() {
     for (int i = 0; i < LSST::cRIO::NUM_TS_ILC; i++) {
         ilcFault[i] = false;
         heaterDisabled[i] = true;

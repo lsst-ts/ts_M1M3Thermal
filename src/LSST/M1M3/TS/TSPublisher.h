@@ -78,6 +78,8 @@ public:
 #endif
     }
 
+    Telemetry::PumpThread *pump_thread;
+
 private:
     std::shared_ptr<SAL_MTM1M3TS> _m1m3TSSAL;
 
@@ -85,7 +87,6 @@ private:
 
     Telemetry::FlowMeterThread *_flowMeterThread;
     Telemetry::GlycolTemperatureThread *_glycolTemperatureThread;
-    Telemetry::PumpThread *_pumpThread;
 };
 
 }  // namespace TS

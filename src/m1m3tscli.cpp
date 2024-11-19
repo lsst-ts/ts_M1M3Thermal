@@ -46,7 +46,6 @@
 #define FPGAClass ThermalFPGA
 #endif
 
-#include <MPU/FactoryInterface.h>
 #include <MPU/FlowMeter.h>
 #include <MPU/GlycolTemperature.h>
 #ifdef SIMULATOR
@@ -92,6 +91,7 @@ public:
     int openFPGA(command_vec cmds) override;
 
     int mpuRead(command_vec cmds);
+    int mpuFlush(command_vec cmds);
     int mpuTelemetry(command_vec cmds);
     int mpuWrite(command_vec cmds);
     int printFlowMeter(command_vec cmds);
@@ -149,26 +149,13 @@ private:
     void _printTimestamp(std::string prefix, bool nullTimer);
 };
 
-class PrintMPUFactory : public FactoryInterface {
-public:
-    PrintMPUFactory(std::shared_ptr<FlowMeterPrint> flowMeter, std::shared_ptr<VFDPrint> vfd) {
-        _flowMeter = flowMeter;
-        _vfd = vfd;
-    }
-
-    std::shared_ptr<FlowMeter> createFlowMeter() override { return _flowMeter; }
-    std::shared_ptr<VFD> createVFD() override { return _vfd; }
-
-private:
-    std::shared_ptr<FlowMeterPrint> _flowMeter;
-    std::shared_ptr<VFDPrint> _vfd;
-};
-
 #define ILC_ARG "<ILC..>"
 
 M1M3TScli::M1M3TScli(const char *name, const char *description) : FPGACliApp(name, description) {
     addCommand("mpu-read", std::bind(&M1M3TScli::mpuRead, this, std::placeholders::_1), "SS?", NEED_FPGA,
                "<mpu> <register[:length]>..", "Reads given MPU registers");
+    addCommand("mpu-flush", std::bind(&M1M3TScli::mpuFlush, this, std::placeholders::_1), "s", NEED_FPGA,
+               "[mpu]", "Flush MPU port");
     addCommand("mpu-telemetry", std::bind(&M1M3TScli::mpuTelemetry, this, std::placeholders::_1), "s",
                NEED_FPGA, "[mpu]", "Reads MPU telemetry");
     addCommand("mpu-write", std::bind(&M1M3TScli::mpuWrite, this, std::placeholders::_1), "SII", NEED_FPGA,
@@ -255,6 +242,8 @@ int M1M3TScli::openFPGA(command_vec cmds) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     addThread(glycolTemperatureBus.get());
 
+    addMPU("temp", glycolTemperatureBus);
+
     return ret;
 }
 
@@ -294,6 +283,20 @@ int M1M3TScli::mpuRead(command_vec cmds) {
             std::cout << fmt::format("{0:>5d} (0x{0:04x}): {1:d} (0x{1:x})", r.first + i, v) << std::endl;
         }
     }
+
+    return 0;
+}
+
+int M1M3TScli::mpuFlush(command_vec cmds) {
+    auto mpu = getMPU(cmds[0]);
+    auto transport = get_transport(mpu);
+    if (mpu == NULL || transport == NULL) {
+        std::cerr << "Invalid MPU device name " << cmds[0] << ". List of known devices: " << std::endl;
+        printMPU();
+        return -1;
+    }
+
+    transport->flush();
 
     return 0;
 }
@@ -401,11 +404,7 @@ int M1M3TScli::fcuOnOff(command_vec cmds) {
 
 int M1M3TScli::pumpOnOff(command_vec cmds) { return 0; }
 
-FPGA *M1M3TScli::newFPGA(const char *dir, bool &fpga_singleton) {
-    PrintTSFPGA *printFPGA = new PrintTSFPGA();
-    printFPGA->setMPUFactory(std::make_shared<PrintMPUFactory>(flowMeter, vfd));
-    return printFPGA;
-}
+FPGA *M1M3TScli::newFPGA(const char *dir, bool &fpga_singleton) { return new PrintTSFPGA(); }
 
 int M1M3TScli::fcuBroadcast(command_vec cmds) {
     uint8_t heater = std::stoi(cmds[0]);

@@ -31,10 +31,6 @@
 #include <cRIO/MPU.h>
 #include <cRIO/MPUTelemetry.h>
 
-#include <MPU/FactoryInterface.h>
-#include <MPU/FlowMeter.h>
-#include <MPU/VFD.h>
-
 namespace LSST {
 namespace M1M3 {
 namespace TS {
@@ -68,8 +64,6 @@ public:
     IFPGA();
     virtual ~IFPGA() {}
 
-    void setMPUFactory(std::shared_ptr<FactoryInterface> _factory);
-
     static IFPGA &get();
 
     virtual void readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) = 0;
@@ -90,11 +84,6 @@ public:
     void setCoolantPumpPower(bool on);
 
     void setHeartbeat(bool heartbeat);
-
-    std::shared_ptr<FactoryInterface> mpuFactory;
-
-    std::shared_ptr<VFD> vfd;
-    std::shared_ptr<FlowMeter> flowMeter;
 };
 
 }  // namespace TS

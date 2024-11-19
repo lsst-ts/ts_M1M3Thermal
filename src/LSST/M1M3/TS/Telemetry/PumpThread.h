@@ -35,19 +35,29 @@ namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
+typedef enum { NOP, START, STOP, RESET, FREQ } request_type;
+
 /**
  * Thread reading out pump values. Started from TSPublisher when CSC
  * enteres disabled state, updates SAL VFD pump telemetery.
  */
 class PumpThread final : public cRIO::Thread, MTM1M3TS_glycolPumpC {
 public:
-    PumpThread(std::shared_ptr<VFD> vfd, std::shared_ptr<Transports::Transport> transport);
+    PumpThread(std::shared_ptr<Transports::Transport> transport);
 
     void run(std::unique_lock<std::mutex>& lock) override;
 
+    void start_pump();
+    void stop_pump();
+    void reset_pump();
+    void set_target_frequency(float frequency);
+
 private:
-    std::shared_ptr<VFD> _vfd;
+    VFD vfd;
     std::shared_ptr<Transports::Transport> _transport;
+
+    std::atomic<request_type> _next_request;
+    float _target_frequency;
 };
 
 }  // namespace Telemetry

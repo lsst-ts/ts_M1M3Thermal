@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v1.0.1
+------
+
+* Improved error response on pump readout
+
 v1.0.0
 ------
 

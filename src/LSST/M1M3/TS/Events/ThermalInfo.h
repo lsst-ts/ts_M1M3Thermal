@@ -37,6 +37,8 @@ namespace Events {
 class ThermalInfo : public MTM1M3TS_logevent_thermalInfoC, public cRIO::Singleton<ThermalInfo> {
 public:
     ThermalInfo(token);
+
+    void reset();
     void processServerID(uint8_t address, uint8_t ilcIndex, uint64_t uniqueID, uint8_t ilcAppType,
                          uint8_t networkNodeType, uint8_t ilcSelectedOptions, uint8_t networkNodeOptions,
                          uint8_t majorRev, uint8_t minorRev, std::string firmwareName);

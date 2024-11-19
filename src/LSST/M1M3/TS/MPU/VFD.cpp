@@ -30,10 +30,8 @@
 using namespace LSST::M1M3::TS;
 
 void VFD::readInfo() {
-    clear();
-
-    readHoldingRegisters(0x2000, 3, 255);
-    readHoldingRegisters(0x2100, 7, 255);
+    readHoldingRegisters(0x2000, 3, 1500);
+    readHoldingRegisters(0x2100, 7, 1500);
 }
 
 const char *VFD::getDriveError(uint16_t code) {
@@ -74,8 +72,8 @@ void VFDPrint::print() {
 
     uint16_t bits = getVelocityPositionBits();
 
-    std::cout << std::setfill(' ') << std::setw(20) << "Status: "
-              << "0x" << std::hex << getStatus() << std::endl
+    std::cout << std::setfill(' ') << std::setw(20) << "Status: " << "0x" << std::hex << getStatus()
+              << std::endl
               << std::setw(20) << "Commanded Freq.: " << std::fixed << std::setprecision(2)
               << getCommandedFrequency() << std::endl
               << std::setw(20) << "Vel./Pos. Bits: " << std::hex << bits << std::dec << std::endl;

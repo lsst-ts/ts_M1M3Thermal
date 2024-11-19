@@ -48,13 +48,6 @@ IFPGA &IFPGA::get() {
 #endif
 }
 
-void IFPGA::setMPUFactory(std::shared_ptr<FactoryInterface> _factory) {
-    mpuFactory = _factory;
-
-    flowMeter = mpuFactory->createFlowMeter();
-    vfd = mpuFactory->createVFD();
-}
-
 float IFPGA::getMixingValvePosition() {
     uint16_t buf = FPGAAddress::MIXING_VALVE_POSITION;
     writeRequestFIFO(&buf, 1, 1);
