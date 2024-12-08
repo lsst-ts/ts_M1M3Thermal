@@ -19,3 +19,7 @@ MixingValve:
   PositionFeedback:
     FullyClosed: 0.03
     FullyOpened: 9.64
+
+Setpoint:
+  Low: -15
+  High: 15

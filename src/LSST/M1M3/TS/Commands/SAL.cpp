@@ -33,6 +33,7 @@
 #include <Settings/Controller.h>
 #include <Settings/GlycolPump.h>
 #include <Settings/MixingValve.h>
+#include <Settings/Setpoint.h>
 #include <TSApplication.h>
 #include <TSPublisher.h>
 
@@ -59,7 +60,7 @@ bool SAL_start::validate() {
         params.configurationOverride = "Default";
     }
     if (params.configurationOverride[0] == '_') {
-        SPDLOG_ERROR("configurationOverride argument shall not start with _");
+        ackFailed("configurationOverride argument shall not start with _");
         return false;
     }
     return true;
@@ -80,7 +81,7 @@ void SAL_start::execute() {
 
         Events::ThermalInfo::instance().log();
     } catch (std::exception &ex) {
-        SPDLOG_WARN("Cannot communicate with FCU's ILCs on startup: {}", ex.what());
+        ackFailed(fmt::format("Cannot communicate with FCU's ILCs on startup: {}", ex.what()));
     }
 
     TSPublisher::instance().startFlowMeterThread();
@@ -133,6 +134,7 @@ void SAL_exitControl::execute() {
 
 bool SAL_setEngineeringMode::validate() {
     if (Events::SummaryState::instance().enabled() == false) {
+        ackFailed("To enter the engineering mode, CSC must be in enabled state.");
         return false;
     }
     return true;
@@ -144,14 +146,26 @@ void SAL_setEngineeringMode::execute() {
     SPDLOG_INFO("{} Engineering Mode", params.enableEngineeringMode ? "Entered" : "Exited");
 }
 
-bool SAL_fanCoilsHeatersPower::validate() { return Events::EngineeringMode::instance().isEnabled(); }
+bool SAL_fanCoilsHeatersPower::validate() {
+    if (Events::EngineeringMode::instance().isEnabled() == false) {
+        ackFailed("CSC must be in enabled state to set heater on.");
+        return false;
+    };
+    return true;
+}
 
 void SAL_fanCoilsHeatersPower::execute() {
     IFPGA::get().setFCUPower(params.power);
     SPDLOG_INFO("Turned Fan Coils Heaters Power {}", params.power ? "on" : "off");
 }
 
-bool SAL_heaterFanDemand::validate() { return Events::EngineeringMode::instance().isEnabled(); }
+bool SAL_heaterFanDemand::validate() {
+    if (Events::EngineeringMode::instance().isEnabled() == false) {
+        ackFailed("CSC must be in enabled state to set heater and fan demands.");
+        return false;
+    };
+    return true;
+}
 
 void SAL_heaterFanDemand::execute() {
     try {
@@ -172,6 +186,7 @@ void SAL_heaterFanDemand::execute() {
 
 bool SAL_setMixingValve::validate() {
     if (params.mixingValveTarget < 0 || params.mixingValveTarget > 100) {
+        ackFailed("Mixing valve target must be between 0 and 100.");
         return false;
     }
     return true;
@@ -212,7 +227,8 @@ void SAL_coolantPumpStop::execute() {
 
 bool SAL_coolantPumpFrequency::validate() {
     if (params.targetFrequency < 0) {
-        SPDLOG_WARN("Target frequency must be bigger than 0 Hz, was {:+0.02f} Hz", params.targetFrequency);
+        ackFailed(fmt::format("Target frequency must be bigger than 0 Hz, was {:+0.02f} Hz",
+                              params.targetFrequency));
         return false;
     }
     return true;
@@ -229,3 +245,16 @@ void SAL_coolantPumpReset::execute() {
     ackComplete();
     SPDLOG_INFO("Coolant pump reseted");
 }
+
+bool SAL_applySetpoint::validate() {
+    if (params.setpoint < Settings::Setpoint::instance().low ||
+        params.setpoint > Settings::Setpoint::instance().high) {
+        ackFailed(fmt::format("Temperature setpoint must be between {} and {}, attempted to set to {}.",
+                              Settings::Setpoint::instance().low, Settings::Setpoint::instance().high,
+                              params.setpoint));
+        return false;
+    }
+    return true;
+}
+
+void SAL_applySetpoint::execute() {}

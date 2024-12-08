@@ -1,7 +1,7 @@
 /*
  * This file is part of LSST M1M3 thermal system package.
  *
- * Developed for the LSST Telescope & Site Software
+ * Developed for the LSST Data Management System.
  * This product includes software developed by the LSST Project
  * (https://www.lsst.org).
  * See the COPYRIGHT file at the top-level directory of this distribution
@@ -22,30 +22,22 @@
  */
 
 #include <spdlog/spdlog.h>
-#include <yaml-cpp/yaml.h>
 
-#include <Settings/Controller.h>
-#include <Settings/FlowMeter.h>
-#include <Settings/GlycolPump.h>
-#include <Settings/MixingValve.h>
 #include <Settings/Setpoint.h>
-#include <Settings/Thermal.h>
 
 using namespace LSST::M1M3::TS::Settings;
 
-void Controller::load(const std::string &label) {
-    std::string filename = cRIO::Settings::Path::getFilePath("v1/_init.yaml");
-    SPDLOG_DEBUG("Using configuration file \"{}\"", filename);
+Setpoint::Setpoint(token) {
+    low = NAN;
+    high = NAN;
+}
+
+void Setpoint::load(YAML::Node doc) {
+    SPDLOG_TRACE("Loading mixing valve settigns");
     try {
-        YAML::Node doc = YAML::LoadFile(filename);
-
-        FlowMeter::instance().load(doc["FlowMeter"]);
-        GlycolPump::instance().load(doc["GlycolPump"]);
-        MixingValve::instance().load(doc["MixingValve"]);
-        Setpoint::instance().load(doc["Setpoint"]);
-        Thermal::instance().load(doc["FCU"]);
-
+        low = doc["Low"].as<float>();
+        high = doc["High"].as<float>();
     } catch (YAML::Exception &ex) {
-        throw std::runtime_error(fmt::format("YAML Loading {}: {}", filename, ex.what()));
+        throw std::runtime_error(fmt::format("Cannot load Setpoint settings: {}", ex.what()));
     }
 }
