@@ -96,7 +96,7 @@ void Update::_sendFCU() {
         Telemetry::ThermalData::instance().reset();
         TSApplication::ilc()->clear();
 
-        TSApplication::instance().callFunctionOnIlcs([](uint8_t address) -> void {
+        TSApplication::instance().callFunctionOnAllIlcs([](uint8_t address) -> void {
             if (Events::SummaryState::instance().active()) {
                 TSApplication::ilc()->reportThermalStatus(address);
             } else {

@@ -44,12 +44,11 @@ using namespace MTM1M3TS;
 
 void changeAllILCsMode(uint16_t mode) {
     TSApplication::ilc()->clear();
-    TSApplication::instance().callFunctionOnIlcs(
+    TSApplication::instance().callFunctionOnAllIlcs(
             [mode](uint8_t address) -> void { TSApplication::ilc()->changeILCMode(address, mode); });
 
     try {
         IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
-
     } catch (std::exception &ex) {
         SPDLOG_WARN(ex.what());
     }
@@ -74,7 +73,7 @@ void SAL_start::execute() {
         changeAllILCsMode(ILC::Mode::Disabled);
 
         TSApplication::ilc()->clear();
-        TSApplication::instance().callFunctionOnIlcs(
+        TSApplication::instance().callFunctionOnAllIlcs(
                 [](uint8_t address) -> void { TSApplication::ilc()->reportServerID(address); });
 
         IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
@@ -171,7 +170,7 @@ void SAL_heaterFanDemand::execute() {
     try {
         TSApplication::ilc()->clear();
 
-        TSApplication::instance().callFunctionOnIlcs([this](uint8_t address) -> void {
+        TSApplication::instance().callFunctionOnAllIlcs([this](uint8_t address) -> void {
             TSApplication::ilc()->setThermalDemand(address, params.heaterPWM[address - 1],
                                                    params.fanRPM[address - 1]);
         });

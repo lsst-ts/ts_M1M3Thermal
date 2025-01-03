@@ -26,7 +26,7 @@
 
 using namespace LSST::M1M3::TS;
 
-void TSApplication::callFunctionOnIlcs(std::function<void(uint8_t)> func) {
+void TSApplication::callFunctionOnAllIlcs(std::function<void(uint8_t)> func) {
     for (int address = 1; address <= LSST::cRIO::NUM_TS_ILC; address++) {
         if (Events::EnabledILC::instance().isEnabled(address - 1)) {
             func(address);

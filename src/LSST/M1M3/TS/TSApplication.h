@@ -37,7 +37,7 @@ public:
 
     void setILC(SALThermalILC *ilc) { _ilc = ilc; }
 
-    void callFunctionOnIlcs(std::function<void(uint8_t)> func);
+    void callFunctionOnAllIlcs(std::function<void(uint8_t)> func);
 
     static SALThermalILC *ilc() { return instance()._ilc; }
 
