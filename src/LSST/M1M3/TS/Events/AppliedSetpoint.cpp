@@ -1,5 +1,5 @@
 /*
- * GlycolTemperatureThread telemetry handling class.
+ * Publish AppliedSetpoint event.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,25 +20,35 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cmath>
-
 #include <spdlog/spdlog.h>
 
-#include "Events/SummaryState.h"
-#include "IFPGA.h"
-#include "TSPublisher.h"
-#include "Telemetry/GlycolLoopTemperature.h"
-#include "Telemetry/GlycolTemperatureThread.h"
+#include <Events/AppliedSetpoint.h>
+#include <TSPublisher.h>
 
-using namespace LSST::M1M3::TS;
-using namespace LSST::M1M3::TS::Telemetry;
+using namespace LSST::M1M3::TS::Events;
 
-GlycolTemperatureThread::GlycolTemperatureThread(std::shared_ptr<Transports::Transport> transport)
-        : GlycolTemperature(transport) {}
+AppliedSetpoint::AppliedSetpoint(token) { reset(); }
 
-void GlycolTemperatureThread::updated() {
-    if (Events::SummaryState::instance().active() == false) {
+void AppliedSetpoint::reset() {
+    setpoint = NAN;
+    _updated = false;
+}
+
+void AppliedSetpoint::send() {
+    if (_updated == false) {
         return;
     }
-    GlycolLoopTemperature::instance().update(getTemperatures());
+    salReturn ret = TSPublisher::SAL()->putSample_logevent_appliedSetpoint(this);
+    if (ret != SAL__OK) {
+        SPDLOG_WARN("Cannot publish appliedSetpoint: {}", ret);
+        return;
+    }
+    _updated = false;
+}
+
+void AppliedSetpoint::setAppliedSetpoint(float new_setpoint) {
+    if (setpoint != new_setpoint) {
+        setpoint = new_setpoint;
+        _updated = true;
+    }
 }

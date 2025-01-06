@@ -1,5 +1,5 @@
 /*
- * GlycolTemperatureThread telemetry handling class.
+ * AppliedSetpoint event handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,25 +20,37 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cmath>
+#ifndef _TS_Event_AppliedSetpoint_
+#define _TS_Event_AppliedSetpoint_
 
-#include <spdlog/spdlog.h>
+#include <SAL_MTM1M3TS.h>
+#include <cRIO/Singleton.h>
 
-#include "Events/SummaryState.h"
-#include "IFPGA.h"
-#include "TSPublisher.h"
-#include "Telemetry/GlycolLoopTemperature.h"
-#include "Telemetry/GlycolTemperatureThread.h"
+namespace LSST {
+namespace M1M3 {
+namespace TS {
+namespace Events {
 
-using namespace LSST::M1M3::TS;
-using namespace LSST::M1M3::TS::Telemetry;
+class AppliedSetpoint final : MTM1M3TS_logevent_appliedSetpointC, public cRIO::Singleton<AppliedSetpoint> {
+public:
+    AppliedSetpoint(token);
 
-GlycolTemperatureThread::GlycolTemperatureThread(std::shared_ptr<Transports::Transport> transport)
-        : GlycolTemperature(transport) {}
+    void reset();
 
-void GlycolTemperatureThread::updated() {
-    if (Events::SummaryState::instance().active() == false) {
-        return;
-    }
-    GlycolLoopTemperature::instance().update(getTemperatures());
-}
+    /**
+     * Sends updates through SAL/DDS.
+     */
+    void send();
+
+    void setAppliedSetpoint(float new_setpoint);
+
+private:
+    bool _updated;
+};
+
+}  // namespace Events
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST
+
+#endif  // !_TS_Event_AppliedSetpoint_

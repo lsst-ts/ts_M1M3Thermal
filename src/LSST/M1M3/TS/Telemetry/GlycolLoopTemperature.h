@@ -1,5 +1,5 @@
 /*
- * GlycolTemperatureThread telemetry handling class.
+ * GlycolLoopTemperature telemetry handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,25 +20,36 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cmath>
+#ifndef _TS_Telemetry_GlycolLoopTemperature_
+#define _TS_Telemetry_GlycolLoopTemperature_
 
-#include <spdlog/spdlog.h>
+#include <mutex>
+#include <vector>
 
-#include "Events/SummaryState.h"
-#include "IFPGA.h"
-#include "TSPublisher.h"
-#include "Telemetry/GlycolLoopTemperature.h"
-#include "Telemetry/GlycolTemperatureThread.h"
+#include <SAL_MTM1M3TS.h>
+#include <cRIO/Singleton.h>
 
-using namespace LSST::M1M3::TS;
-using namespace LSST::M1M3::TS::Telemetry;
+namespace LSST {
+namespace M1M3 {
+namespace TS {
+namespace Telemetry {
 
-GlycolTemperatureThread::GlycolTemperatureThread(std::shared_ptr<Transports::Transport> transport)
-        : GlycolTemperature(transport) {}
+class GlycolLoopTemperature final : MTM1M3TS_glycolLoopTemperatureC,
+                                    public cRIO::Singleton<GlycolLoopTemperature> {
+public:
+    GlycolLoopTemperature(token);
 
-void GlycolTemperatureThread::updated() {
-    if (Events::SummaryState::instance().active() == false) {
-        return;
-    }
-    GlycolLoopTemperature::instance().update(getTemperatures());
-}
+    void update(const std::vector<float> &temperatures);
+
+    float getAirTemperature();
+
+private:
+    std::mutex _access_mutex;
+};
+
+}  // namespace Telemetry
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST
+
+#endif  // !_TS_Telemetry_GlycolLoopTemperature_

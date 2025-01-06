@@ -27,6 +27,7 @@
 #include <cRIO/ControllerThread.h>
 
 #include <Commands/SAL.h>
+#include <Events/AppliedSetpoint.h>
 #include <Events/EngineeringMode.h>
 #include <Events/SummaryState.h>
 #include <Events/ThermalInfo.h>
@@ -256,4 +257,7 @@ bool SAL_applySetpoint::validate() {
     return true;
 }
 
-void SAL_applySetpoint::execute() {}
+void SAL_applySetpoint::execute() {
+    Events::AppliedSetpoint::instance().setAppliedSetpoint(params.setpoint);
+    Events::AppliedSetpoint::instance().send();
+}

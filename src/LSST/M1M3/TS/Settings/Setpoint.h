@@ -42,6 +42,9 @@ public:
 
     void load(YAML::Node doc);
 
+    float timestep;
+    float precision;
+
     float high;
     float low;
 };

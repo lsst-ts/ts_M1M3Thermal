@@ -34,7 +34,7 @@ namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
-class GlycolTemperatureThread final : MTM1M3TS_glycolLoopTemperatureC, public GlycolTemperature {
+class GlycolTemperatureThread final : public GlycolTemperature {
 public:
     GlycolTemperatureThread(std::shared_ptr<Transports::Transport> transport);
 

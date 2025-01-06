@@ -21,5 +21,10 @@ MixingValve:
     FullyOpened: 9.64
 
 Setpoint:
+  # Loop run time in seconds
+  Timestep: 60
+  # Target temperature control precission in degrees C
+  Precision: 0.05
+  # Allowed minimal and maximal setpoints
   Low: -15
-  High: 15
+  High: 25

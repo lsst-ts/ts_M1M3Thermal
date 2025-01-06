@@ -35,6 +35,9 @@ Setpoint::Setpoint(token) {
 void Setpoint::load(YAML::Node doc) {
     SPDLOG_TRACE("Loading mixing valve settigns");
     try {
+        timestep = doc["Timestep"].as<float>();
+        precision = doc["Precision"].as<float>();
+
         low = doc["Low"].as<float>();
         high = doc["High"].as<float>();
     } catch (YAML::Exception &ex) {

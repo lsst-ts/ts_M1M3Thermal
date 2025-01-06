@@ -33,6 +33,9 @@
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
 
+#include <Settings/Setpoint.h>
+
+#include "Telemetry/GlycolLoopTemperature.h"
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
 
@@ -49,6 +52,8 @@ LSST::cRIO::task_return_t Update::run() {
     _sendFCU();
 
     _sendMixingValve();
+
+    _temperatureControlLoop();
 
     Events::EnabledILC::instance().send();
 
@@ -112,4 +117,17 @@ void Update::_sendFCU() {
     } catch (std::exception &e) {
         SPDLOG_WARN("Cannot poll FCU: {}", e.what());
     }
+}
+
+void Update::_temperatureControlLoop() {
+    static auto next_update =
+            std::chrono::steady_clock::now() -
+            std::chrono::milliseconds(int(Settings::Setpoint::instance().timestep * 1000.0));
+
+    auto now = std::chrono::steady_clock::now();
+    if (now < next_update) {
+        return;
+    }
+
+    auto current = Telemetry::GlycolLoopTemperature::instance().getAirTemperature();
 }
