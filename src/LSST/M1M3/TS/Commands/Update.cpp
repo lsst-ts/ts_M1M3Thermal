@@ -28,7 +28,9 @@
 
 #include "Commands/Update.h"
 
+#include "Events/AppliedSetpoint.h"
 #include "Events/EnabledILC.h"
+#include "Events/EngineeringMode.h"
 #include "Events/Heartbeat.h"
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
@@ -120,14 +122,47 @@ void Update::_sendFCU() {
 }
 
 void Update::_temperatureControlLoop() {
-    static auto next_update =
-            std::chrono::steady_clock::now() -
-            std::chrono::milliseconds(int(Settings::Setpoint::instance().timestep * 1000.0));
+    auto timestep_ms = std::chrono::milliseconds(int(Settings::Setpoint::instance().timestep * 1000.0));
+
+    static auto next_update = std::chrono::steady_clock::now() - timestep_ms;
 
     auto now = std::chrono::steady_clock::now();
     if (now < next_update) {
         return;
     }
 
-    auto current = Telemetry::GlycolLoopTemperature::instance().getAirTemperature();
+    next_update += timestep_ms;
+
+    if (Events::SummaryState::instance().enabled() == false ||
+        Events::EngineeringMode::instance().isEnabled() == true) {
+        return;
+    }
+
+    auto mirrorLoop = Telemetry::GlycolLoopTemperature::instance().getMirrorLoopAverage();
+    float targetTemp = Events::AppliedSetpoint::instance().getAppliedSetpoint();
+    static float new_valve_position = 10.0;
+
+    float diff = mirrorLoop - targetTemp;
+    auto tolerance = Settings::Setpoint::instance().tolerance;
+
+    auto mixingValveStep = Settings::Setpoint::instance().mixingValveStep;
+
+    if (diff > tolerance) {
+        new_valve_position -= mixingValveStep;
+    } else if (diff < -tolerance) {
+        new_valve_position += mixingValveStep;
+    } else {
+        return;
+    }
+
+    if (new_valve_position > 100.0) {
+        new_valve_position = 100.0;
+    } else if (new_valve_position < 0) {
+        new_valve_position = 0;
+    }
+
+    SPDLOG_INFO("TemperatureControlLoop: new valve position is {}, temperature difference was {}",
+                new_valve_position, diff);
+
+    IFPGA::get().setMixingValvePosition(new_valve_position);
 }

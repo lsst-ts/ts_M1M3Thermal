@@ -23,8 +23,11 @@ MixingValve:
 Setpoint:
   # Loop run time in seconds
   Timestep: 60
-  # Target temperature control precission in degrees C
-  Precision: 0.05
+  # Target temperature control tolerance in degrees C
+  Tolerance: 0.05
+  # Mixing valve step size - change in % every time difference between coolant temperature and target temperature is greater than tolerance
+  MixingValveStep: 5
+
   # Allowed minimal and maximal setpoints
   Low: -15
   High: 25

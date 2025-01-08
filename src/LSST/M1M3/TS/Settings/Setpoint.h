@@ -43,7 +43,8 @@ public:
     void load(YAML::Node doc);
 
     float timestep;
-    float precision;
+    float tolerance;
+    float mixingValveStep;
 
     float high;
     float low;

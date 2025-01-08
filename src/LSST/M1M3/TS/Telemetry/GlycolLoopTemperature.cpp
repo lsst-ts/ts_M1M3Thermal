@@ -59,7 +59,37 @@ void GlycolLoopTemperature::update(const std::vector<float> &temperatures) {
     }
 }
 
-float GlycolLoopTemperature::getAirTemperature() {
+float GlycolLoopTemperature::getAboveMirrorTemperature() {
+    std::lock_guard<std::mutex> lock(_access_mutex);
+    return aboveMirrorTemperature;
+}
+
+float GlycolLoopTemperature::getMirrorCellInsideTemperature() {
     std::lock_guard<std::mutex> lock(_access_mutex);
     return (insideCellTemperature1 + insideCellTemperature2 + insideCellTemperature3) / 3.0;
+}
+
+float GlycolLoopTemperature::getMirrorLoopAverage() {
+    std::lock_guard<std::mutex> lock(_access_mutex);
+    return (mirrorCoolantSupplyTemperature + mirrorCoolantReturnTemperature) / 2.0;
+}
+
+float GlycolLoopTemperature::getMirrorLoopSupply() {
+    std::lock_guard<std::mutex> lock(_access_mutex);
+    return mirrorCoolantSupplyTemperature;
+}
+
+float GlycolLoopTemperature::getMirrorLoopReturn() {
+    std::lock_guard<std::mutex> lock(_access_mutex);
+    return mirrorCoolantReturnTemperature;
+}
+
+float GlycolLoopTemperature::getTelescopeLoopSupply() {
+    std::lock_guard<std::mutex> lock(_access_mutex);
+    return telescopeCoolantSupplyTemperature;
+}
+
+float GlycolLoopTemperature::getTelescopeLoopReturn() {
+    std::lock_guard<std::mutex> lock(_access_mutex);
+    return telescopeCoolantReturnTemperature;
 }

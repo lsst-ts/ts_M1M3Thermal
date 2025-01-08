@@ -44,6 +44,8 @@ public:
 
     void setAppliedSetpoint(float new_setpoint);
 
+    float getAppliedSetpoint();
+
 private:
     bool _updated;
 };

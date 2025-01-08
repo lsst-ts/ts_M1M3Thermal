@@ -36,10 +36,20 @@ void Setpoint::load(YAML::Node doc) {
     SPDLOG_TRACE("Loading mixing valve settigns");
     try {
         timestep = doc["Timestep"].as<float>();
-        precision = doc["Precision"].as<float>();
+        tolerance = doc["Tolerance"].as<float>();
+        if (tolerance <= 0) {
+            throw std::runtime_error("Setpoint/Tolerance must be greater than 0");
+        }
+        mixingValveStep = doc["MixingValveStep"].as<float>();
+        if (mixingValveStep <= 0) {
+            throw std::runtime_error("Setpoint/MixingValveStep must be greater than 0");
+        }
 
         low = doc["Low"].as<float>();
         high = doc["High"].as<float>();
+        if (low >= high) {
+            throw std::runtime_error("Setpoint/Low must be less than Setpoint/High");
+        }
     } catch (YAML::Exception &ex) {
         throw std::runtime_error(fmt::format("Cannot load Setpoint settings: {}", ex.what()));
     }

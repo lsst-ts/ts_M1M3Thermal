@@ -34,6 +34,7 @@ using namespace LSST::M1M3::TS;
 
 SimulatedFPGA::SimulatedFPGA() : ILC::ILCBusList(1), IFPGA(), ThermalILC(1), _U16ResponseStatus(IDLE) {
     _broadcastCounter = 0;
+    _mixingValve = 0;
     srandom(time(NULL));
     for (int i = 0; i < NUM_TS_ILC; i++) {
         _mode[i] = ILC::Mode::Standby;
@@ -49,6 +50,14 @@ void SimulatedFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t tim
     while (d < data + length) {
         size_t dl;
         switch (*d) {
+            case FPGAAddress::MIXING_VALVE_POSITION:
+                d++;
+                break;
+            case FPGAAddress::MIXING_VALVE_COMMAND:
+                d++;
+                memcpy(&_mixingValve, d, 4);
+                d += 2;
+                break;
             case FPGAAddress::MODBUS_A_TX:
                 d++;
                 dl = *d;
@@ -58,9 +67,6 @@ void SimulatedFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t tim
                 break;
             case FPGAAddress::HEARTBEAT:
                 d += 2;
-                break;
-            case FPGAAddress::GLYCOLTEMP_TEMPERATURES:
-                d++;
                 break;
             // modbus software trigger
             case 252:
@@ -83,7 +89,7 @@ void SimulatedFPGA::writeRequestFIFO(uint16_t *data, size_t length, uint32_t tim
 
 void SimulatedFPGA::readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) {
     for (size_t i = 0; i < length; i++) {
-        data[i] = i + random() / (float)RAND_MAX;
+        data[i] = _mixingValve + random() / (float)RAND_MAX / 1000.0;
     }
 }
 

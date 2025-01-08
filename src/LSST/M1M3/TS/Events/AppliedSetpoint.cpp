@@ -52,3 +52,5 @@ void AppliedSetpoint::setAppliedSetpoint(float new_setpoint) {
         _updated = true;
     }
 }
+
+float AppliedSetpoint::getAppliedSetpoint() { return setpoint; }
