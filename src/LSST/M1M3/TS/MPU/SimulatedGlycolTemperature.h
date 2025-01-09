@@ -54,6 +54,7 @@ private:
 
     std::default_random_engine generator;
     std::uniform_real_distribution<float> distribution;
+    std::uniform_real_distribution<float> step_delta;
 };
 
 }  // namespace TS

@@ -35,6 +35,7 @@
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
 
+#include <Settings/MixingValve.h>
 #include <Settings/Setpoint.h>
 
 #include "Telemetry/GlycolLoopTemperature.h"
@@ -148,9 +149,9 @@ void Update::_temperatureControlLoop() {
     auto mixingValveStep = Settings::Setpoint::instance().mixingValveStep;
 
     if (diff > tolerance) {
-        new_valve_position -= mixingValveStep;
-    } else if (diff < -tolerance) {
         new_valve_position += mixingValveStep;
+    } else if (diff < -tolerance) {
+        new_valve_position -= mixingValveStep;
     } else {
         return;
     }
@@ -161,8 +162,9 @@ void Update::_temperatureControlLoop() {
         new_valve_position = 0;
     }
 
-    SPDLOG_INFO("TemperatureControlLoop: new valve position is {}, temperature difference was {}",
+    SPDLOG_INFO("TemperatureControlLoop: new valve position is {:.1f}%, temperature difference was {:+.3f}",
                 new_valve_position, diff);
 
-    IFPGA::get().setMixingValvePosition(new_valve_position);
+    IFPGA::get().setMixingValvePosition(
+            Settings::MixingValve::instance().percentsToCommanded(new_valve_position));
 }
