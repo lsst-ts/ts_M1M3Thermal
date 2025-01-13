@@ -1,5 +1,5 @@
 /*
- * Simulated glycol thermocouples device.
+ * AppliedSetpoint event handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,45 +20,39 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MPU_SimulatedGlycolTemperature__
-#define __MPU_SimulatedGlycolTemperature__
+#ifndef _TS_Event_AppliedSetpoint_
+#define _TS_Event_AppliedSetpoint_
 
-#include <random>
-
-#include <Modbus/Buffer.h>
-#include <Transports/Transport.h>
+#include <SAL_MTM1M3TS.h>
+#include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
+namespace Events {
 
-class SimulatedGlycolTemperature : public Transports::Transport {
+class AppliedSetpoint final : MTM1M3TS_logevent_appliedSetpointC, public cRIO::Singleton<AppliedSetpoint> {
 public:
-    SimulatedGlycolTemperature();
+    AppliedSetpoint(token);
 
-    void write(const unsigned char* buf, size_t len) override;
-    std::vector<uint8_t> read(size_t len, std::chrono::microseconds timeout,
-                              LSST::cRIO::Thread* calling_thread = NULL) override;
+    void reset();
 
-    void commands(Modbus::BusList& bus_list, std::chrono::microseconds timeout,
-                  LSST::cRIO::Thread* calling_thread = NULL) override;
+    /**
+     * Sends updates through SAL/DDS.
+     */
+    void send();
 
-    void flush() override;
-    void telemetry(uint64_t& write_bytes, uint64_t& read_bytes) override;
+    void setAppliedSetpoint(float new_setpoint);
+
+    float getAppliedSetpoint();
 
 private:
-    uint64_t _bytes_written;
-    uint64_t _bytes_read;
-
-    float _temperatures[8];
-
-    std::default_random_engine generator;
-    std::uniform_real_distribution<float> distribution;
-    std::uniform_real_distribution<float> step_delta;
+    bool _updated;
 };
 
+}  // namespace Events
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // ! __MPU_SimulatedGlycolTemperature__
+#endif  // !_TS_Event_AppliedSetpoint_

@@ -40,6 +40,7 @@ private:
     void _sendGlycolLoopTemperature();
     void _sendMixingValve();
     void _sendFCU();
+    void _temperatureControlLoop();
 };
 
 }  // namespace Commands

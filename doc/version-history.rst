@@ -7,6 +7,7 @@ Version History
 v1.0.1
 ------
 
+* ApplySetpoint command, auto-regulate the mixing valve
 * Improved error response on pump readout
 
 v1.0.0
