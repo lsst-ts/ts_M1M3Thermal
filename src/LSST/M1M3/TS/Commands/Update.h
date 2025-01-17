@@ -34,6 +34,8 @@ namespace Commands {
 
 class Update : public cRIO::Task {
 public:
+    Update() : _bus_state(OK) {}
+
     cRIO::task_return_t run() override;
 
 private:
@@ -41,6 +43,9 @@ private:
     void _sendMixingValve();
     void _sendFCU();
     void _temperatureControlLoop();
+
+    /// State of the state machine handling bus recovery from power failure
+    enum { OK, FAILED, RESET_ERROR, STANDBY, SERVER_ID, DISABLED, ENABLED } _bus_state;
 };
 
 }  // namespace Commands
