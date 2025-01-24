@@ -22,11 +22,12 @@ PKG_CPPFLAGS := \
 
 ifdef WITH_SAL_KAFKA
   SAL_CPPFLAGS += $(PKG_CPPFLAGS)  \
-	-I${SAL_WORK_DIR}/MTVMS/cpp/src -I${SAL_WORK_DIR}/include -I${CRIOCPP} -I. \
+	-I${SAL_WORK_DIR}/MTM1M3TS/cpp/src \
+	-I${SAL_WORK_DIR}/include -I${CRIOCPP} -I. \
 	-I${SAL_HOME}/include -I${LSST_SDK_INSTALL}/include -I${SAL_HOME}/include -I${LSST_SAL_PREFIX}/include -I${LSST_SAL_PREFIX}/include/avro
   LIBS += $(PKG_LIBS) -ldl -lpthread -L/usr/lib64/boost${BOOST_RELEASE} -lboost_filesystem -lboost_iostreams \
-	-lboost_program_options -lboost_system ../ts_cRIOcpp/lib/libcRIOcpp.a \
-	-L${LSST_SAL_PREFIX}/lib -lcurl -lrdkafka++ -lrdkafka -lavrocpp -lavro -ljansson -lserdes++ -lserdes ${LSST_SAL_PREFIX}/lib/libSAL_MTM1M3TS.a -lstdc++fs
+	-lboost_program_options -lboost_system ../ts_cRIOcpp/lib/libcRIOcpp.a ${LSST_SAL_PREFIX}/lib/libSAL_MTM1M3TS.a \
+	-L${LSST_SAL_PREFIX}/lib -lcurl -lrdkafka++ -lrdkafka -lavrocpp -lavro -ljansson -lserdes++ -lserdes -lsasl2
   LIBS_FLAGS += -L${LSST_SAL_PREFIX}/lib
 else
   SAL_CPPFLAGS += $(PKG_CPPFLAGS) \
