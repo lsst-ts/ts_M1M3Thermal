@@ -4,9 +4,10 @@
 Version History
 ===============
 
-v1.0.1
+v2.0.0
 ------
 
+* Compiles with Kafka SAL
 * ApplySetpoint command, auto-regulate the mixing valve
 * Improved error response on pump readout
 

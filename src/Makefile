@@ -51,7 +51,7 @@ clang-format:
 	${co}$(C) -c -fmessage-length=0 -o $@ $(patsubst %.d,%,$<)
 
 %.cpp.d: %.cpp
-	@echo '[DEP] $<'
+	@echo '[DPP] $<'
 	${co}$(CPP) $(CRIO_CFLAGS) $(CFLAGS) -M $< -MF $@ -MT '$(patsubst %.cpp,%.o,$<) $@'
 
 %.c.d: %.c
