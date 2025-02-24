@@ -4,6 +4,12 @@
 Version History
 ===============
 
+v2.0.1
+------
+
+* non-Kafka (OSPL) option removed
+* Kafka init script + support configuration
+
 v2.0.0
 ------
 
