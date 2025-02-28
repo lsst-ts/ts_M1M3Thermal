@@ -34,6 +34,8 @@ namespace Commands {
 
 class Update : public cRIO::Task {
 public:
+    Update() {}
+
     cRIO::task_return_t run() override;
 
 private:
