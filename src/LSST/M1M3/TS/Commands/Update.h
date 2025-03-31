@@ -42,7 +42,8 @@ private:
     void _sendGlycolLoopTemperature();
     void _sendMixingValve();
     void _sendFCU();
-    void _temperatureControlLoop();
+    void _glycol_temperature_control_loop();
+    void _heaters_temperature_control_loop();
 };
 
 }  // namespace Commands

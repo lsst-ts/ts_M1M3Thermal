@@ -30,9 +30,10 @@
 
 #include "Commands/Update.h"
 
-#include "Events/AppliedSetpoint.h"
+#include "Events/AppliedSetpoints.h"
 #include "Events/EnabledILC.h"
 #include "Events/EngineeringMode.h"
+#include "Events/FcuTargets.h"
 #include "Events/Heartbeat.h"
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
@@ -58,7 +59,19 @@ LSST::cRIO::task_return_t Update::run() {
 
     _sendMixingValve();
 
-    _temperatureControlLoop();
+    if (Events::SummaryState::instance().enabled() == true &&
+        Events::EngineeringMode::instance().isEnabled() == false) {
+        auto timestep_ms = std::chrono::milliseconds(int(Settings::Setpoint::instance().timestep * 1000.0));
+
+        static auto next_update = std::chrono::steady_clock::now() - timestep_ms;
+
+        auto now = std::chrono::steady_clock::now();
+        if (now >= next_update) {
+            next_update += timestep_ms;
+            _glycol_temperature_control_loop();
+            _heaters_temperature_control_loop();
+        }
+    }
 
     Events::EnabledILC::instance().send();
 
@@ -199,36 +212,20 @@ void Update::_sendFCU() {
     }
 }
 
-void Update::_temperatureControlLoop() {
-    auto timestep_ms = std::chrono::milliseconds(int(Settings::Setpoint::instance().timestep * 1000.0));
-
-    static auto next_update = std::chrono::steady_clock::now() - timestep_ms;
-
-    auto now = std::chrono::steady_clock::now();
-    if (now < next_update) {
-        return;
-    }
-
-    if (Events::SummaryState::instance().enabled() == false ||
-        Events::EngineeringMode::instance().isEnabled() == true) {
-        return;
-    }
-
-    next_update += timestep_ms;
-
-    auto mirrorLoop = Telemetry::GlycolLoopTemperature::instance().getMirrorLoopAverage();
-    float targetTemp = Events::AppliedSetpoint::instance().getAppliedSetpoint();
+void Update::_glycol_temperature_control_loop() {
+    auto mirror_loop = Telemetry::GlycolLoopTemperature::instance().getMirrorLoopAverage();
+    float target_glycol_temp = Events::AppliedSetpoints::instance().getAppliedGlycolSetpoint();
     static float new_valve_position = 10.0;
 
-    float diff = mirrorLoop - targetTemp;
+    float diff = mirror_loop - target_glycol_temp;
     auto tolerance = Settings::Setpoint::instance().tolerance;
 
-    auto mixingValveStep = Settings::Setpoint::instance().mixingValveStep;
+    auto mixing_valve_step = Settings::Setpoint::instance().mixingValveStep;
 
     if (diff > tolerance) {
-        new_valve_position += mixingValveStep;
+        new_valve_position += mixing_valve_step;
     } else if (diff < -tolerance) {
-        new_valve_position -= mixingValveStep;
+        new_valve_position -= mixing_valve_step;
     } else {
         return;
     }
@@ -244,4 +241,29 @@ void Update::_temperatureControlLoop() {
 
     IFPGA::get().setMixingValvePosition(
             Settings::MixingValve::instance().percentsToCommanded(new_valve_position));
+}
+
+void Update::_heaters_temperature_control_loop() {
+    auto heaterPWM = Events::FcuTargets::instance().get_heaterPWM();
+    auto fanRPM = Events::FcuTargets::instance().get_fanRPM();
+    auto temperature = Telemetry::ThermalData::instance().get_absoluteTemperature();
+    auto target_temperature = Events::AppliedSetpoints::instance().getAppliedHeatersSetpoint();
+    std::vector<int> target_heater(cRIO::NUM_TS_ILC);
+    std::vector<int> target_fan(cRIO::NUM_TS_ILC);
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        if (temperature[i] < target_temperature && heaterPWM[i] < 100) {
+            target_heater[i] = 255 * heaterPWM[i] / 100.0 + 1;
+        } else if (heaterPWM[i] > 0) {
+            target_heater[i] = 255 * heaterPWM[i] / 100.0 - 1;
+        }
+
+        if (target_heater[i] > 255) {
+            target_heater[i] = 255;
+        }
+        if (target_heater[i] < 0) {
+            target_heater[i] = 0;
+        }
+        target_fan[i] = 2;
+    }
+    TSApplication::instance().set_FCU_heaters_fans(target_heater, target_fan);
 }

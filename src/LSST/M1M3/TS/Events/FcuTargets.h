@@ -1,5 +1,5 @@
 /*
- * Application global variables.
+ * AppliedSetpoints event handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,37 +20,40 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_TSApplication_h
-#define _TS_TSApplication_h
+#ifndef _TS_Event_FcuTargets_
+#define _TS_Event_FcuTargets_
 
-#include <vector>
-
-#include <IFPGA.h>
-#include <SALThermalILC.h>
+#include <SAL_MTM1M3TS.h>
 #include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
+namespace Events {
 
-class TSApplication : public cRIO::Singleton<TSApplication> {
+class FcuTargets final : MTM1M3TS_logevent_fcuTargetsC, public cRIO::Singleton<FcuTargets> {
 public:
-    TSApplication(token) { _ilc = NULL; }
+    FcuTargets(token);
 
-    void setILC(SALThermalILC *ilc) { _ilc = ilc; }
+    void reset();
 
-    void callFunctionOnAllIlcs(std::function<void(uint8_t)> func);
+    /**
+     * Sends updates through SAL/DDS.
+     */
+    void send();
 
-    static SALThermalILC *ilc() { return instance()._ilc; }
+    void set_fcu_targets(std::vector<float> new_heater_pwm, std::vector<int> new_fan_rpm);
 
-    void set_FCU_heaters_fans(const std::vector<int> &heater_PWM, const std::vector<int> &fan_RPM);
+    auto get_heaterPWM() { return heaterPWM; }
+    auto get_fanRPM() { return fanRPM; }
 
 private:
-    SALThermalILC *_ilc;
+    bool _updated;
 };
 
+}  // namespace Events
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //! _TS_TSApplication_h
+#endif  // !_TS_Event_FcuTargets_

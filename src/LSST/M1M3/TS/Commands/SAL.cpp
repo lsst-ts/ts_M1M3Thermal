@@ -27,7 +27,7 @@
 #include <cRIO/ControllerThread.h>
 
 #include <Commands/SAL.h>
-#include <Events/AppliedSetpoint.h>
+#include <Events/AppliedSetpoints.h>
 #include <Events/EngineeringMode.h>
 #include <Events/SummaryState.h>
 #include <Events/ThermalInfo.h>
@@ -169,15 +169,7 @@ bool SAL_heaterFanDemand::validate() {
 
 void SAL_heaterFanDemand::execute() {
     try {
-        TSApplication::ilc()->clear();
-
-        TSApplication::instance().callFunctionOnAllIlcs([this](uint8_t address) -> void {
-            TSApplication::ilc()->setThermalDemand(address, params.heaterPWM[address - 1],
-                                                   params.fanRPM[address - 1]);
-        });
-
-        IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
-        SPDLOG_INFO("Changed heaters and fans demand");
+        TSApplication::instance().set_FCU_heaters_fans(params.heaterPWM, params.fanRPM);
         ackComplete();
     } catch (std::exception &e) {
         ackFailed(e.what());
@@ -246,18 +238,29 @@ void SAL_coolantPumpReset::execute() {
     SPDLOG_INFO("Coolant pump reseted");
 }
 
-bool SAL_applySetpoint::validate() {
-    if (params.setpoint < Settings::Setpoint::instance().low ||
-        params.setpoint > Settings::Setpoint::instance().high) {
-        ackFailed(fmt::format("Temperature setpoint must be between {} and {}, attempted to set to {}.",
-                              Settings::Setpoint::instance().low, Settings::Setpoint::instance().high,
-                              params.setpoint));
+bool SAL_applySetpoints::validate() {
+    if (params.glycolSetpoint < Settings::Setpoint::instance().low ||
+        params.glycolSetpoint > Settings::Setpoint::instance().high) {
+        ackFailed(fmt::format(
+                "Glycol loop temperature setpoint must be between {} and {}, attempted to set to {}.",
+                Settings::Setpoint::instance().low, Settings::Setpoint::instance().high,
+                params.glycolSetpoint));
+        return false;
+    }
+    if (params.heatersSetpoint < Settings::Setpoint::instance().low ||
+        params.heatersSetpoint > Settings::Setpoint::instance().high) {
+        ackFailed(fmt::format(
+                "FCU heaters temperature setpoint must be between {} and {}, attempted to set to {}.",
+                Settings::Setpoint::instance().low, Settings::Setpoint::instance().high,
+                params.heatersSetpoint));
         return false;
     }
     return true;
 }
 
-void SAL_applySetpoint::execute() {
-    Events::AppliedSetpoint::instance().setAppliedSetpoint(params.setpoint);
-    Events::AppliedSetpoint::instance().send();
+void SAL_applySetpoints::execute() {
+    Events::AppliedSetpoints::instance().setAppliedSetpoints(params.glycolSetpoint, params.heatersSetpoint);
+    Events::AppliedSetpoints::instance().send();
+    SPDLOG_INFO("Glycol setpoint: {:0.2f} FCU heaters setpoint: {:0.2f}", params.glycolSetpoint,
+                params.heatersSetpoint);
 }

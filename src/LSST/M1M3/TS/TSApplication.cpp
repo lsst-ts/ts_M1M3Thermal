@@ -22,7 +22,8 @@
 
 #include "TSApplication.h"
 
-#include <Events/EnabledILC.h>
+#include "Events/EnabledILC.h"
+#include "Events/FcuTargets.h"
 
 using namespace LSST::M1M3::TS;
 
@@ -32,4 +33,26 @@ void TSApplication::callFunctionOnAllIlcs(std::function<void(uint8_t)> func) {
             func(address);
         }
     }
+}
+
+void TSApplication::set_FCU_heaters_fans(const std::vector<int> &heater_PWM,
+                                         const std::vector<int> &fan_RPM) {
+    ilc()->clear();
+
+    callFunctionOnAllIlcs([heater_PWM, fan_RPM](uint8_t address) -> void {
+        TSApplication::ilc()->setThermalDemand(address, heater_PWM[address - 1], fan_RPM[address - 1]);
+    });
+
+    IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
+
+    std::vector<float> target_heater_PWM(cRIO::NUM_TS_ILC);
+    std::vector<int> target_fan_RPM(cRIO::NUM_TS_ILC);
+
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        target_heater_PWM[i] = 100.0 * (heater_PWM[i] / 255.0);
+        target_fan_RPM[i] = fan_RPM[i] * 10;
+    }
+    Events::FcuTargets::instance().set_fcu_targets(target_heater_PWM, target_fan_RPM);
+
+    SPDLOG_INFO("Changed heaters and fans demand");
 }

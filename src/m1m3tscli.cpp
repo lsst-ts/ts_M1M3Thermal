@@ -27,6 +27,7 @@
 #include <spdlog/async.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
+#include <fmt/ranges.h>
 
 #include <cRIO/FPGACliApp.h>
 #include <cRIO/MPU.h>

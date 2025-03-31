@@ -1,5 +1,5 @@
 /*
- * AppliedSetpoint event handling class.
+ * AppliedSetpoints event handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,8 +20,8 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Event_AppliedSetpoint_
-#define _TS_Event_AppliedSetpoint_
+#ifndef _TS_Event_AppliedSetpoints_
+#define _TS_Event_AppliedSetpoints_
 
 #include <SAL_MTM1M3TS.h>
 #include <cRIO/Singleton.h>
@@ -31,9 +31,9 @@ namespace M1M3 {
 namespace TS {
 namespace Events {
 
-class AppliedSetpoint final : MTM1M3TS_logevent_appliedSetpointC, public cRIO::Singleton<AppliedSetpoint> {
+class AppliedSetpoints final : MTM1M3TS_logevent_appliedSetpointsC, public cRIO::Singleton<AppliedSetpoints> {
 public:
-    AppliedSetpoint(token);
+    AppliedSetpoints(token);
 
     void reset();
 
@@ -42,9 +42,11 @@ public:
      */
     void send();
 
-    void setAppliedSetpoint(float new_setpoint);
+    void setAppliedSetpoints(float new_glycol_setpoint, float new_heaters_setpoint);
 
-    float getAppliedSetpoint();
+    float getAppliedGlycolSetpoint() { return glycolSetpoint; }
+
+    float getAppliedHeatersSetpoint() { return heatersSetpoint; }
 
 private:
     bool _updated;
@@ -55,4 +57,4 @@ private:
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !_TS_Event_AppliedSetpoint_
+#endif  // !_TS_Event_AppliedSetpoints_

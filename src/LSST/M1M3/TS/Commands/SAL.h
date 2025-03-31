@@ -62,7 +62,7 @@ SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), coolantPumpFrequency);
 
 SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), coolantPumpReset);
 
-SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), applySetpoint);
+SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), applySetpoints);
 
 }  // namespace Commands
 }  // namespace TS

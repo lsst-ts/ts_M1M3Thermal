@@ -7,7 +7,7 @@ ifndef VERBOSE
 endif
 
 # change as needed
-c_opts := -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
+c_opts := -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE -DSPDLOG_FMT_EXTERNAL
 
 ifdef DEBUG
   c_opts += -g

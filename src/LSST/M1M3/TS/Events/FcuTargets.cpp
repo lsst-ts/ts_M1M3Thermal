@@ -1,5 +1,5 @@
 /*
- * Publish AppliedSetpoint event.
+ * Publish AppliedSetpoints event.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -22,35 +22,43 @@
 
 #include <spdlog/spdlog.h>
 
-#include <Events/AppliedSetpoint.h>
+#include <cRIO/ThermalILC.h>
+
+#include <Events/FcuTargets.h>
 #include <TSPublisher.h>
 
 using namespace LSST::M1M3::TS::Events;
 
-AppliedSetpoint::AppliedSetpoint(token) { reset(); }
-
-void AppliedSetpoint::reset() {
-    setpoint = NAN;
-    _updated = false;
+FcuTargets::FcuTargets(token) {
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        heaterPWM[i] = 0;
+        fanRPM[i] = 0;
+    }
+    _updated = true;
 }
 
-void AppliedSetpoint::send() {
+void FcuTargets::send() {
     if (_updated == false) {
         return;
     }
-    salReturn ret = TSPublisher::SAL()->putSample_logevent_appliedSetpoint(this);
+    salReturn ret = TSPublisher::SAL()->putSample_logevent_fcuTargets(this);
     if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot publish appliedSetpoint: {}", ret);
+        SPDLOG_WARN("Cannot publish fcuTargets: {}", ret);
         return;
     }
     _updated = false;
 }
 
-void AppliedSetpoint::setAppliedSetpoint(float new_setpoint) {
-    if (setpoint != new_setpoint) {
-        setpoint = new_setpoint;
-        _updated = true;
+void FcuTargets::set_fcu_targets(std::vector<float> new_heater_pwm, std::vector<int> new_fan_rpm) {
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        if (heaterPWM[i] != new_heater_pwm[i]) {
+            heaterPWM[i] = new_heater_pwm[i];
+            _updated = true;
+        }
+        if (fanRPM[i] != new_fan_rpm[i]) {
+            fanRPM[i] = new_fan_rpm[i];
+            _updated = true;
+        }
     }
+    send();
 }
-
-float AppliedSetpoint::getAppliedSetpoint() { return setpoint; }
