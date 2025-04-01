@@ -247,17 +247,17 @@ void SAL_coolantPumpReset::execute() {
 }
 
 bool SAL_applySetpoint::validate() {
-    if (params.setpoint < Settings::Setpoint::instance().low ||
-        params.setpoint > Settings::Setpoint::instance().high) {
+    if (params.glycolSetpoint < Settings::Setpoint::instance().low ||
+        params.glycolSetpoint > Settings::Setpoint::instance().high) {
         ackFailed(fmt::format("Temperature setpoint must be between {} and {}, attempted to set to {}.",
                               Settings::Setpoint::instance().low, Settings::Setpoint::instance().high,
-                              params.setpoint));
+                              params.glycolSetpoint));
         return false;
     }
     return true;
 }
 
 void SAL_applySetpoint::execute() {
-    Events::AppliedSetpoint::instance().setAppliedSetpoint(params.setpoint);
+    Events::AppliedSetpoint::instance().setAppliedSetpoint(params.glycolSetpoint);
     Events::AppliedSetpoint::instance().send();
 }
