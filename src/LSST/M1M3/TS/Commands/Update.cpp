@@ -138,7 +138,7 @@ void Update::_sendFCU() {
                 break;
             default:
                 SPDLOG_ERROR("Reached invalid ILC bus state: {}", static_cast<int>(_bus_state));
-                Events::SummaryState::setState(MTM1M3TS::MTM1M3TS_shared_SummaryStates_FaultState);
+                Events::SummaryState::set_state(MTM1M3TS::MTM1M3TS_shared_SummaryStates_FaultState);
                 break;
         }
 

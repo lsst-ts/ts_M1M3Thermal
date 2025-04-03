@@ -54,5 +54,6 @@ void TSApplication::set_FCU_heaters_fans(const std::vector<int> &heater_PWM,
     }
     Events::FcuTargets::instance().set_fcu_targets(target_heater_PWM, target_fan_RPM);
 
-    SPDLOG_INFO("Changed heaters and fans demand");
+    SPDLOG_DEBUG("TSApplication::set_FCU_heaters_fans Changed heaters and fans demand: {:.1f} % {:d}",
+                 target_heater_PWM[0], target_fan_RPM[0]);
 }
