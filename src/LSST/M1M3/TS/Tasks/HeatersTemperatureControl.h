@@ -1,5 +1,5 @@
 /*
- * Thread to catch outer loop clock interrupts.
+ * Task controlling FCU heaters.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,25 +20,26 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_OuterLoopClockThread_h
-#define _TS_OuterLoopClockThread_h
+#ifndef _TS_Tasks_HeatersTemperatureControl_
+#define _TS_Tasks_HeatersTemperatureControl_
 
-#include <cRIO/Thread.h>
+#include "cRIO/Task.h"
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
+namespace Tasks {
 
-/**
- * Schedules update command,
- */
-class OuterLoopClockThread : public cRIO::Thread {
-protected:
-    void run(std::unique_lock<std::mutex> &lock) override;
+class HeatersTemperatureControl : public cRIO::Task {
+public:
+    HeatersTemperatureControl();
+
+    virtual cRIO::task_return_t run();
 };
 
+}  // namespace Tasks
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //! _TS_OuterLoopClockThread_h
+#endif  // ! _TS_Tasks_HeatersTemperatureControl_

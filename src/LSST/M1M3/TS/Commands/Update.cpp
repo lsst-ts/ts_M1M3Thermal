@@ -22,10 +22,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <SAL_MTM1M3TS.h>
-
-#include <cRIO/ThermalILC.h>
-
 #include "Commands/Update.h"
 
 #include "Events/AppliedSetpoints.h"
@@ -35,9 +31,6 @@
 #include "Events/Heartbeat.h"
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
-
-#include <Settings/MixingValve.h>
-#include <Settings/Setpoint.h>
 
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
@@ -55,20 +48,6 @@ LSST::cRIO::task_return_t Update::run() {
     _sendFCU();
 
     _sendMixingValve();
-
-    if (Events::SummaryState::instance().enabled() == true &&
-        Events::EngineeringMode::instance().is_enabled() == false) {
-        auto timestep_ms = std::chrono::milliseconds(int(Settings::Setpoint::instance().timestep * 1000.0));
-
-        _next_update = std::chrono::steady_clock::now() - timestep_ms;
-
-        auto now = std::chrono::steady_clock::now();
-        if (now >= _next_update) {
-            _next_update += timestep_ms;
-            _glycol_temperature_control_loop();
-            _heaters_temperature_control_loop();
-        }
-    }
 
     Events::EnabledILC::instance().send();
 
@@ -207,32 +186,4 @@ void Update::_sendFCU() {
     } catch (std::exception &e) {
         SPDLOG_WARN("Cannot poll FCU: {}", e.what());
     }
-}
-
-void Update::_glycol_temperature_control_loop() {
-}
-
-void Update::_heaters_temperature_control_loop() {
-    auto heaterPWM = Events::FcuTargets::instance().get_heaterPWM();
-    auto fanRPM = Events::FcuTargets::instance().get_fanRPM();
-    auto temperature = Telemetry::ThermalData::instance().get_absoluteTemperature();
-    auto target_temperature = Events::AppliedSetpoints::instance().getAppliedHeatersSetpoint();
-    std::vector<int> target_heater(cRIO::NUM_TS_ILC);
-    std::vector<int> target_fan(cRIO::NUM_TS_ILC);
-    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
-        if (temperature[i] < target_temperature && heaterPWM[i] < 100) {
-            target_heater[i] = 255 * heaterPWM[i] / 100.0 + 1;
-        } else if (heaterPWM[i] > 0) {
-            target_heater[i] = 255 * heaterPWM[i] / 100.0 - 1;
-        }
-
-        if (target_heater[i] > 255) {
-            target_heater[i] = 255;
-        }
-        if (target_heater[i] < 0) {
-            target_heater[i] = 0;
-        }
-        target_fan[i] = 2;
-    }
-    TSApplication::instance().set_FCU_heaters_fans(target_heater, target_fan);
 }

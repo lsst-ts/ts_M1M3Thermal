@@ -23,8 +23,6 @@
 #include <spdlog/spdlog.h>
 
 #include "Events/AppliedSetpoints.h"
-#include "Events/EngineeringMode.h"
-#include "Events/SummaryState.h"
 #include "IFPGA.h"
 #include "Settings/MixingValve.h"
 #include "Settings/Setpoint.h"

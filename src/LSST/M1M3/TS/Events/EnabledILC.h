@@ -24,7 +24,9 @@
 #define _TS_Event_EnabledILCILC_
 
 #include <SAL_MTM1M3TS.h>
+
 #include <cRIO/Singleton.h>
+#include <cRIO/ThermalILC.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -59,8 +61,8 @@ public:
     void send();
 
     // TODO move to SAL/DDS
-    int errorCount[cRIO::NUM_TS_ILC];
-    bool autoDisabled[cRIO::NUM_TS_ILC];
+    int errorCount[LSST::cRIO::NUM_TS_ILC];
+    bool autoDisabled[LSST::cRIO::NUM_TS_ILC];
 
 private:
     bool _updated;

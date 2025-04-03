@@ -41,11 +41,8 @@ public:
     cRIO::task_return_t run() override;
 
 private:
-    void _sendGlycolLoopTemperature();
     void _sendMixingValve();
     void _sendFCU();
-    void _glycol_temperature_control_loop();
-    void _heaters_temperature_control_loop();
 
     std::chrono::steady_clock::time_point _next_update;
 };

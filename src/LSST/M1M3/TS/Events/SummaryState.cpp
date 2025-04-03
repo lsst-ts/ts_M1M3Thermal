@@ -77,9 +77,9 @@ void SummaryState::_switch_state(int new_state) {
             break;
         case MTM1M3TS_shared_SummaryStates_OfflineState:
             if (summaryState != MTM1M3TS_shared_SummaryStates_StandbyState) {
-                throw std::runtime_error(fmt::format("Cannot switch to Offline state from {}", summaryState));
+		SPDLOG_WARN("Switching to offline state from non-Standy state - {}", summaryState);
             }
-	    break;
+            break;
         case MTM1M3TS_shared_SummaryStates_StandbyState:
             if (summaryState != MTM1M3TS_shared_SummaryStates_DisabledState &&
                 summaryState != MTM1M3TS_shared_SummaryStates_OfflineState) {

@@ -31,7 +31,6 @@ namespace TS {
 namespace Tasks {
 
 class GlycolTemperatureControl : public cRIO::Task {
-
 public:
     GlycolTemperatureControl();
 
