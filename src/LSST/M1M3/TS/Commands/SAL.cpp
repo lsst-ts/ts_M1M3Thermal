@@ -92,7 +92,7 @@ void SAL_start::execute() {
         TSPublisher::instance().startPumpThread();
     }
 
-    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
+    Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_DisabledState);
     Events::EngineeringMode::instance().send();
     ackComplete();
     SPDLOG_INFO("Started");
@@ -102,7 +102,7 @@ void SAL_enable::execute() {
     changeAllILCsMode(ILC::Mode::Enabled);
     IFPGA::get().setFCUPower(true);
 
-    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_EnabledState);
+    Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_EnabledState);
     ackComplete();
     SPDLOG_INFO("Enabled");
 }
@@ -112,7 +112,7 @@ void SAL_disable::execute() {
     IFPGA::get().setFCUPower(false);
     IFPGA::get().setCoolantPumpPower(false);
 
-    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
+    Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
 }
 
@@ -122,7 +122,7 @@ void SAL_standby::execute() {
 
     changeAllILCsMode(ILC::Mode::ClearFaults);
     changeAllILCsMode(ILC::Mode::Standby);
-    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_StandbyState);
+    Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_StandbyState);
     ackComplete();
     SPDLOG_INFO("Standby");
 }
@@ -141,13 +141,13 @@ bool SAL_setEngineeringMode::validate() {
 }
 
 void SAL_setEngineeringMode::execute() {
-    Events::EngineeringMode::instance().setEnabled(params.enableEngineeringMode);
+    Events::EngineeringMode::instance().set_enabled(params.enableEngineeringMode);
     ackComplete();
     SPDLOG_INFO("{} Engineering Mode", params.enableEngineeringMode ? "Entered" : "Exited");
 }
 
 bool SAL_fanCoilsHeatersPower::validate() {
-    if (Events::EngineeringMode::instance().isEnabled() == false) {
+    if (Events::EngineeringMode::instance().is_enabled() == false) {
         ackFailed("CSC must be in enabled state to set heater on.");
         return false;
     };
@@ -160,7 +160,7 @@ void SAL_fanCoilsHeatersPower::execute() {
 }
 
 bool SAL_heaterFanDemand::validate() {
-    if (Events::EngineeringMode::instance().isEnabled() == false) {
+    if (Events::EngineeringMode::instance().is_enabled() == false) {
         ackFailed("CSC must be in enabled state to set heater and fan demands.");
         return false;
     };
@@ -191,7 +191,7 @@ void SAL_setMixingValve::execute() {
     SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.02})", params.mixingValveTarget, target);
 }
 
-bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().isEnabled(); }
+bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().is_enabled(); }
 
 void SAL_coolantPumpPower::execute() {
     IFPGA::get().setCoolantPumpPower(params.power);

@@ -43,12 +43,13 @@
 #include <OuterLoopClockThread.h>
 #include <Settings/Controller.h>
 
-#include <Commands/EnterControl.h>
-#include <Commands/SAL.h>
-#include <SALThermalILC.h>
-#include <TSApplication.h>
-#include <TSPublisher.h>
-#include <TSSubscriber.h>
+#include "Commands/EnterControl.h"
+#include "Commands/SAL.h"
+#include "Events/SummaryState.h"
+#include "SALThermalILC.h"
+#include "TSApplication.h"
+#include "TSPublisher.h"
+#include "TSSubscriber.h"
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
@@ -112,6 +113,8 @@ void M1M3thermald::init() {
 }
 
 void M1M3thermald::done() {
+    Events::SummaryState::set_state(MTM1M3TS::MTM1M3TS_shared_SummaryStates_OfflineState);
+
     LSST::cRIO::ControllerThread::instance().stop();
     TSPublisher::instance().stopFlowMeterThread();
     TSPublisher::instance().stopPumpThread();

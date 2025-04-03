@@ -20,8 +20,6 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <chrono>
-
 #include <spdlog/spdlog.h>
 
 #include <SAL_MTM1M3TS.h>
@@ -41,7 +39,6 @@
 #include <Settings/MixingValve.h>
 #include <Settings/Setpoint.h>
 
-#include "Telemetry/GlycolLoopTemperature.h"
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
 
@@ -60,14 +57,14 @@ LSST::cRIO::task_return_t Update::run() {
     _sendMixingValve();
 
     if (Events::SummaryState::instance().enabled() == true &&
-        Events::EngineeringMode::instance().isEnabled() == false) {
+        Events::EngineeringMode::instance().is_enabled() == false) {
         auto timestep_ms = std::chrono::milliseconds(int(Settings::Setpoint::instance().timestep * 1000.0));
 
-        static auto next_update = std::chrono::steady_clock::now() - timestep_ms;
+        _next_update = std::chrono::steady_clock::now() - timestep_ms;
 
         auto now = std::chrono::steady_clock::now();
-        if (now >= next_update) {
-            next_update += timestep_ms;
+        if (now >= _next_update) {
+            _next_update += timestep_ms;
             _glycol_temperature_control_loop();
             _heaters_temperature_control_loop();
         }
@@ -213,34 +210,6 @@ void Update::_sendFCU() {
 }
 
 void Update::_glycol_temperature_control_loop() {
-    auto mirror_loop = Telemetry::GlycolLoopTemperature::instance().getMirrorLoopAverage();
-    float target_glycol_temp = Events::AppliedSetpoints::instance().getAppliedGlycolSetpoint();
-    static float new_valve_position = 10.0;
-
-    float diff = mirror_loop - target_glycol_temp;
-    auto tolerance = Settings::Setpoint::instance().tolerance;
-
-    auto mixing_valve_step = Settings::Setpoint::instance().mixingValveStep;
-
-    if (diff > tolerance) {
-        new_valve_position += mixing_valve_step;
-    } else if (diff < -tolerance) {
-        new_valve_position -= mixing_valve_step;
-    } else {
-        return;
-    }
-
-    if (new_valve_position > 100.0) {
-        new_valve_position = 100.0;
-    } else if (new_valve_position < 0) {
-        new_valve_position = 0;
-    }
-
-    SPDLOG_INFO("TemperatureControlLoop: new valve position is {:.1f}%, temperature difference was {:+.3f}",
-                new_valve_position, diff);
-
-    IFPGA::get().setMixingValvePosition(
-            Settings::MixingValve::instance().percentsToCommanded(new_valve_position));
 }
 
 void Update::_heaters_temperature_control_loop() {

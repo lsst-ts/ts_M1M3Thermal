@@ -29,6 +29,9 @@ namespace LSST {
 namespace M1M3 {
 namespace TS {
 
+/**
+ * Schedules update command, 
+ */
 class OuterLoopClockThread : public cRIO::Thread {
 protected:
     void run(std::unique_lock<std::mutex> &lock) override;

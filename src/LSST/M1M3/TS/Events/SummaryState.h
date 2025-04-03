@@ -67,14 +67,14 @@ public:
      *
      * @multithreading safe
      */
-    static void setState(int newState) { instance()._switchState(newState); }
+    static void set_state(int newState) { instance()._switch_state(newState); }
     static void send();
 
 private:
-    void _switchState(int newState);
+    void _switch_state(int newState);
     bool _updated;
 
-    std::mutex _stateMutex;
+    std::mutex _state_mutex;
 };
 
 }  // namespace Events

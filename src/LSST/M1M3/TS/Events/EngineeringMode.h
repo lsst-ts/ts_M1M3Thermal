@@ -38,9 +38,9 @@ public:
     /**
      * Enabled / disable ILC.
      */
-    void setEnabled(bool newState);
+    void set_enabled(bool newState);
 
-    bool isEnabled();
+    bool is_enabled();
 
     /**
      * Sends updates through SAL/DDS.

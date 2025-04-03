@@ -23,6 +23,8 @@
 #ifndef _TS_Command_Update_
 #define _TS_Command_Update_
 
+#include <chrono>
+
 #include <SAL_MTM1M3TS.h>
 
 #include <cRIO/Task.h>
@@ -44,6 +46,8 @@ private:
     void _sendFCU();
     void _glycol_temperature_control_loop();
     void _heaters_temperature_control_loop();
+
+    std::chrono::steady_clock::time_point _next_update;
 };
 
 }  // namespace Commands
