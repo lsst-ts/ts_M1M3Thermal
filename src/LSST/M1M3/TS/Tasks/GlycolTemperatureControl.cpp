@@ -36,7 +36,6 @@ GlycolTemperatureControl::GlycolTemperatureControl() {}
 LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
     auto mirror_loop = Telemetry::GlycolLoopTemperature::instance().getMirrorLoopAverage();
     float target_glycol_temp = Events::AppliedSetpoints::instance().getAppliedGlycolSetpoint();
-    static float new_valve_position = 10.0;
 
     float diff = mirror_loop - target_glycol_temp;
     auto tolerance = Settings::Setpoint::instance().tolerance;
@@ -44,24 +43,27 @@ LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
     auto mixing_valve_step = Settings::Setpoint::instance().mixingValveStep;
 
     if (diff > tolerance) {
-        new_valve_position += mixing_valve_step;
+        target_mixing_valve += mixing_valve_step;
     } else if (diff < -tolerance) {
-        new_valve_position -= mixing_valve_step;
+        target_mixing_valve -= mixing_valve_step;
     } else {
-        return 60000;
+        return Settings::Setpoint::instance().timestep * 1000.0;
     }
 
-    if (new_valve_position > 100.0) {
-        new_valve_position = 100.0;
-    } else if (new_valve_position < 0) {
-        new_valve_position = 0;
+    if (target_mixing_valve > 100.0) {
+        target_mixing_valve = 100.0;
+    } else if (target_mixing_valve < 0) {
+        target_mixing_valve = 0;
     }
 
-    SPDLOG_INFO("TemperatureControlLoop: new valve position is {:.1f}%, temperature difference was {:+.3f}",
-                new_valve_position, diff);
+    float target_v = Settings::MixingValve::instance().percentsToCommanded(target_mixing_valve);
 
-    IFPGA::get().setMixingValvePosition(
-            Settings::MixingValve::instance().percentsToCommanded(new_valve_position));
+    SPDLOG_INFO(
+            "TemperatureControlLoop: new valve position is {:.1f}% ({:0.02f}), temperature difference was "
+            "{:+.3f}",
+            target_mixing_valve, target_v, diff);
 
-    return 60000;
+    IFPGA::get().setMixingValvePosition(target_v);
+
+    return Settings::Setpoint::instance().timestep * 1000.0;
 }

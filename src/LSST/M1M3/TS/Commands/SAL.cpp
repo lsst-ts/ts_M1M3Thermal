@@ -29,6 +29,7 @@
 #include <Commands/SAL.h>
 #include <Events/AppliedSetpoints.h>
 #include <Events/EngineeringMode.h>
+#include <Events/FcuTargets.h>
 #include <Events/SummaryState.h>
 #include <Events/ThermalInfo.h>
 #include <Settings/Controller.h>
@@ -80,6 +81,7 @@ void SAL_start::execute() {
         IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
 
         Events::ThermalInfo::instance().log();
+        Events::FcuTargets::instance().send();
     } catch (std::exception &ex) {
         ackFailed(fmt::format("Cannot communicate with FCU's ILCs on startup: {}", ex.what()));
     }
@@ -108,6 +110,8 @@ void SAL_enable::execute() {
 }
 
 void SAL_disable::execute() {
+    auto zeros = std::vector<int>(cRIO::NUM_TS_ILC, 0);
+    TSApplication::instance().set_FCU_heaters_fans(zeros, zeros);
     changeAllILCsMode(ILC::Mode::Disabled);
     IFPGA::get().setFCUPower(false);
     IFPGA::get().setCoolantPumpPower(false);
@@ -188,7 +192,7 @@ void SAL_setMixingValve::execute() {
     float target = Settings::MixingValve::instance().percentsToCommanded(params.mixingValveTarget);
     IFPGA::get().setMixingValvePosition(target);
     ackComplete();
-    SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.02})", params.mixingValveTarget, target);
+    SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.04})", params.mixingValveTarget, target);
 }
 
 bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().is_enabled(); }

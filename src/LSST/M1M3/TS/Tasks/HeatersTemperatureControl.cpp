@@ -54,7 +54,7 @@ LSST::cRIO::task_return_t HeatersTemperatureControl::run() {
         if (target_heater[i] < 0) {
             target_heater[i] = 0;
         }
-        target_fan[i] = 2;
+        target_fan[i] = fanRPM[i] == 0 ? 20 : fanRPM[i] / 10;
     }
     TSApplication::instance().set_FCU_heaters_fans(target_heater, target_fan);
 

@@ -35,6 +35,8 @@ public:
     GlycolTemperatureControl();
 
     virtual cRIO::task_return_t run();
+
+    float target_mixing_valve = 0;
 };
 
 }  // namespace Tasks
