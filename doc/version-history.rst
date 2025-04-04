@@ -15,6 +15,7 @@ v2.0.0
 
 * Compiles with Kafka SAL
 * ApplySetpoint command, auto-regulate the mixing valve
+* Auto-recover ILCs after bus failure
 * Improved error response on pump readout
 
 v1.0.0

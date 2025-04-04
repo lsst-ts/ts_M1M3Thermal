@@ -24,6 +24,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <SAL_MTM1M3TS.h>
+
 #include <cRIO/ThermalILC.h>
 
 #include "Commands/Update.h"
@@ -87,6 +89,9 @@ void Update::_sendMixingValve() {
 }
 
 void Update::_sendFCU() {
+    /// State of the state machine handling bus recovery from power failure
+    static enum { OK, FAILED, RESET_ERROR, STANDBY, SERVER_ID, DISABLED, ENABLED } _bus_state = OK;
+
     static auto next_update = std::chrono::steady_clock::now() - 20ms;
 
     auto now = std::chrono::steady_clock::now();
@@ -104,18 +109,90 @@ void Update::_sendFCU() {
         Telemetry::ThermalData::instance().reset();
         TSApplication::ilc()->clear();
 
-        TSApplication::instance().callFunctionOnAllIlcs([](uint8_t address) -> void {
-            if (Events::SummaryState::instance().active()) {
-                TSApplication::ilc()->reportThermalStatus(address);
-            } else {
-                TSApplication::ilc()->reportServerStatus(address);
-            }
-        });
+        switch (_bus_state) {
+            case OK:
+                TSApplication::instance().callFunctionOnAllIlcs([](uint8_t address) {
+                    if (Events::SummaryState::instance().active()) {
+                        TSApplication::ilc()->reportThermalStatus(address);
+                    } else {
+                        TSApplication::ilc()->reportServerStatus(address);
+                    }
+                });
+                break;
+            case FAILED:
+                TSApplication::instance().callFunctionOnAllIlcs([](uint8_t address) {
+                    TSApplication::ilc()->changeILCMode(address, ILC::Mode::ClearFaults);
+                });
+                break;
+            case RESET_ERROR:
+                TSApplication::instance().callFunctionOnAllIlcs([](uint8_t address) {
+                    TSApplication::ilc()->changeILCMode(address, ILC::Mode::Standby);
+                });
+                break;
+            case STANDBY:
+                TSApplication::instance().callFunctionOnAllIlcs(
+                        [](uint8_t address) { TSApplication::ilc()->reportServerID(address); });
+                break;
+            case SERVER_ID:
+                TSApplication::instance().callFunctionOnAllIlcs([](uint8_t address) {
+                    TSApplication::ilc()->changeILCMode(address, ILC::Mode::Disabled);
+                });
+                break;
+            case DISABLED:
+                TSApplication::instance().callFunctionOnAllIlcs([](uint8_t address) {
+                    TSApplication::ilc()->changeILCMode(address, ILC::Mode::Enabled);
+                });
+                break;
+            case ENABLED:
+                TSApplication::instance().callFunctionOnAllIlcs(
+                        [](uint8_t address) { TSApplication::ilc()->reportServerStatus(address); });
+                break;
+            default:
+                SPDLOG_ERROR("Reached invalid ILC bus state: {}", static_cast<int>(_bus_state));
+                Events::SummaryState::setState(MTM1M3TS::MTM1M3TS_shared_SummaryStates_FaultState);
+                break;
+        }
 
         IFPGA::get().ilcCommands(*TSApplication::ilc(), 800);
 
-        if (Events::SummaryState::instance().active()) {
-            Telemetry::ThermalData::instance().send();
+        auto _old_state = _bus_state;
+
+        switch (_bus_state) {
+            case OK:
+                if (Events::SummaryState::instance().active()) {
+                    Telemetry::ThermalData::instance().send();
+                }
+                break;
+            case FAILED:
+                _bus_state = RESET_ERROR;
+                break;
+            case RESET_ERROR:
+                _bus_state = STANDBY;
+                break;
+            case STANDBY:
+                Events::ThermalInfo::instance().log();
+                _bus_state = SERVER_ID;
+                break;
+            case SERVER_ID:
+                _bus_state = DISABLED;
+                break;
+            case DISABLED:
+                _bus_state = ENABLED;
+                break;
+            case ENABLED:
+                _bus_state = OK;
+                break;
+        }
+
+        if (_old_state != _bus_state) {
+            SPDLOG_INFO("Recovering ILCs: transitioned from {} to {}.", static_cast<int>(_old_state),
+                        static_cast<int>(_bus_state));
+        }
+
+    } catch (Modbus::MissingResponse &e) {
+        if (_bus_state != FAILED) {
+            SPDLOG_WARN("No response from the bus, entering ILC failed state.");
+            _bus_state = FAILED;
         }
     } catch (std::exception &e) {
         SPDLOG_WARN("Cannot poll FCU: {}", e.what());
@@ -132,12 +209,12 @@ void Update::_temperatureControlLoop() {
         return;
     }
 
-    next_update += timestep_ms;
-
     if (Events::SummaryState::instance().enabled() == false ||
         Events::EngineeringMode::instance().isEnabled() == true) {
         return;
     }
+
+    next_update += timestep_ms;
 
     auto mirrorLoop = Telemetry::GlycolLoopTemperature::instance().getMirrorLoopAverage();
     float targetTemp = Events::AppliedSetpoint::instance().getAppliedSetpoint();
