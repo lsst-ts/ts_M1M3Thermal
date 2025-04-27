@@ -20,12 +20,16 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+
 #include <spdlog/spdlog.h>
 
 #include <cRIO/ThermalILC.h>
 
-#include <Events/FcuTargets.h>
-#include <TSPublisher.h>
+#include "Events/FcuTargets.h"
+#include "IFPGA.h"
+#include "TSApplication.h"
+#include "TSPublisher.h"
 
 using namespace LSST::M1M3::TS::Events;
 
@@ -49,7 +53,35 @@ void FcuTargets::send() {
     _updated = false;
 }
 
-void FcuTargets::set_fcu_targets(std::vector<float> new_heater_pwm, std::vector<int> new_fan_rpm) {
+void FcuTargets::set_FCU_heaters_fans(const std::vector<int> &heater_PWM, const std::vector<int> &fan_RPM) {
+    auto &app = TSApplication::instance();
+
+    app.ilc()->clear();
+
+    app.callFunctionOnAllIlcs([heater_PWM, fan_RPM](uint8_t address) -> void {
+        TSApplication::ilc()->setThermalDemand(address, heater_PWM[address - 1], fan_RPM[address - 1]);
+    });
+
+    IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
+
+    std::vector<float> target_heater_PWM(cRIO::NUM_TS_ILC);
+    std::vector<int> target_fan_RPM(cRIO::NUM_TS_ILC);
+
+    // converts 0-255 values to human readable values
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        target_heater_PWM[i] = 100.0 * (heater_PWM[i] / 255.0);
+        target_fan_RPM[i] = fan_RPM[i] * 10;
+    }
+    _set_fcu_targets(target_heater_PWM, target_fan_RPM);
+
+    const auto [h_min, h_max] = std::minmax_element(begin(target_heater_PWM), end(target_heater_PWM));
+    const auto [f_min, f_max] = std::minmax_element(begin(target_fan_RPM), end(target_fan_RPM));
+
+    SPDLOG_INFO("Changed targets: heaters {:.1f} % to {:.1f} %, fans {:d} to {:d}.", *h_min, *h_max, *f_min,
+                *f_max);
+}
+
+void FcuTargets::_set_fcu_targets(std::vector<float> new_heater_pwm, std::vector<int> new_fan_rpm) {
     for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
         if (heaterPWM[i] != new_heater_pwm[i]) {
             heaterPWM[i] = new_heater_pwm[i];

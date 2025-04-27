@@ -26,9 +26,9 @@
 
 #include "Events/AppliedSetpoints.h"
 #include "Events/FcuTargets.h"
+#include "Settings/Heaters.h"
 #include "Tasks/HeatersTemperatureControl.h"
 #include "Telemetry/ThermalData.h"
-#include "TSApplication.h"
 
 using namespace LSST::M1M3::TS::Tasks;
 
@@ -42,7 +42,7 @@ LSST::cRIO::task_return_t HeatersTemperatureControl::run() {
     std::vector<int> target_heater(LSST::cRIO::NUM_TS_ILC);
     std::vector<int> target_fan(LSST::cRIO::NUM_TS_ILC);
     for (int i = 0; i < LSST::cRIO::NUM_TS_ILC; i++) {
-        target_heater[i] = 128 * (target_temperature - temperature[i]);
+        target_heater[i] = (target_temperature - temperature[i]) * 255 / Settings::Heaters::instance().pRange;
 
         if (target_heater[i] > 255) {
             target_heater[i] = 255;
@@ -52,7 +52,7 @@ LSST::cRIO::task_return_t HeatersTemperatureControl::run() {
         }
         target_fan[i] = fanRPM[i] == 0 ? 20 : fanRPM[i] / 10;
     }
-    TSApplication::instance().set_FCU_heaters_fans(target_heater, target_fan);
+    Events::FcuTargets::instance().set_FCU_heaters_fans(target_heater, target_fan);
 
     return 60000;
 }

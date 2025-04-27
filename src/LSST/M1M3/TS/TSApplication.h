@@ -43,8 +43,6 @@ public:
 
     static SALThermalILC *ilc() { return instance()._ilc; }
 
-    void set_FCU_heaters_fans(const std::vector<int> &heater_PWM, const std::vector<int> &fan_RPM);
-
 private:
     SALThermalILC *_ilc;
 };

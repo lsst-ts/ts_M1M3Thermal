@@ -36,7 +36,7 @@
 #include <Settings/GlycolPump.h>
 #include <Settings/MixingValve.h>
 #include <Settings/Setpoint.h>
-#include <TSApplication.h>
+#include "TSApplication.h"
 #include <TSPublisher.h>
 
 using namespace LSST::cRIO;
@@ -111,7 +111,7 @@ void SAL_enable::execute() {
 
 void SAL_disable::execute() {
     auto zeros = std::vector<int>(cRIO::NUM_TS_ILC, 0);
-    TSApplication::instance().set_FCU_heaters_fans(zeros, zeros);
+    Events::FcuTargets::instance().set_FCU_heaters_fans(zeros, zeros);
     changeAllILCsMode(ILC::Mode::Disabled);
     IFPGA::get().setFCUPower(false);
     IFPGA::get().setCoolantPumpPower(false);
@@ -173,7 +173,7 @@ bool SAL_heaterFanDemand::validate() {
 
 void SAL_heaterFanDemand::execute() {
     try {
-        TSApplication::instance().set_FCU_heaters_fans(params.heaterPWM, params.fanRPM);
+        Events::FcuTargets::instance().set_FCU_heaters_fans(params.heaterPWM, params.fanRPM);
         ackComplete();
     } catch (std::exception &e) {
         ackFailed(e.what());

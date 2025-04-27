@@ -42,13 +42,15 @@ public:
      */
     void send();
 
-    void set_fcu_targets(std::vector<float> new_heater_pwm, std::vector<int> new_fan_rpm);
+    void set_FCU_heaters_fans(const std::vector<int> &heater_PWM, const std::vector<int> &fan_RPM);
 
     auto get_heaterPWM() { return heaterPWM; }
     auto get_fanRPM() { return fanRPM; }
 
 private:
     bool _updated;
+
+    void _set_fcu_targets(std::vector<float> new_heater_pwm, std::vector<int> new_fan_rpm);
 };
 
 }  // namespace Events
