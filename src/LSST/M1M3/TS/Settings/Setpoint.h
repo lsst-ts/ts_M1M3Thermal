@@ -46,6 +46,8 @@ public:
     float tolerance;
     float mixingValveStep;
 
+    float glycolSupplyPercentage;
+
     float high;
     float low;
 };

@@ -27,7 +27,8 @@ Setpoint:
   Tolerance: 0.05
   # Mixing valve step size - change in % every time difference between coolant temperature and target temperature is greater than tolerance
   MixingValveStep: 5
-
+  # Percentage of mirror supply temperature on glycol loop target value
+  GlycolSupplyPercentage: 95
   # Allowed minimal and maximal setpoints
   Low: -15
   High: 25

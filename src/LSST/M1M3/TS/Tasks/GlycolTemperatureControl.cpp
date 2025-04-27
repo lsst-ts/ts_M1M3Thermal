@@ -34,7 +34,8 @@ using namespace LSST::M1M3::TS::Tasks;
 GlycolTemperatureControl::GlycolTemperatureControl() {}
 
 LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
-    auto mirror_loop = Telemetry::GlycolLoopTemperature::instance().getMirrorLoopAverage();
+    auto mirror_loop = Telemetry::GlycolLoopTemperature::instance().getMirrorLoopAverage(
+            Settings::Setpoint::instance().glycolSupplyPercentage / 100.0);
     float target_glycol_temp = Events::AppliedSetpoints::instance().getAppliedGlycolSetpoint();
 
     float diff = mirror_loop - target_glycol_temp;

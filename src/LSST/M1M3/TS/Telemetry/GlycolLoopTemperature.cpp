@@ -69,9 +69,9 @@ float GlycolLoopTemperature::getMirrorCellInsideTemperature() {
     return (insideCellTemperature1 + insideCellTemperature2 + insideCellTemperature3) / 3.0;
 }
 
-float GlycolLoopTemperature::getMirrorLoopAverage() {
+float GlycolLoopTemperature::getMirrorLoopAverage(float supply) {
     std::lock_guard<std::mutex> lock(_access_mutex);
-    return (mirrorCoolantSupplyTemperature + mirrorCoolantReturnTemperature) / 2.0;
+    return (mirrorCoolantSupplyTemperature * supply) + (mirrorCoolantReturnTemperature * (1 - supply));
 }
 
 float GlycolLoopTemperature::getMirrorLoopSupply() {
