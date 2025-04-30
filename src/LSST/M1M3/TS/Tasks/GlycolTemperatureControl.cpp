@@ -60,7 +60,7 @@ LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
     float target_v = Settings::MixingValve::instance().percentsToCommanded(target_mixing_valve);
 
     SPDLOG_INFO(
-            "TemperatureControlLoop: new valve position is {:.1f}% ({:0.02f}), temperature difference was "
+            "TemperatureControlLoop: new valve position is {:.1f}% ({:0.04f}), temperature difference was "
             "{:+.3f}",
             target_mixing_valve, target_v, diff);
 

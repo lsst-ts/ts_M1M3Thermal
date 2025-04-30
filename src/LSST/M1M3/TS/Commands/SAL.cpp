@@ -192,7 +192,7 @@ void SAL_setMixingValve::execute() {
     float target = Settings::MixingValve::instance().percentsToCommanded(params.mixingValveTarget);
     IFPGA::get().setMixingValvePosition(target);
     ackComplete();
-    SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.04})", params.mixingValveTarget, target);
+    SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.05f})", params.mixingValveTarget, target);
 }
 
 bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().is_enabled(); }
