@@ -52,7 +52,11 @@ LSST::cRIO::task_return_t HeatersTemperatureControl::run() {
         }
         target_fan[i] = fanRPM[i] == 0 ? 20 : fanRPM[i] / 10;
     }
-    Events::FcuTargets::instance().set_FCU_heaters_fans(target_heater, target_fan);
+    try {
+        Events::FcuTargets::instance().set_FCU_heaters_fans(target_heater, target_fan);
+    } catch (std::exception& ex) {
+        SPDLOG_WARN("Error executing FCU heaters task: {}", ex.what());
+    }
 
     return 60000;
 }
