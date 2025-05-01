@@ -20,27 +20,18 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <chrono>
-
 #include <spdlog/spdlog.h>
-
-#include <SAL_MTM1M3TS.h>
-
-#include <cRIO/ThermalILC.h>
 
 #include "Commands/Update.h"
 
-#include "Events/AppliedSetpoint.h"
+#include "Events/AppliedSetpoints.h"
 #include "Events/EnabledILC.h"
 #include "Events/EngineeringMode.h"
+#include "Events/FcuTargets.h"
 #include "Events/Heartbeat.h"
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
 
-#include <Settings/MixingValve.h>
-#include <Settings/Setpoint.h>
-
-#include "Telemetry/GlycolLoopTemperature.h"
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
 
@@ -57,8 +48,6 @@ LSST::cRIO::task_return_t Update::run() {
     _sendFCU();
 
     _sendMixingValve();
-
-    _temperatureControlLoop();
 
     Events::EnabledILC::instance().send();
 
@@ -149,7 +138,7 @@ void Update::_sendFCU() {
                 break;
             default:
                 SPDLOG_ERROR("Reached invalid ILC bus state: {}", static_cast<int>(_bus_state));
-                Events::SummaryState::setState(MTM1M3TS::MTM1M3TS_shared_SummaryStates_FaultState);
+                Events::SummaryState::set_state(MTM1M3TS::MTM1M3TS_shared_SummaryStates_FaultState);
                 break;
         }
 
@@ -197,51 +186,4 @@ void Update::_sendFCU() {
     } catch (std::exception &e) {
         SPDLOG_WARN("Cannot poll FCU: {}", e.what());
     }
-}
-
-void Update::_temperatureControlLoop() {
-    auto timestep_ms = std::chrono::milliseconds(int(Settings::Setpoint::instance().timestep * 1000.0));
-
-    static auto next_update = std::chrono::steady_clock::now() - timestep_ms;
-
-    auto now = std::chrono::steady_clock::now();
-    if (now < next_update) {
-        return;
-    }
-
-    if (Events::SummaryState::instance().enabled() == false ||
-        Events::EngineeringMode::instance().isEnabled() == true) {
-        return;
-    }
-
-    next_update += timestep_ms;
-
-    auto mirrorLoop = Telemetry::GlycolLoopTemperature::instance().getMirrorLoopAverage();
-    float targetTemp = Events::AppliedSetpoint::instance().getAppliedSetpoint();
-    static float new_valve_position = 10.0;
-
-    float diff = mirrorLoop - targetTemp;
-    auto tolerance = Settings::Setpoint::instance().tolerance;
-
-    auto mixingValveStep = Settings::Setpoint::instance().mixingValveStep;
-
-    if (diff > tolerance) {
-        new_valve_position += mixingValveStep;
-    } else if (diff < -tolerance) {
-        new_valve_position -= mixingValveStep;
-    } else {
-        return;
-    }
-
-    if (new_valve_position > 100.0) {
-        new_valve_position = 100.0;
-    } else if (new_valve_position < 0) {
-        new_valve_position = 0;
-    }
-
-    SPDLOG_INFO("TemperatureControlLoop: new valve position is {:.1f}%, temperature difference was {:+.3f}",
-                new_valve_position, diff);
-
-    IFPGA::get().setMixingValvePosition(
-            Settings::MixingValve::instance().percentsToCommanded(new_valve_position));
 }

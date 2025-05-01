@@ -22,7 +22,8 @@
 
 #include "TSApplication.h"
 
-#include <Events/EnabledILC.h>
+#include "Events/EnabledILC.h"
+#include "Events/FcuTargets.h"
 
 using namespace LSST::M1M3::TS;
 

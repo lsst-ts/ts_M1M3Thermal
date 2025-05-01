@@ -1,5 +1,5 @@
 /*
- * Publish AppliedSetpoint event.
+ * Task controlling FCU heaters.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,37 +20,26 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <spdlog/spdlog.h>
+#ifndef _TS_Tasks_HeatersTemperatureControl_
+#define _TS_Tasks_HeatersTemperatureControl_
 
-#include <Events/AppliedSetpoint.h>
-#include <TSPublisher.h>
+#include "cRIO/Task.h"
 
-using namespace LSST::M1M3::TS::Events;
+namespace LSST {
+namespace M1M3 {
+namespace TS {
+namespace Tasks {
 
-AppliedSetpoint::AppliedSetpoint(token) { reset(); }
+class HeatersTemperatureControl : public cRIO::Task {
+public:
+    HeatersTemperatureControl();
 
-void AppliedSetpoint::reset() {
-    setpoint = NAN;
-    _updated = false;
-}
+    virtual cRIO::task_return_t run();
+};
 
-void AppliedSetpoint::send() {
-    if (_updated == false) {
-        return;
-    }
-    salReturn ret = TSPublisher::SAL()->putSample_logevent_appliedSetpoint(this);
-    if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot publish appliedSetpoint: {}", ret);
-        return;
-    }
-    _updated = false;
-}
+}  // namespace Tasks
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST
 
-void AppliedSetpoint::setAppliedSetpoint(float new_setpoint) {
-    if (setpoint != new_setpoint) {
-        setpoint = new_setpoint;
-        _updated = true;
-    }
-}
-
-float AppliedSetpoint::getAppliedSetpoint() { return setpoint; }
+#endif  // ! _TS_Tasks_HeatersTemperatureControl_

@@ -47,6 +47,8 @@ public:
      * Sends updates through SAL/DDS.
      */
     void send();
+
+    auto get_absoluteTemperature() { return absoluteTemperature; }
 };
 
 }  // namespace Telemetry

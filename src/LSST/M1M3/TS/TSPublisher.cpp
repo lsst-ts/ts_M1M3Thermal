@@ -64,9 +64,10 @@ void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
     _m1m3TSSAL->salTelemetryPub((char *)"MTM1M3TS_glycolPump");
 
     SPDLOG_DEBUG("TSPublisher: Initializing SAL Events");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_appliedSetpoint");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_appliedSetpoints");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_engineeringMode");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_enabledILC");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_fcuTargets");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_heartbeat");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_logLevel");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_summaryState");
@@ -74,7 +75,7 @@ void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_simulationMode");
 
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalInfo");
-//    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_glycolPumpStatus");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_glycolPumpStatus");
 
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalSettings");
 }

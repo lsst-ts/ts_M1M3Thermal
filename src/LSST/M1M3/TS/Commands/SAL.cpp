@@ -27,15 +27,16 @@
 #include <cRIO/ControllerThread.h>
 
 #include <Commands/SAL.h>
-#include <Events/AppliedSetpoint.h>
+#include <Events/AppliedSetpoints.h>
 #include <Events/EngineeringMode.h>
+#include <Events/FcuTargets.h>
 #include <Events/SummaryState.h>
 #include <Events/ThermalInfo.h>
 #include <Settings/Controller.h>
 #include <Settings/GlycolPump.h>
 #include <Settings/MixingValve.h>
 #include <Settings/Setpoint.h>
-#include <TSApplication.h>
+#include "TSApplication.h"
 #include <TSPublisher.h>
 
 using namespace LSST::cRIO;
@@ -80,6 +81,7 @@ void SAL_start::execute() {
         IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
 
         Events::ThermalInfo::instance().log();
+        Events::FcuTargets::instance().send();
     } catch (std::exception &ex) {
         ackFailed(fmt::format("Cannot communicate with FCU's ILCs on startup: {}", ex.what()));
     }
@@ -92,7 +94,7 @@ void SAL_start::execute() {
         TSPublisher::instance().startPumpThread();
     }
 
-    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
+    Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_DisabledState);
     Events::EngineeringMode::instance().send();
     ackComplete();
     SPDLOG_INFO("Started");
@@ -102,17 +104,19 @@ void SAL_enable::execute() {
     changeAllILCsMode(ILC::Mode::Enabled);
     IFPGA::get().setFCUPower(true);
 
-    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_EnabledState);
+    Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_EnabledState);
     ackComplete();
     SPDLOG_INFO("Enabled");
 }
 
 void SAL_disable::execute() {
+    auto zeros = std::vector<int>(cRIO::NUM_TS_ILC, 0);
+    Events::FcuTargets::instance().set_FCU_heaters_fans(zeros, zeros);
     changeAllILCsMode(ILC::Mode::Disabled);
     IFPGA::get().setFCUPower(false);
     IFPGA::get().setCoolantPumpPower(false);
 
-    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_DisabledState);
+    Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
 }
 
@@ -122,7 +126,7 @@ void SAL_standby::execute() {
 
     changeAllILCsMode(ILC::Mode::ClearFaults);
     changeAllILCsMode(ILC::Mode::Standby);
-    Events::SummaryState::setState(MTM1M3TS_shared_SummaryStates_StandbyState);
+    Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_StandbyState);
     ackComplete();
     SPDLOG_INFO("Standby");
 }
@@ -141,13 +145,13 @@ bool SAL_setEngineeringMode::validate() {
 }
 
 void SAL_setEngineeringMode::execute() {
-    Events::EngineeringMode::instance().setEnabled(params.enableEngineeringMode);
+    Events::EngineeringMode::instance().set_enabled(params.enableEngineeringMode);
     ackComplete();
     SPDLOG_INFO("{} Engineering Mode", params.enableEngineeringMode ? "Entered" : "Exited");
 }
 
 bool SAL_fanCoilsHeatersPower::validate() {
-    if (Events::EngineeringMode::instance().isEnabled() == false) {
+    if (Events::EngineeringMode::instance().is_enabled() == false) {
         ackFailed("CSC must be in enabled state to set heater on.");
         return false;
     };
@@ -160,7 +164,7 @@ void SAL_fanCoilsHeatersPower::execute() {
 }
 
 bool SAL_heaterFanDemand::validate() {
-    if (Events::EngineeringMode::instance().isEnabled() == false) {
+    if (Events::EngineeringMode::instance().is_enabled() == false) {
         ackFailed("CSC must be in enabled state to set heater and fan demands.");
         return false;
     };
@@ -169,15 +173,7 @@ bool SAL_heaterFanDemand::validate() {
 
 void SAL_heaterFanDemand::execute() {
     try {
-        TSApplication::ilc()->clear();
-
-        TSApplication::instance().callFunctionOnAllIlcs([this](uint8_t address) -> void {
-            TSApplication::ilc()->setThermalDemand(address, params.heaterPWM[address - 1],
-                                                   params.fanRPM[address - 1]);
-        });
-
-        IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
-        SPDLOG_INFO("Changed heaters and fans demand");
+        Events::FcuTargets::instance().set_FCU_heaters_fans(params.heaterPWM, params.fanRPM);
         ackComplete();
     } catch (std::exception &e) {
         ackFailed(e.what());
@@ -196,10 +192,10 @@ void SAL_setMixingValve::execute() {
     float target = Settings::MixingValve::instance().percentsToCommanded(params.mixingValveTarget);
     IFPGA::get().setMixingValvePosition(target);
     ackComplete();
-    SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.02})", params.mixingValveTarget, target);
+    SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.05f})", params.mixingValveTarget, target);
 }
 
-bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().isEnabled(); }
+bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().is_enabled(); }
 
 void SAL_coolantPumpPower::execute() {
     IFPGA::get().setCoolantPumpPower(params.power);
@@ -246,18 +242,29 @@ void SAL_coolantPumpReset::execute() {
     SPDLOG_INFO("Coolant pump reseted");
 }
 
-bool SAL_applySetpoint::validate() {
-    if (params.setpoint < Settings::Setpoint::instance().low ||
-        params.setpoint > Settings::Setpoint::instance().high) {
-        ackFailed(fmt::format("Temperature setpoint must be between {} and {}, attempted to set to {}.",
-                              Settings::Setpoint::instance().low, Settings::Setpoint::instance().high,
-                              params.setpoint));
+bool SAL_applySetpoints::validate() {
+    if (params.glycolSetpoint < Settings::Setpoint::instance().low ||
+        params.glycolSetpoint > Settings::Setpoint::instance().high) {
+        ackFailed(fmt::format(
+                "Glycol loop temperature setpoint must be between {} and {}, attempted to set to {}.",
+                Settings::Setpoint::instance().low, Settings::Setpoint::instance().high,
+                params.glycolSetpoint));
+        return false;
+    }
+    if (params.heatersSetpoint < Settings::Setpoint::instance().low ||
+        params.heatersSetpoint > Settings::Setpoint::instance().high) {
+        ackFailed(fmt::format(
+                "FCU heaters temperature setpoint must be between {} and {}, attempted to set to {}.",
+                Settings::Setpoint::instance().low, Settings::Setpoint::instance().high,
+                params.heatersSetpoint));
         return false;
     }
     return true;
 }
 
-void SAL_applySetpoint::execute() {
-    Events::AppliedSetpoint::instance().setAppliedSetpoint(params.setpoint);
-    Events::AppliedSetpoint::instance().send();
+void SAL_applySetpoints::execute() {
+    Events::AppliedSetpoints::instance().setAppliedSetpoints(params.glycolSetpoint, params.heatersSetpoint);
+    Events::AppliedSetpoints::instance().send();
+    SPDLOG_INFO("Glycol setpoint: {:0.2f} FCU heaters setpoint: {:0.2f}", params.glycolSetpoint,
+                params.heatersSetpoint);
 }

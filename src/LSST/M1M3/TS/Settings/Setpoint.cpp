@@ -28,6 +28,8 @@
 using namespace LSST::M1M3::TS::Settings;
 
 Setpoint::Setpoint(token) {
+    glycolSupplyPercentage = 100;
+
     low = NAN;
     high = NAN;
 }
@@ -43,6 +45,13 @@ void Setpoint::load(YAML::Node doc) {
         mixingValveStep = doc["MixingValveStep"].as<float>();
         if (mixingValveStep <= 0) {
             throw std::runtime_error("Setpoint/MixingValveStep must be greater than 0");
+        }
+
+        glycolSupplyPercentage = doc["GlycolSupplyPercentage"].as<float>();
+        if (glycolSupplyPercentage < 0 || glycolSupplyPercentage > 100) {
+            throw std::runtime_error(
+                    fmt::format("GlycolSupplyPercentage value must be between 0 and 100, was set to {:.2f}",
+                                glycolSupplyPercentage));
         }
 
         low = doc["Low"].as<float>();

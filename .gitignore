@@ -12,3 +12,4 @@ ts-M1M3thermald
 .mypy.ini
 .ruff.toml
 towncrier.toml
+src/version.c

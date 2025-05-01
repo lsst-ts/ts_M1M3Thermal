@@ -23,6 +23,8 @@
 #ifndef _TS_Command_Update_
 #define _TS_Command_Update_
 
+#include <chrono>
+
 #include <SAL_MTM1M3TS.h>
 
 #include <cRIO/Task.h>
@@ -39,10 +41,10 @@ public:
     cRIO::task_return_t run() override;
 
 private:
-    void _sendGlycolLoopTemperature();
     void _sendMixingValve();
     void _sendFCU();
-    void _temperatureControlLoop();
+
+    std::chrono::steady_clock::time_point _next_update;
 };
 
 }  // namespace Commands

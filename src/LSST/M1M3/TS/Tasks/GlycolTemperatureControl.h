@@ -1,5 +1,5 @@
 /*
- * EngineeringMode event.
+ * Tasks controlling mixing valve position.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,31 +20,28 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <Events/EngineeringMode.h>
-#include <TSPublisher.h>
-#include <spdlog/spdlog.h>
+#ifndef _TS_Tasks_GlycolTemperatureControl_
+#define _TS_Tasks_GlycolTemperatureControl_
 
-using namespace LSST::M1M3::TS;
-using namespace LSST::M1M3::TS::Events;
+#include "cRIO/Task.h"
 
-EngineeringMode::EngineeringMode(token) {
-    engineeringMode = false;
-    send();
-}
+namespace LSST {
+namespace M1M3 {
+namespace TS {
+namespace Tasks {
 
-void EngineeringMode::set_enabled(bool newState) {
-    if (engineeringMode != newState) {
-        engineeringMode = newState;
-        send();
-    }
-}
+class GlycolTemperatureControl : public cRIO::Task {
+public:
+    GlycolTemperatureControl();
 
-bool EngineeringMode::is_enabled() { return engineeringMode; }
+    virtual cRIO::task_return_t run();
 
-void EngineeringMode::send() {
-    salReturn ret = TSPublisher::SAL()->putSample_logevent_engineeringMode(this);
-    if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot send engineeringMode: {}", ret);
-        return;
-    }
-}
+    float target_mixing_valve = 0;
+};
+
+}  // namespace Tasks
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST
+
+#endif  // ! _TS_Tasks_GlycolTemperatureControl_

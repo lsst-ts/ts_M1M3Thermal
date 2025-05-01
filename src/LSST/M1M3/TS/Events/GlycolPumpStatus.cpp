@@ -51,11 +51,11 @@ void GlycolPumpStatus::update(VFD *vfd) {
         parametersLocked = status & 0x0400;
         errorCode = status & 0x0800;
 
-//        salReturn ret = TSPublisher::SAL()->putSample_logevent_glycolPumpStatus(&instance());
-//        if (ret != SAL__OK) {
-//            SPDLOG_WARN("Can not send GlycolPumpStatus: {}", ret);
-//            return;
-//        }
+        salReturn ret = TSPublisher::SAL()->putSample_logevent_glycolPumpStatus(&instance());
+        if (ret != SAL__OK) {
+            SPDLOG_WARN("Can not send GlycolPumpStatus: {}", ret);
+            return;
+        }
 
         _last_status = status;
         _last_errorCode = errorCode;

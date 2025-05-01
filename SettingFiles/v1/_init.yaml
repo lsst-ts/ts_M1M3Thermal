@@ -20,6 +20,12 @@ MixingValve:
     FullyClosed: 0.03
     FullyOpened: 9.64
 
+Heaters:
+  # range in deg C for the full P error. If set to 1, that means that target
+  # difference +1 and above will run heaters at 100%, +0.5 differece will run
+  # heaters at 50%.
+  PRange: 0.5
+
 Setpoint:
   # Loop run time in seconds
   Timestep: 60
@@ -27,7 +33,8 @@ Setpoint:
   Tolerance: 0.05
   # Mixing valve step size - change in % every time difference between coolant temperature and target temperature is greater than tolerance
   MixingValveStep: 5
-
+  # Percentage of mirror supply temperature on glycol loop target value
+  GlycolSupplyPercentage: 95
   # Allowed minimal and maximal setpoints
   Low: -15
   High: 25

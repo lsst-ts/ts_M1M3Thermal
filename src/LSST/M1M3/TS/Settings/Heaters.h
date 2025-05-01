@@ -21,8 +21,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Settings_Setpoint_h
-#define _TS_Settings_Setpoint_h
+#ifndef _TS_Settings_Heaters_h
+#define _TS_Settings_Heaters_h
 
 #include <yaml-cpp/yaml.h>
 
@@ -36,20 +36,13 @@ namespace M1M3 {
 namespace TS {
 namespace Settings {
 
-class Setpoint : public cRIO::Singleton<Setpoint> {
+class Heaters : public cRIO::Singleton<Heaters> {
 public:
-    Setpoint(token);
+    Heaters(token);
 
     void load(YAML::Node doc);
 
-    float timestep;
-    float tolerance;
-    float mixingValveStep;
-
-    float glycolSupplyPercentage;
-
-    float high;
-    float low;
+    float pRange;
 };
 
 }  // namespace Settings
@@ -57,4 +50,4 @@ public:
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //!_TS_Settings_Setpoint_h
+#endif  //!_TS_Settings_Heaters_h

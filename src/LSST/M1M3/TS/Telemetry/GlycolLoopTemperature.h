@@ -66,11 +66,13 @@ public:
     float getMirrorCellInsideTemperature();
 
     /**
-     * Retrieves avergare mirror glycol loop temperature.
+     * Retrieves weighted average mirror glycol loop temperature.
+     *
+     * @param supply supply contribution, 0 to 1
      *
      * @return average of the supply and return values
      */
-    float getMirrorLoopAverage();
+    float getMirrorLoopAverage(float supply);
 
     /**
      * Returns mirror glycol supply temperature.

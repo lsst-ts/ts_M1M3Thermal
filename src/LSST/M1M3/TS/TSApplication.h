@@ -23,6 +23,8 @@
 #ifndef _TS_TSApplication_h
 #define _TS_TSApplication_h
 
+#include <vector>
+
 #include <IFPGA.h>
 #include <SALThermalILC.h>
 #include <cRIO/Singleton.h>

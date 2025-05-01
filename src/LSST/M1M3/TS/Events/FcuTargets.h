@@ -1,5 +1,5 @@
 /*
- * EngineeringMode event.
+ * AppliedSetpoints event handling class.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,31 +20,42 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <Events/EngineeringMode.h>
-#include <TSPublisher.h>
-#include <spdlog/spdlog.h>
+#ifndef _TS_Event_FcuTargets_
+#define _TS_Event_FcuTargets_
 
-using namespace LSST::M1M3::TS;
-using namespace LSST::M1M3::TS::Events;
+#include <SAL_MTM1M3TS.h>
+#include <cRIO/Singleton.h>
 
-EngineeringMode::EngineeringMode(token) {
-    engineeringMode = false;
-    send();
-}
+namespace LSST {
+namespace M1M3 {
+namespace TS {
+namespace Events {
 
-void EngineeringMode::set_enabled(bool newState) {
-    if (engineeringMode != newState) {
-        engineeringMode = newState;
-        send();
-    }
-}
+class FcuTargets final : MTM1M3TS_logevent_fcuTargetsC, public cRIO::Singleton<FcuTargets> {
+public:
+    FcuTargets(token);
 
-bool EngineeringMode::is_enabled() { return engineeringMode; }
+    void reset();
 
-void EngineeringMode::send() {
-    salReturn ret = TSPublisher::SAL()->putSample_logevent_engineeringMode(this);
-    if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot send engineeringMode: {}", ret);
-        return;
-    }
-}
+    /**
+     * Sends updates through SAL/DDS.
+     */
+    void send();
+
+    void set_FCU_heaters_fans(const std::vector<int> &heater_PWM, const std::vector<int> &fan_RPM);
+
+    auto get_heaterPWM() { return heaterPWM; }
+    auto get_fanRPM() { return fanRPM; }
+
+private:
+    bool _updated;
+
+    void _set_fcu_targets(std::vector<float> new_heater_pwm, std::vector<int> new_fan_rpm);
+};
+
+}  // namespace Events
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST
+
+#endif  // !_TS_Event_FcuTargets_

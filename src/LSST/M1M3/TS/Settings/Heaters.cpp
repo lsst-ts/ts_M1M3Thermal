@@ -21,40 +21,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Settings_Setpoint_h
-#define _TS_Settings_Setpoint_h
+#include <spdlog/spdlog.h>
 
-#include <yaml-cpp/yaml.h>
+#include <Settings/Heaters.h>
 
-#include <SAL_MTM1M3TS.h>
+using namespace LSST::M1M3::TS::Settings;
 
-#include <TSPublisher.h>
-#include <cRIO/Singleton.h>
+Heaters::Heaters(token) { pRange = 1; }
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Settings {
-
-class Setpoint : public cRIO::Singleton<Setpoint> {
-public:
-    Setpoint(token);
-
-    void load(YAML::Node doc);
-
-    float timestep;
-    float tolerance;
-    float mixingValveStep;
-
-    float glycolSupplyPercentage;
-
-    float high;
-    float low;
-};
-
-}  // namespace Settings
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
-
-#endif  //!_TS_Settings_Setpoint_h
+void Heaters::load(YAML::Node doc) {
+    SPDLOG_TRACE("Loading heaters settigns");
+    try {
+        pRange = doc["PRange"].as<float>(1.0);
+        if (pRange <= 0) {
+            throw std::runtime_error("Heaters/PRange must be greater than 0");
+        }
+    } catch (YAML::Exception &ex) {
+        throw std::runtime_error(fmt::format("Cannot load Setpoint settings: {}", ex.what()));
+    }
+}

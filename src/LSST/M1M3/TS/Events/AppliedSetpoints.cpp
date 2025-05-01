@@ -1,5 +1,5 @@
 /*
- * EngineeringMode event.
+ * Publish AppliedSetpoints event.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,31 +20,40 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <Events/EngineeringMode.h>
-#include <TSPublisher.h>
 #include <spdlog/spdlog.h>
 
-using namespace LSST::M1M3::TS;
+#include <Events/AppliedSetpoints.h>
+#include <TSPublisher.h>
+
 using namespace LSST::M1M3::TS::Events;
 
-EngineeringMode::EngineeringMode(token) {
-    engineeringMode = false;
-    send();
+AppliedSetpoints::AppliedSetpoints(token) { reset(); }
+
+void AppliedSetpoints::reset() {
+    glycolSetpoint = NAN;
+    heatersSetpoint = NAN;
+    _updated = false;
 }
 
-void EngineeringMode::set_enabled(bool newState) {
-    if (engineeringMode != newState) {
-        engineeringMode = newState;
-        send();
-    }
-}
-
-bool EngineeringMode::is_enabled() { return engineeringMode; }
-
-void EngineeringMode::send() {
-    salReturn ret = TSPublisher::SAL()->putSample_logevent_engineeringMode(this);
-    if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot send engineeringMode: {}", ret);
+void AppliedSetpoints::send() {
+    if (_updated == false) {
         return;
+    }
+    salReturn ret = TSPublisher::SAL()->putSample_logevent_appliedSetpoints(this);
+    if (ret != SAL__OK) {
+        SPDLOG_WARN("Cannot publish appliedSetpoint: {}", ret);
+        return;
+    }
+    _updated = false;
+}
+
+void AppliedSetpoints::setAppliedSetpoints(float new_glycol_setpoint, float new_heaters_setpoint) {
+    if (glycolSetpoint != new_glycol_setpoint) {
+        glycolSetpoint = new_glycol_setpoint;
+        _updated = true;
+    }
+    if (heatersSetpoint != new_heaters_setpoint) {
+        heatersSetpoint = new_heaters_setpoint;
+        _updated = true;
     }
 }

@@ -27,6 +27,7 @@
 #include <spdlog/async.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
+#include <fmt/ranges.h>
 
 #include <cRIO/FPGACliApp.h>
 #include <cRIO/MPU.h>
@@ -387,7 +388,9 @@ int M1M3TScli::printPump(command_vec cmds) {
 
 int M1M3TScli::mixingValve(command_vec cmds) {
     if (cmds.size() == 1) {
-        dynamic_cast<IFPGA *>(getFPGA())->setMixingValvePosition(std::stof(cmds[0]) / 1000.0f);
+        auto pos = std::stof(cmds[0]) / 1000.0f;
+        dynamic_cast<IFPGA *>(getFPGA())->setMixingValvePosition(pos);
+        std::cout << "Commanded to " << std::fixed << std::setprecision(5) << pos << " mA" << std::endl;
     }
     std::cout << "Mixing valve: " << std::fixed << std::setprecision(3)
               << dynamic_cast<IFPGA *>(getFPGA())->getMixingValvePosition() << " V" << std::endl;

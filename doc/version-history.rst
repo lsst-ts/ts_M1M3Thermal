@@ -4,6 +4,12 @@
 Version History
 ===============
 
+v2.1.0
+------
+
+* FcuTarget event
+* FCU heater control based on setpoint
+
 v2.0.1
 ------
 
