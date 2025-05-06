@@ -35,7 +35,7 @@ MixingValve::MixingValve(token) { rawValvePosition = NAN; }
 
 void MixingValve::sendPosition(float position) {
     rawValvePosition = position;
-    valvePosition = Settings::MixingValve::instance().positionToPercents(position);
+    valvePosition = Settings::MixingValve::instance().position_to_percents(position);
 
     salReturn ret = TSPublisher::SAL()->putSample_mixingValve(this);
     if (ret != SAL__OK) {

@@ -32,8 +32,6 @@
 #include "Events/Heartbeat.h"
 #include "Events/SummaryState.h"
 #include "OuterLoopClockThread.h"
-#include "Tasks/GlycolTemperatureControl.h"
-#include "Tasks/HeatersTemperatureControl.h"
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
@@ -41,33 +39,10 @@ using namespace LSST::M1M3::TS;
 void OuterLoopClockThread::run(std::unique_lock<std::mutex> &lock) {
     SPDLOG_INFO("OuterLoopClockThread: Run");
 
-    std::shared_ptr<Tasks::GlycolTemperatureControl> _glycol_temperature_task;
-    std::shared_ptr<Tasks::HeatersTemperatureControl> _heaters_temperature_task;
-
     while (keepRunning) {
         runCondition.wait_for(lock, 500ms);
         if (Events::SummaryState::instance().active()) {
             cRIO::ControllerThread::instance().enqueue(std::make_shared<Commands::Update>());
-        }
-        if (Events::SummaryState::instance().enabled() == true &&
-            Events::EngineeringMode::instance().is_enabled() == false) {
-            if (_glycol_temperature_task == nullptr) {
-                _glycol_temperature_task = std::make_shared<Tasks::GlycolTemperatureControl>();
-                cRIO::ControllerThread::instance().enqueue(_glycol_temperature_task);
-            }
-            if (_heaters_temperature_task == nullptr) {
-                _heaters_temperature_task = std::make_shared<Tasks::HeatersTemperatureControl>();
-                cRIO::ControllerThread::instance().enqueue(_heaters_temperature_task);
-            }
-        } else {
-            if (_glycol_temperature_task != nullptr) {
-                cRIO::ControllerThread::instance().remove(_glycol_temperature_task);
-                _glycol_temperature_task = nullptr;
-            }
-            if (_heaters_temperature_task != nullptr) {
-                cRIO::ControllerThread::instance().remove(_heaters_temperature_task);
-                _heaters_temperature_task = nullptr;
-            }
         }
         Events::Heartbeat::instance().tryToggle();
     }

@@ -31,25 +31,22 @@
 
 using namespace LSST::M1M3::TS::Tasks;
 
-GlycolTemperatureControl::GlycolTemperatureControl() {}
+GlycolTemperatureControl::GlycolTemperatureControl()
+        : target_pid(Settings::MixingValve::instance().pid_parameters) {}
 
 LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
     auto mirror_loop = Telemetry::GlycolLoopTemperature::instance().getMirrorLoopAverage(
             Settings::Setpoint::instance().glycolSupplyPercentage / 100.0);
     float target_glycol_temp = Events::AppliedSetpoints::instance().getAppliedGlycolSetpoint();
 
-    float diff = mirror_loop - target_glycol_temp;
-    auto tolerance = Settings::Setpoint::instance().tolerance;
-
-    auto mixing_valve_step = Settings::Setpoint::instance().mixingValveStep;
-
-    if (diff > tolerance) {
-        target_mixing_valve += mixing_valve_step;
-    } else if (diff < -tolerance) {
-        target_mixing_valve -= mixing_valve_step;
-    } else {
-        return Settings::Setpoint::instance().timestep * 1000.0;
+    if (isnan(target_glycol_temp) || isnan(mirror_loop)) {
+        SPDLOG_INFO("Glycol targets not set, ending the loop.");
+        return Task::DONT_RESCHEDULE;
     }
+
+    float diff = mirror_loop - target_glycol_temp;
+
+    float target_mixing_valve = round(target_pid.process(target_glycol_temp, mirror_loop) / 5.0) * 5;
 
     if (target_mixing_valve > 100.0) {
         target_mixing_valve = 100.0;
@@ -57,7 +54,7 @@ LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
         target_mixing_valve = 0;
     }
 
-    float target_v = Settings::MixingValve::instance().percentsToCommanded(target_mixing_valve);
+    float target_v = Settings::MixingValve::instance().percents_to_commanded(target_mixing_valve);
 
     SPDLOG_INFO(
             "TemperatureControlLoop: new valve position is {:.1f}% ({:0.04f}), temperature difference was "

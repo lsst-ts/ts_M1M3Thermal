@@ -26,18 +26,20 @@
 
 #include <cRIO/ControllerThread.h>
 
-#include <Commands/SAL.h>
-#include <Events/AppliedSetpoints.h>
-#include <Events/EngineeringMode.h>
-#include <Events/FcuTargets.h>
-#include <Events/SummaryState.h>
-#include <Events/ThermalInfo.h>
-#include <Settings/Controller.h>
-#include <Settings/GlycolPump.h>
-#include <Settings/MixingValve.h>
-#include <Settings/Setpoint.h>
+#include "Commands/SAL.h"
+#include "Events/AppliedSetpoints.h"
+#include "Events/EngineeringMode.h"
+#include "Events/FcuTargets.h"
+#include "Events/SummaryState.h"
+#include "Events/ThermalInfo.h"
+#include "Settings/Controller.h"
+#include "Settings/GlycolPump.h"
+#include "Settings/MixingValve.h"
+#include "Settings/Setpoint.h"
+#include "Tasks/GlycolTemperatureControl.h"
+#include "Tasks/HeatersTemperatureControl.h"
 #include "TSApplication.h"
-#include <TSPublisher.h>
+#include "TSPublisher.h"
 
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
@@ -189,7 +191,7 @@ bool SAL_setMixingValve::validate() {
 }
 
 void SAL_setMixingValve::execute() {
-    float target = Settings::MixingValve::instance().percentsToCommanded(params.mixingValveTarget);
+    float target = Settings::MixingValve::instance().percents_to_commanded(params.mixingValveTarget);
     IFPGA::get().setMixingValvePosition(target);
     ackComplete();
     SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.05f})", params.mixingValveTarget, target);
@@ -263,7 +265,24 @@ bool SAL_applySetpoints::validate() {
 }
 
 void SAL_applySetpoints::execute() {
+    static std::shared_ptr<Tasks::GlycolTemperatureControl> _glycol_temperature_task;
+    static std::shared_ptr<Tasks::HeatersTemperatureControl> _heaters_temperature_task;
+
     Events::AppliedSetpoints::instance().setAppliedSetpoints(params.glycolSetpoint, params.heatersSetpoint);
+
+    if (_glycol_temperature_task != nullptr) {
+        cRIO::ControllerThread::instance().remove(_glycol_temperature_task);
+    }
+
+    _glycol_temperature_task = std::make_shared<Tasks::GlycolTemperatureControl>();
+    cRIO::ControllerThread::instance().enqueue(_glycol_temperature_task);
+
+    if (_heaters_temperature_task != nullptr) {
+        cRIO::ControllerThread::instance().remove(_heaters_temperature_task);
+    }
+    _heaters_temperature_task = std::make_shared<Tasks::HeatersTemperatureControl>();
+    cRIO::ControllerThread::instance().enqueue(_heaters_temperature_task);
+
     Events::AppliedSetpoints::instance().send();
     SPDLOG_INFO("Glycol setpoint: {:0.2f} FCU heaters setpoint: {:0.2f}", params.glycolSetpoint,
                 params.heatersSetpoint);

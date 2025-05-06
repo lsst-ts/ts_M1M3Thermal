@@ -19,6 +19,12 @@ MixingValve:
   PositionFeedback:
     FullyClosed: 0.03
     FullyOpened: 9.64
+  PID:
+    Timestep: 60.0
+    P : 33.0
+    I : 0.5
+    D : 0.0
+    N : 0.0
 
 Heaters:
   # range in deg C for the full P error. If set to 1, that means that target
