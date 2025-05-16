@@ -20,18 +20,19 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "IFPGA.h"
-
 #include <string.h>
 
+#include <cRIO/ThermalILC.h>
+
+#include "IFPGA.h"
 #ifdef SIMULATOR
-#include <SimulatedFPGA.h>
+#include "SimulatedFPGA.h"
 #else
-#include <ThermalFPGA.h>
+#include "ThermalFPGA.h"
 #endif
 
-#include <MPU/FlowMeter.h>
-#include <MPU/VFD.h>
+#include "Events/FcuTargets.h"
+#include "Events/SummaryState.h"
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
@@ -90,4 +91,17 @@ void IFPGA::setHeartbeat(bool heartbeat) {
     buf[0] = FPGAAddress::HEARTBEAT;
     buf[1] = heartbeat;
     writeCommandFIFO(buf, 2, 0);
+}
+
+void IFPGA::panic() {
+    setCoolantPumpPower(false);
+    setMixingValvePosition(0);
+
+    std::vector<int> zeros(0, cRIO::NUM_TS_ILC);
+    Events::FcuTargets::instance().set_FCU_heaters_fans(zeros, zeros);
+
+    Events::SummaryState::set_state(MTM1M3TS::MTM1M3TS_shared_SummaryStates_FaultState);
+
+    setFCUPower(0);
+    SPDLOG_INFO("Thermal system entered fault state.");
 }

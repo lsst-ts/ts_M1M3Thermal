@@ -43,13 +43,15 @@ public:
     void load(YAML::Node doc);
 
     float timestep;
-    float tolerance;
-    float mixingValveStep;
-
     float glycolSupplyPercentage;
-
     float high;
     float low;
+
+    float safetyRange;
+    float safetyMinOffset;
+    float safetyHeatersOffset;
+    int safetyMaxViolations;
+    float safetyAirTemperatureMaxAge;
 };
 
 }  // namespace Settings

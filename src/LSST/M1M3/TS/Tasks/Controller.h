@@ -1,5 +1,5 @@
 /*
- * AppliedSetpoints event handling class.
+ * Tasks controler, managing other tasks.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,41 +20,38 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Event_AppliedSetpoints_
-#define _TS_Event_AppliedSetpoints_
+#ifndef _TS_Tasks_Controller_
+#define _TS_Tasks_Controller_
 
-#include <SAL_MTM1M3TS.h>
+#include <memory>
+#include <mutex>
+
 #include <cRIO/Singleton.h>
+
+#include "Tasks/GlycolTemperatureControl.h"
+#include "Tasks/HeatersTemperatureControl.h"
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace Events {
+namespace Tasks {
 
-class AppliedSetpoints final : MTM1M3TS_logevent_appliedSetpointsC, public cRIO::Singleton<AppliedSetpoints> {
+class Controller : public cRIO::Singleton<Controller> {
 public:
-    AppliedSetpoints(token);
+    Controller(token);
 
-    void reset();
-
-    /**
-     * Sends updates through SAL/DDS.
-     */
-    void send();
-
-    void set_applied_setpoints(float new_glycol_setpoint, float new_heaters_setpoint);
-
-    float get_applied_glycol_setpoint() { return glycolSetpoint; }
-
-    float get_applied_heaters_setpoint() { return heatersSetpoint; }
+    void set_setpoints(float glycol, float heaters);
 
 private:
-    bool _updated;
+    std::mutex _lock;
+
+    std::shared_ptr<GlycolTemperatureControl> _glycol_temperature_task;
+    std::shared_ptr<HeatersTemperatureControl> _heaters_temperature_task;
 };
 
-}  // namespace Events
+}  // namespace Tasks
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !_TS_Event_AppliedSetpoints_
+#endif  // !_TS_Tasks_Controller_

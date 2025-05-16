@@ -35,14 +35,14 @@ class FcuTargets final : MTM1M3TS_logevent_fcuTargetsC, public cRIO::Singleton<F
 public:
     FcuTargets(token);
 
-    void reset();
-
     /**
      * Sends updates through SAL/DDS.
      */
     void send();
 
     void set_FCU_heaters_fans(const std::vector<int> &heater_PWM, const std::vector<int> &fan_RPM);
+
+    void recover();
 
     auto get_heaterPWM() { return heaterPWM; }
     auto get_fanRPM() { return fanRPM; }

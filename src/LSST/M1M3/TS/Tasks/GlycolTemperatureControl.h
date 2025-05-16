@@ -40,6 +40,9 @@ public:
     float target_mixing_valve = 0;
 
     PID::PID target_pid;
+
+private:
+    int safety_violations;
 };
 
 }  // namespace Tasks

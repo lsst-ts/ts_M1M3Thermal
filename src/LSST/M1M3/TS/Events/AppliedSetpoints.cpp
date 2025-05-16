@@ -47,7 +47,7 @@ void AppliedSetpoints::send() {
     _updated = false;
 }
 
-void AppliedSetpoints::setAppliedSetpoints(float new_glycol_setpoint, float new_heaters_setpoint) {
+void AppliedSetpoints::set_applied_setpoints(float new_glycol_setpoint, float new_heaters_setpoint) {
     if (glycolSetpoint != new_glycol_setpoint) {
         glycolSetpoint = new_glycol_setpoint;
         _updated = true;

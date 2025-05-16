@@ -24,12 +24,13 @@
 #include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
 
-#include <Settings/Controller.h>
-#include <Settings/FlowMeter.h>
-#include <Settings/GlycolPump.h>
-#include <Settings/MixingValve.h>
-#include <Settings/Setpoint.h>
-#include <Settings/Thermal.h>
+#include "Settings/Controller.h"
+#include "Settings/FlowMeter.h"
+#include "Settings/GlycolPump.h"
+#include "Settings/Heaters.h"
+#include "Settings/MixingValve.h"
+#include "Settings/Setpoint.h"
+#include "Settings/Thermal.h"
 
 using namespace LSST::M1M3::TS::Settings;
 
@@ -42,6 +43,7 @@ void Controller::load(const std::string &label) {
         FlowMeter::instance().load(doc["FlowMeter"]);
         GlycolPump::instance().load(doc["GlycolPump"]);
         MixingValve::instance().load(doc["MixingValve"]);
+        Heaters::instance().load(doc["Heaters"]);
         Setpoint::instance().load(doc["Setpoint"]);
         Thermal::instance().load(doc["FCU"]);
 

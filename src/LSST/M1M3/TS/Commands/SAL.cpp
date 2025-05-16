@@ -36,8 +36,7 @@
 #include "Settings/GlycolPump.h"
 #include "Settings/MixingValve.h"
 #include "Settings/Setpoint.h"
-#include "Tasks/GlycolTemperatureControl.h"
-#include "Tasks/HeatersTemperatureControl.h"
+#include "Tasks/Controller.h"
 #include "TSApplication.h"
 #include "TSPublisher.h"
 
@@ -265,25 +264,5 @@ bool SAL_applySetpoints::validate() {
 }
 
 void SAL_applySetpoints::execute() {
-    static std::shared_ptr<Tasks::GlycolTemperatureControl> _glycol_temperature_task;
-    static std::shared_ptr<Tasks::HeatersTemperatureControl> _heaters_temperature_task;
-
-    Events::AppliedSetpoints::instance().setAppliedSetpoints(params.glycolSetpoint, params.heatersSetpoint);
-
-    if (_glycol_temperature_task != nullptr) {
-        cRIO::ControllerThread::instance().remove(_glycol_temperature_task);
-    }
-
-    _glycol_temperature_task = std::make_shared<Tasks::GlycolTemperatureControl>();
-    cRIO::ControllerThread::instance().enqueue(_glycol_temperature_task);
-
-    if (_heaters_temperature_task != nullptr) {
-        cRIO::ControllerThread::instance().remove(_heaters_temperature_task);
-    }
-    _heaters_temperature_task = std::make_shared<Tasks::HeatersTemperatureControl>();
-    cRIO::ControllerThread::instance().enqueue(_heaters_temperature_task);
-
-    Events::AppliedSetpoints::instance().send();
-    SPDLOG_INFO("Glycol setpoint: {:0.2f} FCU heaters setpoint: {:0.2f}", params.glycolSetpoint,
-                params.heatersSetpoint);
+    Tasks::Controller::instance().set_setpoints(params.glycolSetpoint, params.heatersSetpoint);
 }

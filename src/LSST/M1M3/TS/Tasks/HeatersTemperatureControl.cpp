@@ -38,11 +38,14 @@ LSST::cRIO::task_return_t HeatersTemperatureControl::run() {
     auto heaterPWM = Events::FcuTargets::instance().get_heaterPWM();
     auto fanRPM = Events::FcuTargets::instance().get_fanRPM();
     auto temperature = Telemetry::ThermalData::instance().get_absoluteTemperature();
-    auto target_temperature = Events::AppliedSetpoints::instance().getAppliedHeatersSetpoint();
+    auto target_temperature = Events::AppliedSetpoints::instance().get_applied_heaters_setpoint();
+
+    auto& h_settings = Settings::Heaters::instance();
+
     std::vector<int> target_heater(LSST::cRIO::NUM_TS_ILC);
     std::vector<int> target_fan(LSST::cRIO::NUM_TS_ILC);
     for (int i = 0; i < LSST::cRIO::NUM_TS_ILC; i++) {
-        target_heater[i] = (target_temperature - temperature[i]) * 255 / Settings::Heaters::instance().pRange;
+        target_heater[i] = (target_temperature - temperature[i]) * 255 / h_settings.pRange;
 
         if (target_heater[i] > 255) {
             target_heater[i] = 255;
@@ -58,5 +61,5 @@ LSST::cRIO::task_return_t HeatersTemperatureControl::run() {
         SPDLOG_WARN("Error executing FCU heaters task: {}", ex.what());
     }
 
-    return 60000;
+    return h_settings.interval * 1000.0;
 }

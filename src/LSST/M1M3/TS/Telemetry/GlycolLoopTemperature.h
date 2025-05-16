@@ -56,14 +56,14 @@ public:
      *
      * @return above mirror air temperature
      */
-    float getAboveMirrorTemperature();
+    float get_above_mirror_temperature();
 
     /**
      * Retrieves average temperature in the mirror cell.
      *
      * @return average temperature of three sensors in the mirror cell
      */
-    float getMirrorCellInsideTemperature();
+    float get_mirror_cell_inside_temperature();
 
     /**
      * Retrieves weighted average mirror glycol loop temperature.
@@ -72,30 +72,32 @@ public:
      *
      * @return average of the supply and return values
      */
-    float getMirrorLoopAverage(float supply);
+    float get_mirror_loop_average(float supply);
 
     /**
      * Returns mirror glycol supply temperature.
      */
-    float getMirrorLoopSupply();
+    float get_mirror_loop_supply();
 
     /**
      * Returns mirror glycol return temperature.
      */
-    float getMirrorLoopReturn();
+    float get_mirror_loop_return();
 
     /**
      * Returns telescope glycol loop supply temperature.
      */
-    float getTelescopeLoopSupply();
+    float get_telescope_loop_supply();
 
     /**
      * Returns telescope glycol loop return temperature.
      */
-    float getTelescopeLoopReturn();
+    float get_telescope_loop_return();
 
 private:
     std::mutex _access_mutex;
+
+    int _safety_violations_count;
 };
 
 }  // namespace Telemetry

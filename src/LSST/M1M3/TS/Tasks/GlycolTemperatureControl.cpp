@@ -35,9 +35,11 @@ GlycolTemperatureControl::GlycolTemperatureControl()
         : target_pid(Settings::MixingValve::instance().pid_parameters) {}
 
 LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
-    auto mirror_loop = Telemetry::GlycolLoopTemperature::instance().getMirrorLoopAverage(
-            Settings::Setpoint::instance().glycolSupplyPercentage / 100.0);
-    float target_glycol_temp = Events::AppliedSetpoints::instance().getAppliedGlycolSetpoint();
+    auto &glycol_temp = Telemetry::GlycolLoopTemperature::instance();
+    auto &s_setpoint = Settings::Setpoint::instance();
+
+    auto mirror_loop = glycol_temp.get_mirror_loop_average(s_setpoint.glycolSupplyPercentage / 100.0);
+    float target_glycol_temp = Events::AppliedSetpoints::instance().get_applied_glycol_setpoint();
 
     if (isnan(target_glycol_temp) || isnan(mirror_loop)) {
         SPDLOG_INFO("Glycol targets not set, ending the loop.");

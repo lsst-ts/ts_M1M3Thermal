@@ -81,6 +81,16 @@ void FcuTargets::set_FCU_heaters_fans(const std::vector<int> &heater_PWM, const 
                 *f_max);
 }
 
+void FcuTargets::recover() {
+    std::vector<int> heater(0, cRIO::NUM_TS_ILC);
+    std::vector<int> fan(0, cRIO::NUM_TS_ILC);
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        fan[i] = fanRPM[i] / 10;
+    }
+
+    set_FCU_heaters_fans(heater, fan);
+}
+
 void FcuTargets::_set_fcu_targets(std::vector<float> new_heater_pwm, std::vector<int> new_fan_rpm) {
     for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
         if (heaterPWM[i] != new_heater_pwm[i]) {

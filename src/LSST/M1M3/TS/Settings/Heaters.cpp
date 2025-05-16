@@ -36,7 +36,12 @@ void Heaters::load(YAML::Node doc) {
         if (pRange <= 0) {
             throw std::runtime_error("Heaters/PRange must be greater than 0");
         }
+
+        interval = doc["Interval"].as<float>();
+        if (interval <= 0) {
+            throw std::runtime_error("Heaters/Interval must be greater than 0");
+        }
     } catch (YAML::Exception &ex) {
-        throw std::runtime_error(fmt::format("Cannot load Setpoint settings: {}", ex.what()));
+        throw std::runtime_error(fmt::format("Cannot load Heaters settings: {}", ex.what()));
     }
 }

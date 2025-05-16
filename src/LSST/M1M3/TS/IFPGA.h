@@ -84,6 +84,12 @@ public:
     void setCoolantPumpPower(bool on);
 
     void setHeartbeat(bool heartbeat);
+
+    /**
+     * Fault the thermal system. Shut down pump, closes mixing valve, sets fans
+     * and heaters to 0 and power down the slot.
+     */
+    void panic();
 };
 
 }  // namespace TS
