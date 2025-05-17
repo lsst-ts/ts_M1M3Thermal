@@ -30,7 +30,7 @@ using namespace LSST::M1M3::TS::Settings;
 Heaters::Heaters(token) { pRange = 1; }
 
 void Heaters::load(YAML::Node doc) {
-    SPDLOG_TRACE("Loading heaters settigns");
+    SPDLOG_INFO("Loading heaters settigns");
     try {
         pRange = doc["PRange"].as<float>(1.0);
         if (pRange <= 0) {

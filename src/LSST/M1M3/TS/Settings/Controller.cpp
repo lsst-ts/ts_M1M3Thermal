@@ -34,9 +34,9 @@
 
 using namespace LSST::M1M3::TS::Settings;
 
-void Controller::load(const std::string &label) {
+void Controller::load(const std::string &configuration_override) {
     std::string filename = cRIO::Settings::Path::getFilePath("v1/_init.yaml");
-    SPDLOG_DEBUG("Using configuration file \"{}\"", filename);
+    SPDLOG_INFO("Using configuration file \"{}\"", filename);
     try {
         YAML::Node doc = YAML::LoadFile(filename);
 

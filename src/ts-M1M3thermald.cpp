@@ -44,6 +44,7 @@
 #include <Settings/Controller.h>
 
 #include "Commands/EnterControl.h"
+#include "Commands/ReloadConfiguration.h"
 #include "Commands/SAL.h"
 #include "Events/SummaryState.h"
 #include "SALThermalILC.h"
@@ -53,6 +54,10 @@
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
+
+void sig_usr1(int signal) {
+    LSST::cRIO::ControllerThread::instance().enqueue(std::make_shared<Commands::ReloadConfiguration>());
+}
 
 extern const char *VERSION;
 
@@ -108,6 +113,8 @@ void M1M3thermald::init() {
     addThread(new TSSubscriber(_m1m3tsSAL));
 
     LSST::cRIO::ControllerThread::instance().enqueue(std::make_shared<Commands::EnterControl>());
+
+    signal(SIGUSR1, sig_usr1);
 
     daemonOK();
 }

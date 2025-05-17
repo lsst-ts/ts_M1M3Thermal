@@ -32,7 +32,7 @@
 using namespace LSST::M1M3::TS::Settings;
 
 void Thermal::load(YAML::Node doc) {
-    SPDLOG_TRACE("Loading disabled FCU list");
+    SPDLOG_INFO("Loading disabled FCU list");
 
     autoDisable = doc["AutoDisable"].as<bool>();
     failuresToDisable = doc["FailuresToDisable"].as<int>();

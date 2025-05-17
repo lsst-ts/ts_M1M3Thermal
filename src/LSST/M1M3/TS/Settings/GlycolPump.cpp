@@ -30,7 +30,7 @@ using namespace LSST::M1M3::TS::Settings;
 GlycolPump::GlycolPump(token) { enabled = false; }
 
 void GlycolPump::load(YAML::Node doc) {
-    SPDLOG_TRACE("Loading Glycol Pump settings");
+    SPDLOG_INFO("Loading Glycol Pump settings");
 
     enabled = doc["Enabled"].as<bool>();
 }
