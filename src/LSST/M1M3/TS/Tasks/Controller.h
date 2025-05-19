@@ -1,5 +1,5 @@
 /*
- * MixingValve telemetry handling class.
+ * Tasks controler, managing other tasks.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,26 +20,38 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <Settings/MixingValve.h>
-#include <TSPublisher.h>
-#include <Telemetry/MixingValve.h>
-#include <cRIO/ThermalILC.h>
-#include <spdlog/spdlog.h>
+#ifndef _TS_Tasks_Controller_
+#define _TS_Tasks_Controller_
 
-#include <cmath>
+#include <memory>
+#include <mutex>
 
-using namespace LSST::M1M3::TS;
-using namespace LSST::M1M3::TS::Telemetry;
+#include <cRIO/Singleton.h>
 
-MixingValve::MixingValve(token) { rawValvePosition = NAN; }
+#include "Tasks/GlycolTemperatureControl.h"
+#include "Tasks/HeatersTemperatureControl.h"
 
-void MixingValve::sendPosition(float position) {
-    rawValvePosition = position;
-    valvePosition = Settings::MixingValve::instance().position_to_percents(position);
+namespace LSST {
+namespace M1M3 {
+namespace TS {
+namespace Tasks {
 
-    salReturn ret = TSPublisher::SAL()->putSample_mixingValve(this);
-    if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot send mixingValve: {}", ret);
-        return;
-    }
-}
+class Controller : public cRIO::Singleton<Controller> {
+public:
+    Controller(token);
+
+    void set_setpoints(float glycol, float heaters);
+
+private:
+    std::mutex _lock;
+
+    std::shared_ptr<GlycolTemperatureControl> _glycol_temperature_task;
+    std::shared_ptr<HeatersTemperatureControl> _heaters_temperature_task;
+};
+
+}  // namespace Tasks
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST
+
+#endif  // !_TS_Tasks_Controller_

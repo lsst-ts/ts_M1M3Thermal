@@ -24,24 +24,26 @@
 #include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
 
-#include <Settings/Controller.h>
-#include <Settings/FlowMeter.h>
-#include <Settings/GlycolPump.h>
-#include <Settings/MixingValve.h>
-#include <Settings/Setpoint.h>
-#include <Settings/Thermal.h>
+#include "Settings/Controller.h"
+#include "Settings/FlowMeter.h"
+#include "Settings/GlycolPump.h"
+#include "Settings/Heaters.h"
+#include "Settings/MixingValve.h"
+#include "Settings/Setpoint.h"
+#include "Settings/Thermal.h"
 
 using namespace LSST::M1M3::TS::Settings;
 
-void Controller::load(const std::string &label) {
+void Controller::load(const std::string &configuration_override) {
     std::string filename = cRIO::Settings::Path::getFilePath("v1/_init.yaml");
-    SPDLOG_DEBUG("Using configuration file \"{}\"", filename);
+    SPDLOG_INFO("Using configuration file \"{}\"", filename);
     try {
         YAML::Node doc = YAML::LoadFile(filename);
 
         FlowMeter::instance().load(doc["FlowMeter"]);
         GlycolPump::instance().load(doc["GlycolPump"]);
         MixingValve::instance().load(doc["MixingValve"]);
+        Heaters::instance().load(doc["Heaters"]);
         Setpoint::instance().load(doc["Setpoint"]);
         Thermal::instance().load(doc["FCU"]);
 

@@ -28,8 +28,9 @@
 
 #include <SAL_MTM1M3TS.h>
 
-#include <TSPublisher.h>
-#include <cRIO/Singleton.h>
+#include "cRIO/Singleton.h"
+#include "PID/PIDParameters.h"
+#include "TSPublisher.h"
 
 namespace LSST {
 namespace M1M3 {
@@ -44,9 +45,11 @@ public:
 
     void log() { TSPublisher::SAL()->logEvent_mixingValveSettings(this, 0); }
 
-    float percentsToCommanded(float target);
+    float percents_to_commanded(float target);
 
-    float positionToPercents(float position);
+    float position_to_percents(float position);
+
+    PID::PIDParameters pid_parameters;
 };
 
 }  // namespace Settings

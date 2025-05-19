@@ -7,6 +7,9 @@ Version History
 v2.1.0
 ------
 
+* Panic function, safety checks for above mirror temperature
+* Hot config reloading
+* Mixing valve PID control
 * FcuTarget event
 * FCU heater control based on setpoint
 

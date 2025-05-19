@@ -53,6 +53,16 @@ case "$1" in
 	stopdaemon
 	startdaemon
 	;;
+  reload)
+	pid=$(cat $PIDFILE)
+	if [ -z $pid ]; then
+		echo "M1M3 Thermal System CSC isn't running."
+	else
+		echo -n "Triggering M1M3 Thermal System configuration reload - pid ${pid}"
+		/bin/kill -SIGUSR1 ${pid}
+		echo "..$? done. Check M1M3 log for confirmation!"
+	fi
+	;;
   status)
 	status $DAEMON
 	exit $?

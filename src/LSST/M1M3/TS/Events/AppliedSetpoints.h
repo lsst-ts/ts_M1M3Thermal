@@ -42,11 +42,11 @@ public:
      */
     void send();
 
-    void setAppliedSetpoints(float new_glycol_setpoint, float new_heaters_setpoint);
+    void set_applied_setpoints(float new_glycol_setpoint, float new_heaters_setpoint);
 
-    float getAppliedGlycolSetpoint() { return glycolSetpoint; }
+    float get_applied_glycol_setpoint() { return glycolSetpoint; }
 
-    float getAppliedHeatersSetpoint() { return heatersSetpoint; }
+    float get_applied_heaters_setpoint() { return heatersSetpoint; }
 
 private:
     bool _updated;

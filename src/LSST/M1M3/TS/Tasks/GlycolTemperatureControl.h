@@ -24,6 +24,7 @@
 #define _TS_Tasks_GlycolTemperatureControl_
 
 #include "cRIO/Task.h"
+#include "PID/PID.h"
 
 namespace LSST {
 namespace M1M3 {
@@ -37,6 +38,11 @@ public:
     virtual cRIO::task_return_t run();
 
     float target_mixing_valve = 0;
+
+    PID::PID target_pid;
+
+private:
+    int safety_violations;
 };
 
 }  // namespace Tasks

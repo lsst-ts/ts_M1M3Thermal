@@ -30,13 +30,18 @@ using namespace LSST::M1M3::TS::Settings;
 Heaters::Heaters(token) { pRange = 1; }
 
 void Heaters::load(YAML::Node doc) {
-    SPDLOG_TRACE("Loading heaters settigns");
+    SPDLOG_INFO("Loading heaters settigns");
     try {
         pRange = doc["PRange"].as<float>(1.0);
         if (pRange <= 0) {
             throw std::runtime_error("Heaters/PRange must be greater than 0");
         }
+
+        interval = doc["Interval"].as<float>();
+        if (interval <= 0) {
+            throw std::runtime_error("Heaters/Interval must be greater than 0");
+        }
     } catch (YAML::Exception &ex) {
-        throw std::runtime_error(fmt::format("Cannot load Setpoint settings: {}", ex.what()));
+        throw std::runtime_error(fmt::format("Cannot load Heaters settings: {}", ex.what()));
     }
 }

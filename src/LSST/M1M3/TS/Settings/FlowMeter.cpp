@@ -30,7 +30,7 @@ using namespace LSST::M1M3::TS::Settings;
 FlowMeter::FlowMeter(token) { enabled = false; }
 
 void FlowMeter::load(YAML::Node doc) {
-    SPDLOG_TRACE("Loading flow meter settings");
+    SPDLOG_INFO("Loading flow meter settings");
 
     enabled = doc["Enabled"].as<bool>();
 }

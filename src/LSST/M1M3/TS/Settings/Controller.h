@@ -39,7 +39,7 @@ class Controller : public cRIO::Singleton<Controller> {
 public:
     Controller(token) {}
 
-    void load(const std::string &label);
+    void load(const std::string &configuration_override);
 };
 
 }  // namespace Settings

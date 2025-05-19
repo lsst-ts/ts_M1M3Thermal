@@ -26,18 +26,19 @@
 
 #include <cRIO/ControllerThread.h>
 
-#include <Commands/SAL.h>
-#include <Events/AppliedSetpoints.h>
-#include <Events/EngineeringMode.h>
-#include <Events/FcuTargets.h>
-#include <Events/SummaryState.h>
-#include <Events/ThermalInfo.h>
-#include <Settings/Controller.h>
-#include <Settings/GlycolPump.h>
-#include <Settings/MixingValve.h>
-#include <Settings/Setpoint.h>
+#include "Commands/SAL.h"
+#include "Events/AppliedSetpoints.h"
+#include "Events/EngineeringMode.h"
+#include "Events/FcuTargets.h"
+#include "Events/SummaryState.h"
+#include "Events/ThermalInfo.h"
+#include "Settings/Controller.h"
+#include "Settings/GlycolPump.h"
+#include "Settings/MixingValve.h"
+#include "Settings/Setpoint.h"
+#include "Tasks/Controller.h"
 #include "TSApplication.h"
-#include <TSPublisher.h>
+#include "TSPublisher.h"
 
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
@@ -189,7 +190,7 @@ bool SAL_setMixingValve::validate() {
 }
 
 void SAL_setMixingValve::execute() {
-    float target = Settings::MixingValve::instance().percentsToCommanded(params.mixingValveTarget);
+    float target = Settings::MixingValve::instance().percents_to_commanded(params.mixingValveTarget);
     IFPGA::get().setMixingValvePosition(target);
     ackComplete();
     SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.05f})", params.mixingValveTarget, target);
@@ -263,8 +264,5 @@ bool SAL_applySetpoints::validate() {
 }
 
 void SAL_applySetpoints::execute() {
-    Events::AppliedSetpoints::instance().setAppliedSetpoints(params.glycolSetpoint, params.heatersSetpoint);
-    Events::AppliedSetpoints::instance().send();
-    SPDLOG_INFO("Glycol setpoint: {:0.2f} FCU heaters setpoint: {:0.2f}", params.glycolSetpoint,
-                params.heatersSetpoint);
+    Tasks::Controller::instance().set_setpoints(params.glycolSetpoint, params.heatersSetpoint);
 }

@@ -43,6 +43,7 @@ public:
     void load(YAML::Node doc);
 
     float pRange;
+    float interval;
 };
 
 }  // namespace Settings

@@ -1,5 +1,5 @@
 /*
- * MixingValve telemetry handling class.
+ * ReloadConfiguration command.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,26 +20,32 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <Settings/MixingValve.h>
-#include <TSPublisher.h>
-#include <Telemetry/MixingValve.h>
-#include <cRIO/ThermalILC.h>
+#ifndef _TS_Command_ReloadConfiguration_
+#define _TS_Command_ReloadConfiguration_
+
 #include <spdlog/spdlog.h>
 
-#include <cmath>
+#include <cRIO/Task.h>
 
-using namespace LSST::M1M3::TS;
-using namespace LSST::M1M3::TS::Telemetry;
+#include "Settings/Controller.h"
 
-MixingValve::MixingValve(token) { rawValvePosition = NAN; }
+namespace LSST {
+namespace M1M3 {
+namespace TS {
+namespace Commands {
 
-void MixingValve::sendPosition(float position) {
-    rawValvePosition = position;
-    valvePosition = Settings::MixingValve::instance().position_to_percents(position);
-
-    salReturn ret = TSPublisher::SAL()->putSample_mixingValve(this);
-    if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot send mixingValve: {}", ret);
-        return;
+class ReloadConfiguration : public cRIO::Task {
+public:
+    cRIO::task_return_t run() override {
+        SPDLOG_INFO("Reloading configuration.");
+        Settings::Controller::instance().load("");
+        return Task::DONT_RESCHEDULE;
     }
-}
+};
+
+}  // namespace Commands
+}  // namespace TS
+}  // namespace M1M3
+}  // namespace LSST
+
+#endif  // !_TS_Command_ReloadConfiguration_

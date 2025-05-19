@@ -23,7 +23,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include <Settings/MixingValve.h>
+#include "Settings/MixingValve.h"
 
 using namespace LSST::M1M3::TS::Settings;
 
@@ -35,24 +35,25 @@ MixingValve::MixingValve(token) {
 }
 
 void MixingValve::load(YAML::Node doc) {
-    SPDLOG_TRACE("Loading mixing valve settigns");
+    SPDLOG_INFO("Loading mixing valve settigns");
     try {
         commandingFullyClosed = doc["Commanding"]["FullyClosed"].as<float>();
         commandingFullyOpened = doc["Commanding"]["FullyOpened"].as<float>();
 
         positionFeedbackFullyClosed = doc["PositionFeedback"]["FullyClosed"].as<float>();
         positionFeedbackFullyOpened = doc["PositionFeedback"]["FullyOpened"].as<float>();
+        pid_parameters.load(doc["PID"]);
     } catch (YAML::Exception &ex) {
         throw std::runtime_error(fmt::format("Cannot load Mising Valve settings: {}", ex.what()));
     }
 }
 
-float MixingValve::percentsToCommanded(float target) {
+float MixingValve::percents_to_commanded(float target) {
     return commandingFullyClosed / 1000.0f +
            ((commandingFullyOpened - commandingFullyClosed) / 1000.0f) * (target / 100.0f);
 }
 
-float MixingValve::positionToPercents(float position) {
+float MixingValve::position_to_percents(float position) {
     float ret = 100.0f * ((position - positionFeedbackFullyClosed) /
                           (positionFeedbackFullyOpened - positionFeedbackFullyClosed));
     return std::max(0.0f, std::min(100.0f, ret));

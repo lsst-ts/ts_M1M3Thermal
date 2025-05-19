@@ -34,7 +34,7 @@ endif
 
 libM1M3TS.a: $(LIB_OBJS)
 	@echo '[AR ] $@'
-	${co}$(AR) rs $@ $^
+	${co}$(AR) rs -P $@ $^
 
 clean:
 	@$(foreach file,$(ALL_OBJS) $(C_DEPS) $(CPP_DEPS) libM1M3TS.a version.c $(shell find -name '*.d'), echo '[RM ] ${file}'; $(RM) -r $(file);)
