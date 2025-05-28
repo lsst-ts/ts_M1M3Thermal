@@ -28,19 +28,22 @@ MixingValve:
     N : 0.5
 
 Heaters:
-  # PID settings. Either scalar (a single value), or array of 96 values.
-  # Scallar sets the same value for all FCUs.
+  # PID settings. 
   PID:
+    # Unless specified otherwise, those values will be used
     Default:
       Timestep: 10.0
       P: 0.7
       I: 2.0
       D: 0
       N: 0.1
-    # If value differ per-FCU, it can be specifed under FCU1-96, as follow for FCU 12
+    # If PID values differ per-FCU, specify those there
     # FCU:
-    #   Address: 12
-    #   P: 0.8
+    #  Address: 12
+    #  P: 0.8
+    # FCU:
+    #  Address: 14
+    #  I: 0.2
 
   # Checks heaters every interval seconds.
   Interval: 10

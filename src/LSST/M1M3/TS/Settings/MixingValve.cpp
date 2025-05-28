@@ -36,16 +36,12 @@ MixingValve::MixingValve(token) {
 
 void MixingValve::load(YAML::Node doc) {
     SPDLOG_INFO("Loading mixing valve settigns");
-    try {
-        commandingFullyClosed = doc["Commanding"]["FullyClosed"].as<float>();
-        commandingFullyOpened = doc["Commanding"]["FullyOpened"].as<float>();
+    commandingFullyClosed = doc["Commanding"]["FullyClosed"].as<float>();
+    commandingFullyOpened = doc["Commanding"]["FullyOpened"].as<float>();
 
-        positionFeedbackFullyClosed = doc["PositionFeedback"]["FullyClosed"].as<float>();
-        positionFeedbackFullyOpened = doc["PositionFeedback"]["FullyOpened"].as<float>();
-        pid_parameters.load(doc["PID"]);
-    } catch (YAML::Exception &ex) {
-        throw std::runtime_error(fmt::format("Cannot load Mising Valve settings: {}", ex.what()));
-    }
+    positionFeedbackFullyClosed = doc["PositionFeedback"]["FullyClosed"].as<float>();
+    positionFeedbackFullyOpened = doc["PositionFeedback"]["FullyOpened"].as<float>();
+    pid_parameters.load(doc["PID"]);
 }
 
 float MixingValve::percents_to_commanded(float target) {

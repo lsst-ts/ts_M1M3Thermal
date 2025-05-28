@@ -25,7 +25,7 @@
 
 #include <PID/PIDParameters.h>
 
-#include <Settings/Heaters.h>
+#include "Settings/Heaters.h"
 
 using namespace LSST::M1M3::TS::Settings;
 
@@ -45,9 +45,26 @@ void Heaters::load(YAML::Node doc) {
     PID::PIDParameters default_params;
     default_params.load(pids["Default"]);
 
+    std::map<int, PID::PIDParameters> fcu_pid;
+
+    for (auto fcu_specific : pids) {
+        if (fcu_specific.first.as<std::string>() != "FCU") {
+            continue;
+        }
+        PID::PIDParameters fcu_params;
+        fcu_params.load(fcu_specific.second, default_params);
+        fcu_pid.emplace(fcu_specific.second["Address"].as<int>() - 1, PID::PIDParameters(fcu_params));
+    }
+
     for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
         delete heaters_PID[i];
-        heaters_PID[i] = new PID::PID(default_params);
+        try {
+            heaters_PID[i] = new PID::PID(fcu_pid.at(i));
+            SPDLOG_DEBUG("FCU heaters custom PID {} - timestep: {} P: {} I: {} D: {} N: {}", i + 1,
+                         fcu_pid[i].timestep, fcu_pid[i].P, fcu_pid[i].I, fcu_pid[i].D, fcu_pid[i].N);
+        } catch (std::out_of_range &ex) {
+            heaters_PID[i] = new PID::PID(default_params);
+        }
     }
     interval = doc["Interval"].as<float>();
     if (interval <= 0) {
