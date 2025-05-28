@@ -23,25 +23,34 @@
 
 #include <spdlog/spdlog.h>
 
+#include <PID/PIDParameters.h>
+
 #include <Settings/Heaters.h>
 
 using namespace LSST::M1M3::TS::Settings;
 
-Heaters::Heaters(token) { pRange = 1; }
+Heaters::Heaters(token) { memset(heaters_PID, 0, sizeof(heaters_PID)); }
+
+Heaters::~Heaters() {
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        delete heaters_PID[i];
+        heaters_PID[i] = nullptr;
+    }
+}
 
 void Heaters::load(YAML::Node doc) {
     SPDLOG_INFO("Loading heaters settigns");
-    try {
-        pRange = doc["PRange"].as<float>(1.0);
-        if (pRange <= 0) {
-            throw std::runtime_error("Heaters/PRange must be greater than 0");
-        }
+    auto pids = doc["PID"];
 
-        interval = doc["Interval"].as<float>();
-        if (interval <= 0) {
-            throw std::runtime_error("Heaters/Interval must be greater than 0");
-        }
-    } catch (YAML::Exception &ex) {
-        throw std::runtime_error(fmt::format("Cannot load Heaters settings: {}", ex.what()));
+    PID::PIDParameters default_params;
+    default_params.load(pids["Default"]);
+
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        delete heaters_PID[i];
+        heaters_PID[i] = new PID::PID(default_params);
+    }
+    interval = doc["Interval"].as<float>();
+    if (interval <= 0) {
+        throw std::runtime_error("Heaters/Interval must be greater than 0");
     }
 }

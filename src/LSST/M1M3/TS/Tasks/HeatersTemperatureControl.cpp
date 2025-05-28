@@ -45,7 +45,8 @@ LSST::cRIO::task_return_t HeatersTemperatureControl::run() {
     std::vector<int> target_heater(LSST::cRIO::NUM_TS_ILC);
     std::vector<int> target_fan(LSST::cRIO::NUM_TS_ILC);
     for (int i = 0; i < LSST::cRIO::NUM_TS_ILC; i++) {
-        target_heater[i] = (target_temperature - temperature[i]) * 255 / h_settings.pRange;
+        assert(h_settings.heaters_PID[i] != nullptr);
+        target_heater[i] = h_settings.heaters_PID[i]->process(target_temperature, temperature[i]);
 
         if (target_heater[i] > 255) {
             target_heater[i] = 255;

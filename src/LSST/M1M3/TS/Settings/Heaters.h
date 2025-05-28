@@ -24,12 +24,13 @@
 #ifndef _TS_Settings_Heaters_h
 #define _TS_Settings_Heaters_h
 
+#include <vector>
+
 #include <yaml-cpp/yaml.h>
 
-#include <SAL_MTM1M3TS.h>
-
-#include <TSPublisher.h>
+#include <cRIO/ThermalILC.h>
 #include <cRIO/Singleton.h>
+#include <PID/PID.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -39,10 +40,12 @@ namespace Settings {
 class Heaters : public cRIO::Singleton<Heaters> {
 public:
     Heaters(token);
+    ~Heaters();
 
     void load(YAML::Node doc);
 
-    float pRange;
+    PID::PID *heaters_PID[cRIO::NUM_TS_ILC];
+
     float interval;
 };
 
