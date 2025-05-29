@@ -79,7 +79,7 @@ void Update::_sendMixingValve() {
 
 void Update::_sendFCU() {
     /// State of the state machine handling bus recovery from power failure
-    static enum { OK, FAILED, RESET_ERROR, STANDBY, SERVER_ID, DISABLED, ENABLED, SET_FCUS } _bus_state = OK;
+    static enum { OK, FAILED, RESET_ERROR, STANDBY, SERVER_ID, DISABLED, ENABLED } _bus_state = OK;
 
     static auto next_update = std::chrono::steady_clock::now() - 20ms;
 
@@ -134,10 +134,6 @@ void Update::_sendFCU() {
                 app.callFunctionOnAllIlcs(
                         [&app](uint8_t address) { app.ilc()->reportServerStatus(address); });
                 break;
-            case SET_FCUS:
-                Events::FcuTargets::instance().recover();
-                app.ilc()->clear();
-                break;
             default:
                 SPDLOG_ERROR("Reached invalid ILC bus state: {}", static_cast<int>(_bus_state));
                 Events::SummaryState::set_state(MTM1M3TS::MTM1M3TS_shared_SummaryStates_FaultState);
@@ -171,9 +167,6 @@ void Update::_sendFCU() {
                 _bus_state = ENABLED;
                 break;
             case ENABLED:
-                _bus_state = SET_FCUS;
-                break;
-            case SET_FCUS:
                 _bus_state = OK;
                 break;
         }
