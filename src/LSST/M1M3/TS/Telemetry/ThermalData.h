@@ -48,6 +48,8 @@ public:
      */
     void send();
 
+    bool is_heater_disabled(int index) { return heaterDisabled[index]; }
+
     auto get_absoluteTemperature() { return absoluteTemperature; }
 };
 

@@ -59,15 +59,23 @@ void Heaters::load(YAML::Node doc) {
     for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
         delete heaters_PID[i];
         try {
-            heaters_PID[i] = new PID::PID(fcu_pid.at(i));
+            heaters_PID[i] = new PID::LimitedPID(fcu_pid.at(i), 0, 255);
             SPDLOG_DEBUG("FCU heaters custom PID {} - timestep: {} P: {} I: {} D: {} N: {}", i + 1,
                          fcu_pid[i].timestep, fcu_pid[i].P, fcu_pid[i].I, fcu_pid[i].D, fcu_pid[i].N);
         } catch (std::out_of_range &ex) {
-            heaters_PID[i] = new PID::PID(default_params);
+            heaters_PID[i] = new PID::LimitedPID(default_params, 0, 255);
         }
     }
     interval = doc["Interval"].as<float>();
     if (interval <= 0) {
         throw std::runtime_error("Heaters/Interval must be greater than 0");
+    }
+}
+
+void Heaters::reset_FCU_PIDs() {
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        if (heaters_PID[i] != nullptr) {
+            heaters_PID[i]->reset_previous_values();
+        }
     }
 }

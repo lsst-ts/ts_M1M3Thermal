@@ -37,7 +37,9 @@ HeatersTemperatureControl::HeatersTemperatureControl() {}
 LSST::cRIO::task_return_t HeatersTemperatureControl::run() {
     auto heaterPWM = Events::FcuTargets::instance().get_heaterPWM();
     auto fanRPM = Events::FcuTargets::instance().get_fanRPM();
-    auto temperature = Telemetry::ThermalData::instance().get_absoluteTemperature();
+
+    auto& thermal_data_telemetry = Telemetry::ThermalData::instance();
+    auto temperature = thermal_data_telemetry.get_absoluteTemperature();
     auto target_temperature = Events::AppliedSetpoints::instance().get_applied_heaters_setpoint();
 
     auto& h_settings = Settings::Heaters::instance();
@@ -45,16 +47,20 @@ LSST::cRIO::task_return_t HeatersTemperatureControl::run() {
     std::vector<int> target_heater(LSST::cRIO::NUM_TS_ILC);
     std::vector<int> target_fan(LSST::cRIO::NUM_TS_ILC);
     for (int i = 0; i < LSST::cRIO::NUM_TS_ILC; i++) {
-        assert(h_settings.heaters_PID[i] != nullptr);
-        target_heater[i] = h_settings.heaters_PID[i]->process(target_temperature, temperature[i]);
-
-        if (target_heater[i] > 255) {
-            target_heater[i] = 255;
-        }
-        if (target_heater[i] < 0) {
-            target_heater[i] = 0;
-        }
         target_fan[i] = fanRPM[i] == 0 ? 20 : fanRPM[i] / 10;
+        if (h_settings.heaters_PID[i] == nullptr) {
+            SPDLOG_ERROR("Heater {} PID is not set!", i);
+            target_heater[i] = 0;
+            continue;
+        }
+        if (isnan(temperature[i])) {
+            continue;
+        }
+        if (thermal_data_telemetry.is_heater_disabled(i)) {
+            target_heater[i] = 0;
+            continue;
+        }
+        target_heater[i] = round(h_settings.heaters_PID[i]->process(target_temperature, temperature[i]));
     }
     try {
         Events::FcuTargets::instance().set_FCU_heaters_fans(target_heater, target_fan);

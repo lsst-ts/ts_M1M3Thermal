@@ -30,7 +30,7 @@
 
 #include <cRIO/ThermalILC.h>
 #include <cRIO/Singleton.h>
-#include <PID/PID.h>
+#include <PID/LimitedPID.h>
 
 namespace LSST {
 namespace M1M3 {
@@ -44,7 +44,9 @@ public:
 
     void load(YAML::Node doc);
 
-    PID::PID *heaters_PID[cRIO::NUM_TS_ILC];
+    void reset_FCU_PIDs();
+
+    PID::LimitedPID *heaters_PID[cRIO::NUM_TS_ILC];
 
     float interval;
 };

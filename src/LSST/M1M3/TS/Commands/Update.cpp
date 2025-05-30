@@ -32,6 +32,8 @@
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
 
+#include "Settings/Heaters.h"
+
 #include "Telemetry/MixingValve.h"
 #include "Telemetry/ThermalData.h"
 
@@ -152,6 +154,7 @@ void Update::_sendFCU() {
                 break;
             case FAILED:
                 _bus_state = RESET_ERROR;
+                Settings::Heaters::instance().reset_FCU_PIDs();
                 break;
             case RESET_ERROR:
                 _bus_state = STANDBY;
