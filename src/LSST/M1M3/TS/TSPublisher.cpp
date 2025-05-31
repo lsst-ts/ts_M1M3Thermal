@@ -75,6 +75,7 @@ void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_simulationMode");
 
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalInfo");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalWarning");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_glycolPumpStatus");
 
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalSettings");
