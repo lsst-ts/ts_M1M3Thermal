@@ -40,7 +40,10 @@ public:
 
     void update(uint8_t address, uint8_t mode, uint16_t status, uint16_t faults);
 
-    void send() { TSPublisher::instance().logThermalWarning(this); }
+    void send();
+
+private:
+    bool _updated;
 };
 
 }  // namespace Events

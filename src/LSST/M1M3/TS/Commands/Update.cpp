@@ -31,6 +31,7 @@
 #include "Events/Heartbeat.h"
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
+#include "Events/ThermalWarning.h"
 
 #include "Settings/Heaters.h"
 
@@ -52,6 +53,7 @@ LSST::cRIO::task_return_t Update::run() {
     _sendMixingValve();
 
     Events::EnabledILC::instance().send();
+    Events::ThermalWarning::instance().send();
 
     SPDLOG_TRACE("Commands::Update leaving execute");
 
@@ -104,13 +106,11 @@ void Update::_sendFCU() {
 
         switch (_bus_state) {
             case OK:
-                app.callFunctionOnAllIlcs([&app](uint8_t address) {
-                    if (Events::SummaryState::instance().active()) {
-                        app.ilc()->reportThermalStatus(address);
-                    } else {
-                        app.ilc()->reportServerStatus(address);
-                    }
-                });
+                if (Events::SummaryState::instance().active()) {
+                    app.callFunctionOnAllIlcs(
+                            [&app](int address) { app.ilc()->reportThermalStatus(address); });
+                }
+                app.callFunctionOnAllIlcs([&app](int address) { app.ilc()->reportServerStatus(address); });
                 break;
             case FAILED:
                 app.callFunctionOnAllIlcs([&app](uint8_t address) {
