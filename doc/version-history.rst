@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.2.0
+------
+
+* FCU heaters controlled by PID
+
 v2.1.0
 ------
 

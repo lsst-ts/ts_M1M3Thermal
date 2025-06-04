@@ -23,25 +23,59 @@
 
 #include <spdlog/spdlog.h>
 
-#include <Settings/Heaters.h>
+#include <PID/PIDParameters.h>
+
+#include "Settings/Heaters.h"
 
 using namespace LSST::M1M3::TS::Settings;
 
-Heaters::Heaters(token) { pRange = 1; }
+Heaters::Heaters(token) { memset(heaters_PID, 0, sizeof(heaters_PID)); }
+
+Heaters::~Heaters() {
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        delete heaters_PID[i];
+        heaters_PID[i] = nullptr;
+    }
+}
 
 void Heaters::load(YAML::Node doc) {
     SPDLOG_INFO("Loading heaters settigns");
-    try {
-        pRange = doc["PRange"].as<float>(1.0);
-        if (pRange <= 0) {
-            throw std::runtime_error("Heaters/PRange must be greater than 0");
-        }
+    auto pids = doc["PID"];
 
-        interval = doc["Interval"].as<float>();
-        if (interval <= 0) {
-            throw std::runtime_error("Heaters/Interval must be greater than 0");
+    PID::PIDParameters default_params;
+    default_params.load(pids["Default"]);
+
+    std::map<int, PID::PIDParameters> fcu_pid;
+
+    for (auto fcu_specific : pids) {
+        if (fcu_specific.first.as<std::string>() != "FCU") {
+            continue;
         }
-    } catch (YAML::Exception &ex) {
-        throw std::runtime_error(fmt::format("Cannot load Heaters settings: {}", ex.what()));
+        PID::PIDParameters fcu_params;
+        fcu_params.load(fcu_specific.second, default_params);
+        fcu_pid.emplace(fcu_specific.second["Address"].as<int>() - 1, PID::PIDParameters(fcu_params));
+    }
+
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        delete heaters_PID[i];
+        try {
+            heaters_PID[i] = new PID::LimitedPID(fcu_pid.at(i), 0, 255);
+            SPDLOG_DEBUG("FCU heaters custom PID {} - timestep: {} P: {} I: {} D: {} N: {}", i + 1,
+                         fcu_pid[i].timestep, fcu_pid[i].P, fcu_pid[i].I, fcu_pid[i].D, fcu_pid[i].N);
+        } catch (std::out_of_range &ex) {
+            heaters_PID[i] = new PID::LimitedPID(default_params, 0, 255);
+        }
+    }
+    interval = doc["Interval"].as<float>();
+    if (interval <= 0) {
+        throw std::runtime_error("Heaters/Interval must be greater than 0");
+    }
+}
+
+void Heaters::reset_FCU_PIDs() {
+    for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
+        if (heaters_PID[i] != nullptr) {
+            heaters_PID[i]->reset_previous_values();
+        }
     }
 }

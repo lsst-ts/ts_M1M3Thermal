@@ -48,6 +48,9 @@ void Controller::load(const std::string &configuration_override) {
         Thermal::instance().load(doc["FCU"]);
 
     } catch (YAML::Exception &ex) {
-        throw std::runtime_error(fmt::format("YAML Loading {}: {}", filename, ex.what()));
+        auto msg = fmt::format("YAML Loading {}:{}:{} (line, column): {}", filename, ex.mark.line,
+                               ex.mark.column, ex.what());
+        SPDLOG_ERROR(msg);
+        throw std::runtime_error(msg);
     }
 }

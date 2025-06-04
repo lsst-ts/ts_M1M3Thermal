@@ -25,10 +25,11 @@
 
 #include <SALThermalILC.h>
 
-#include <Events/EnabledILC.h>
-#include <Events/ThermalInfo.h>
-#include <Settings/Thermal.h>
-#include <Telemetry/ThermalData.h>
+#include "Events/EnabledILC.h"
+#include "Events/ThermalWarning.h"
+#include "Events/ThermalInfo.h"
+#include "Settings/Thermal.h"
+#include "Telemetry/ThermalData.h"
 
 using namespace LSST::M1M3::TS;
 
@@ -55,7 +56,9 @@ void SALThermalILC::processServerID(uint8_t address, uint64_t uniqueID, uint8_t 
                                                     minorRev, firmwareName);
 }
 
-void SALThermalILC::processServerStatus(uint8_t address, uint8_t mode, uint16_t status, uint16_t faults) {}
+void SALThermalILC::processServerStatus(uint8_t address, uint8_t mode, uint16_t status, uint16_t faults) {
+    Events::ThermalWarning::instance().update(address, mode, status, faults);
+}
 
 void SALThermalILC::processChangeILCMode(uint8_t address, uint16_t mode) {}
 

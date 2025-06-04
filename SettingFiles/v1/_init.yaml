@@ -27,17 +27,23 @@ MixingValve:
     D : -0.1
     N : 0.5
 
-    # Timestep: 2.0
-    # P : -20.0
-    # I : -0.25
-    # D : 0.1
-    # N : 0.5
-
 Heaters:
-  # range in deg C for the full P error. If set to 1, that means that target
-  # difference +1 and above will run heaters at 100%, +0.5 differece will run
-  # heaters at 50%.
-  PRange: 1
+  # PID settings. 
+  PID:
+    # Unless specified otherwise, those values will be used
+    Default:
+      Timestep: 10.0
+      P: 0.7
+      I: 2.0
+      D: 0
+      N: 0.1
+    # If PID values differ per-FCU, specify those there
+    # FCU:
+    #  Address: 12
+    #  P: 0.8
+    # FCU:
+    #  Address: 14
+    #  I: 0.2
 
   # Checks heaters every interval seconds.
   Interval: 10

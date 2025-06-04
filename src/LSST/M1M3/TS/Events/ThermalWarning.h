@@ -1,5 +1,5 @@
 /*
- * ThermalData telemetry handling class.
+ * EnabledILCs event.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,42 +20,35 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Telemetry_ThermalData_
-#define _TS_Telemetry_ThermalData_
+#ifndef _TS_Events_ThermalWarning_
+#define _TS_Events_ThermalWarning_
 
 #include <SAL_MTM1M3TS.h>
+
 #include <cRIO/Singleton.h>
+
+#include "TSPublisher.h"
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace Telemetry {
+namespace Events {
 
-class ThermalData final : MTM1M3TS_thermalDataC, public cRIO::Singleton<ThermalData> {
+class ThermalWarning : public MTM1M3TS_logevent_thermalWarningC, public cRIO::Singleton<ThermalWarning> {
 public:
-    ThermalData(token);
+    ThermalWarning(token);
 
-    /**
-     * Resets stored values to NAN/0.
-     */
-    void reset();
+    void update(uint8_t address, uint8_t mode, uint16_t status, uint16_t faults);
 
-    void update(uint8_t address, uint8_t status, float differentialTemperature, uint8_t fanRPM,
-                float absoluteTemperature);
-
-    /**
-     * Sends updates through SAL/DDS.
-     */
     void send();
 
-    bool is_heater_disabled(int index) { return heaterDisabled[index]; }
-
-    auto get_absoluteTemperature() { return absoluteTemperature; }
+private:
+    bool _updated;
 };
 
-}  // namespace Telemetry
+}  // namespace Events
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !_TS_Telemetry_ThermalData_
+#endif  // !_TS_Events_ThermalWarning_

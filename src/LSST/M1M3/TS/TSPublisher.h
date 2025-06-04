@@ -53,6 +53,9 @@ public:
     void logSoftwareVersions();
     void logSimulationMode();
     void logThermalInfo(MTM1M3TS_logevent_thermalInfoC *data) { _m1m3TSSAL->logEvent_thermalInfo(data, 0); }
+    void logThermalWarning(MTM1M3TS_logevent_thermalWarningC *data) {
+        _m1m3TSSAL->logEvent_thermalWarning(data, 0);
+    }
 
     void startFlowMeterThread();
     void startGlycolTemperatureThread();
