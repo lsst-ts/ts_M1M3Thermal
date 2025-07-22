@@ -392,7 +392,7 @@ int M1M3TScli::mixingValve(command_vec cmds) {
         dynamic_cast<IFPGA *>(getFPGA())->setMixingValvePosition(pos);
         std::cout << "Commanded to " << std::fixed << std::setprecision(5) << pos << " mA" << std::endl;
     }
-    std::cout << "Mixing valve: " << std::fixed << std::setprecision(3)
+    std::cout << "Mixing valve: " << std::fixed << std::setprecision(5)
               << dynamic_cast<IFPGA *>(getFPGA())->getMixingValvePosition() << " V" << std::endl;
     return 0;
 }

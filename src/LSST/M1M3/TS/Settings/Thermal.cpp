@@ -45,6 +45,8 @@ void Thermal::load(YAML::Node doc) {
         Events::EnabledILC::instance().setEnabled(i, enabledFCU[i]);
     }
 
+    defaultFanSpeed = doc["DefaultFanSpeed"].as<int>();
+
     log();
     Events::EnabledILC::instance().send();
 }

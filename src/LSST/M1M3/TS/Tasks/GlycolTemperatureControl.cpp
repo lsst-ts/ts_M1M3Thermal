@@ -32,7 +32,7 @@
 using namespace LSST::M1M3::TS::Tasks;
 
 GlycolTemperatureControl::GlycolTemperatureControl()
-        : target_pid(Settings::MixingValve::instance().pid_parameters) {}
+        : target_pid(Settings::MixingValve::instance().pid_parameters, 0, 100) {}
 
 LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
     auto &glycol_temp = Telemetry::GlycolLoopTemperature::instance();
@@ -50,11 +50,7 @@ LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
 
     float target_mixing_valve = round(target_pid.process(target_glycol_temp, mirror_loop) / 5.0) * 5.0;
 
-    if (target_mixing_valve > 100.0) {
-        target_mixing_valve = 100.0;
-    } else if (target_mixing_valve < 0) {
-        target_mixing_valve = 0;
-    }
+    target_mixing_valve = std::max(0.0f, std::min(target_mixing_valve, 100.0f));
 
     float target_v = Settings::MixingValve::instance().percents_to_commanded(target_mixing_valve);
 

@@ -27,6 +27,7 @@
 #include "Events/AppliedSetpoints.h"
 #include "Events/FcuTargets.h"
 #include "Settings/Heaters.h"
+#include "Settings/Thermal.h"
 #include "Tasks/HeatersTemperatureControl.h"
 #include "Telemetry/ThermalData.h"
 
@@ -43,11 +44,12 @@ LSST::cRIO::task_return_t HeatersTemperatureControl::run() {
     auto target_temperature = Events::AppliedSetpoints::instance().get_applied_heaters_setpoint();
 
     auto& h_settings = Settings::Heaters::instance();
+    auto& t_settings = Settings::Thermal::instance();
 
     std::vector<int> target_heater(LSST::cRIO::NUM_TS_ILC);
     std::vector<int> target_fan(LSST::cRIO::NUM_TS_ILC);
     for (int i = 0; i < LSST::cRIO::NUM_TS_ILC; i++) {
-        target_fan[i] = fanRPM[i] == 0 ? 20 : fanRPM[i] / 10;
+        target_fan[i] = (fanRPM[i] == 0 ? t_settings.defaultFanSpeed : fanRPM[i]) / 10;
         if (h_settings.heaters_PID[i] == nullptr) {
             SPDLOG_ERROR("Heater {} PID is not set!", i);
             target_heater[i] = 0;

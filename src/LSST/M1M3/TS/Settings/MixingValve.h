@@ -50,6 +50,10 @@ public:
     float position_to_percents(float position);
 
     PID::PIDParameters pid_parameters;
+
+    // TODO: remove after that's transformed to M1M3 event
+    float positionFeedbackA;
+    float positionFeedbackB;
 };
 
 }  // namespace Settings

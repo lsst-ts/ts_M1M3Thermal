@@ -41,16 +41,27 @@ void MixingValve::load(YAML::Node doc) {
 
     positionFeedbackFullyClosed = doc["PositionFeedback"]["FullyClosed"].as<float>();
     positionFeedbackFullyOpened = doc["PositionFeedback"]["FullyOpened"].as<float>();
+
+    positionFeedbackA = doc["PositionFeedback"]["a"].as<float>();
+    positionFeedbackB = doc["PositionFeedback"]["b"].as<float>();
+
     pid_parameters.load(doc["PID"]);
 }
 
 float MixingValve::percents_to_commanded(float target) {
-    return commandingFullyClosed / 1000.0f +
-           ((commandingFullyOpened - commandingFullyClosed) / 1000.0f) * (target / 100.0f);
+    return (commandingFullyClosed + (commandingFullyOpened - commandingFullyClosed) * (target / 100.0f)) /
+           1000.0f;
 }
 
 float MixingValve::position_to_percents(float position) {
-    float ret = 100.0f * ((position - positionFeedbackFullyClosed) /
-                          (positionFeedbackFullyOpened - positionFeedbackFullyClosed));
+    if (position < positionFeedbackFullyClosed) {
+        return 0;
+    }
+
+    if (position > positionFeedbackFullyOpened) {
+        return 100;
+    }
+
+    float ret = positionFeedbackA * exp(positionFeedbackB * position);
     return std::max(0.0f, std::min(100.0f, ret));
 }

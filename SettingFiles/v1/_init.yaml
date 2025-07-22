@@ -16,9 +16,13 @@ MixingValve:
     FullyOpened: 20
   
   # units are V (Volts)
+  # The function is a * exp(c * (x + b)), where x is measured voltage, and
+  # result is percentage (0-100) of the mixing valve opening.
   PositionFeedback:
     FullyClosed: 0.021
-    FullyOpened: 9.698
+    FullyOpened: 9.69
+    a: 5.48326
+    b: 0.297239
 
   PID:
     Timestep: 2.0

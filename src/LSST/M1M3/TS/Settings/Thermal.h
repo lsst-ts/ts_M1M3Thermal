@@ -49,6 +49,7 @@ public:
 
     bool autoDisable;
     int failuresToDisable;
+    int defaultFanSpeed;
 };
 
 }  // namespace Settings
