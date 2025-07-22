@@ -76,26 +76,27 @@ void GlycolLoopTemperature::update(const std::vector<float> &temperatures) {
                 if (s_setpoint.safetyMaxViolations > 0) {
                     float heaters = new_setpoint + s_setpoint.safetyHeatersOffset;
                     SPDLOG_INFO(
-                            "Setting glycol setpoint to safe range - was {:.02f}C, difference to air "
-                            "{:.02f}, setting to {:.02f}C glycol, {:.02f}C heaters.",
+                            "Setting glycol setpoint to safe range - was {:.02f} \u00b0C, difference to air "
+                            "{:.02f} \u00b0C, setting to {:.02f} \u00b0C glycol, {:.02f} \u00b0C heaters.",
                             applied_glycol, t_diff, new_setpoint, heaters);
                     Tasks::Controller::instance().set_setpoints(new_setpoint, heaters);
                     _safety_violations_count = 0;
                 } else {
                     if (_safety_violations_count == s_setpoint.safetyMaxViolations) {
                         SPDLOG_WARN(
-                                "Glycol setpoint outside of the safe range - was {:.02f}C, difference to air "
-                                "{:.02f}, setting to {:.02f}C.",
+                                "Glycol setpoint outside of the safe range - was {:.02f} \u00b0C, difference "
+                                "to air "
+                                "{:.02f} \u00b0C, setting to {:.02f} \u00b0C.",
                                 applied_glycol, t_diff, new_setpoint);
                         _safety_violations_count--;
                     }
                 }
             } else {
-                SPDLOG_DEBUG("Checked diff: {:.02f} counts {:i}", t_diff, _safety_violations_count);
+                SPDLOG_DEBUG("Checked diff: {:.02f} \u00b0C counts {:i}", t_diff, _safety_violations_count);
                 _safety_violations_count++;
             }
         } else {
-            SPDLOG_TRACE("Glycol temp OK: {:.02f} {:i}", t_diff, _safety_violations_count);
+            SPDLOG_TRACE("Glycol temp OK: {:.02f} \u00b0C {:i}", t_diff, _safety_violations_count);
             _safety_violations_count = 0;
         }
     }
@@ -109,6 +110,9 @@ void GlycolLoopTemperature::update(const std::vector<float> &temperatures) {
 
 float GlycolLoopTemperature::get_above_mirror_temperature() {
     std::lock_guard<std::mutex> lock(_access_mutex);
+    if (isnan(aboveMirrorTemperature)) {
+        throw std::runtime_error("Above mirror temperature requested before it was measured.");
+    }
     return aboveMirrorTemperature;
 }
 
