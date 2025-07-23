@@ -54,7 +54,7 @@ SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), setMixingValve);
 
 SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), coolantPumpPower);
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), coolantPumpStart);
+SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), coolantPumpStart);
 
 SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), coolantPumpStop);
 

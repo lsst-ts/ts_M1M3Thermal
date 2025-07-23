@@ -27,10 +27,14 @@
 
 using namespace LSST::M1M3::TS::Settings;
 
-GlycolPump::GlycolPump(token) { enabled = false; }
+GlycolPump::GlycolPump(token) {
+    enabled = false;
+    startupFrequency = 0;
+}
 
 void GlycolPump::load(YAML::Node doc) {
     SPDLOG_INFO("Loading Glycol Pump settings");
 
     enabled = doc["Enabled"].as<bool>();
+    startupFrequency = doc["StartupFrequency"].as<float>();
 }

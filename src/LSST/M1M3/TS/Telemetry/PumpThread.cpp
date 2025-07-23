@@ -22,10 +22,11 @@
 
 #include <spdlog/spdlog.h>
 
-#include <Events/GlycolPumpStatus.h>
-#include <IFPGA.h>
-#include <TSPublisher.h>
-#include <Telemetry/PumpThread.h>
+#include "Events/GlycolPumpStatus.h"
+#include "IFPGA.h"
+#include "TSPublisher.h"
+#include "Telemetry/PumpThread.h"
+#include "Settings/GlycolPump.h"
 
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
@@ -48,29 +49,43 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
     while (keepRunning) {
         auto end = std::chrono::steady_clock::now() + 2s;
 
+        request_type n_r = NOP;
+
         try {
             vfd.clear();
 
-            switch (_next_request) {
-                case START:
-                    vfd.start();
-                    break;
-                case STOP:
-                    vfd.stop();
-                    break;
-                case RESET:
-                    vfd.reset();
-                    break;
-                case FREQ:
-                    vfd.setFrequency(_target_frequency);
-                    break;
-                case NOP:
-                    break;
-            }
+            {
+                std::lock_guard<std::mutex> lg(_requests_lock);
 
-            if (_next_request != NOP) {
-                _transport->commands(vfd, 2s, this);
-                _next_request = NOP;
+                if (not(_next_requests.empty())) {
+                    n_r = _next_requests.front();
+                    switch (n_r) {
+                        case START:
+                            vfd.start();
+                            break;
+                        case STOP:
+                            vfd.stop();
+                            break;
+                        case RESET:
+                            vfd.reset();
+                            break;
+                        case FREQ:
+                            vfd.setFrequency(_target_frequency);
+                            break;
+                        case STARTUP:
+                            vfd.reset();
+                            vfd.setFrequency(Settings::GlycolPump::instance().startupFrequency);
+                            vfd.start();
+                            break;
+                        case NOP:
+                            break;
+                    }
+                    _next_requests.pop();
+
+                    if (n_r != NOP) {
+                        _transport->commands(vfd, 2s, this);
+                    }
+                }
             }
 
             vfd.readInfo();
@@ -92,19 +107,13 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
             }
             error_count = 0;
         } catch (std::exception& ex) {
-            // if (error_count == 0) {
             SPDLOG_ERROR("Error in running Glycol Pump thread: {}", ex.what());
-            //}
             error_count++;
+            if (n_r == STARTUP) {
+                SPDLOG_INFO("Queing again failed startup sequence.");
+                startup();
+            }
             std::this_thread::sleep_for(2s);
-            //	    try {
-            //               _transport->flush();
-            //	       SPDLOG_INFO("Flushed Pump FIFOs");
-            //	    } catch (std::runtime_error& er) {
-            //	SPDLOG_WARN("Error in flushing data: {}", er.what());
-
-            //            }
-            //	    std::this_thread::sleep_for(100ms);
         }
 
         runCondition.wait_until(lock, end);
@@ -113,11 +122,25 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
     SPDLOG_DEBUG("Pump Thread Stopped.");
 }
 
-void PumpThread::start_pump() { _next_request = START; }
+void PumpThread::start_pump() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _next_requests.push(START);
+}
 
-void PumpThread::stop_pump() { _next_request = STOP; }
-void PumpThread::reset_pump() { _next_request = RESET; }
+void PumpThread::stop_pump() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _next_requests.push(STOP);
+}
+void PumpThread::reset_pump() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _next_requests.push(RESET);
+}
 void PumpThread::set_target_frequency(float frequency) {
+    std::lock_guard<std::mutex> lg(_requests_lock);
     _target_frequency = frequency;
-    _next_request = FREQ;
+    _next_requests.push(FREQ);
+}
+void PumpThread::startup() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _next_requests.push(STARTUP);
 }

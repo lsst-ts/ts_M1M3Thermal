@@ -106,6 +106,8 @@ void SAL_enable::execute() {
     changeAllILCsMode(ILC::Mode::Enabled);
     IFPGA::get().setFCUPower(true);
 
+    TSPublisher::instance().startupPump();
+
     Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_EnabledState);
     ackComplete();
     SPDLOG_INFO("Enabled");
@@ -209,6 +211,14 @@ void SAL_coolantPumpPower::execute() {
     }
     ackComplete();
     SPDLOG_INFO("Glycol coolant pump powered {}", params.power ? "on" : "off");
+}
+
+bool SAL_coolantPumpStart::validate() {
+    if (TSPublisher::instance().pump_thread == NULL) {
+        ackFailed("Cannot command pump when it is powered off.");
+        return false;
+    }
+    return true;
 }
 
 void SAL_coolantPumpStart::execute() {

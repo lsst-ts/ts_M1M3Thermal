@@ -28,8 +28,9 @@
 
 #include <SAL_MTM1M3TS.h>
 
-#include <TSPublisher.h>
 #include <cRIO/Singleton.h>
+
+#include "TSPublisher.h"
 
 namespace LSST {
 namespace M1M3 {
@@ -43,6 +44,7 @@ public:
     void load(YAML::Node doc);
 
     bool enabled;
+    float startupFrequency;
 };
 
 }  // namespace Settings
