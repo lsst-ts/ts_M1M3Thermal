@@ -34,8 +34,9 @@ GlycolPumpStatus::GlycolPumpStatus(token) {
 }
 
 void GlycolPumpStatus::update(VFD *vfd) {
-    auto status = vfd->getStatus();
-    auto errorCode = vfd->getDriveErrorCodes();
+    // mask unused bits
+    auto status = vfd->getStatus() & 0x0ebf;
+    errorCode = vfd->getDriveErrorCodes();
     if (status != _last_status || errorCode != _last_errorCode) {
         // bits are from VFD manual
         ready = status & 0x0001;
@@ -46,10 +47,10 @@ void GlycolPumpStatus::update(VFD *vfd) {
         decelerating = status & 0x0020;
         // 0x0040 is unused
         faulted = status & 0x0080;
-        mainFrequencyControlled = status & 0x0100;
-        operationCommandControlled = status & 0x0200;
-        parametersLocked = status & 0x0400;
-        errorCode = status & 0x0800;
+        // 0x0100 at reference
+        mainFrequencyControlled = status & 0x0200;
+        operationCommandControlled = status & 0x0400;
+        parametersLocked = status & 0x0800;
 
         salReturn ret = TSPublisher::SAL()->putSample_logevent_glycolPumpStatus(&instance());
         if (ret != SAL__OK) {
