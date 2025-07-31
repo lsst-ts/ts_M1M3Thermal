@@ -62,6 +62,11 @@ private:
     std::queue<request_type> _next_requests;
     std::mutex _requests_lock;
     float _target_frequency;
+
+    request_type _check_commands();
+
+    int _error_count;
+    int _success_count;
 };
 
 }  // namespace Telemetry

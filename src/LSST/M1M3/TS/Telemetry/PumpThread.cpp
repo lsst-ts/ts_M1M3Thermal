@@ -39,11 +39,53 @@ PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
     outputCurrent = NAN;
     busVoltage = NAN;
     outputVoltage = NAN;
+
+    _error_count = 0;
+    _success_count = 0;
+}
+
+request_type PumpThread::_check_commands() {
+    request_type n_r = NOP;
+
+    std::lock_guard<std::mutex> lg(_requests_lock);
+
+    if (not(_next_requests.empty())) {
+        n_r = _next_requests.front();
+        switch (n_r) {
+            case START:
+                vfd.start();
+                break;
+            case STOP:
+                vfd.stop();
+                break;
+            case RESET:
+                vfd.reset();
+                break;
+            case FREQ:
+                vfd.setFrequency(_target_frequency);
+                break;
+            case STARTUP:
+                vfd.reset();
+                vfd.setFrequency(Settings::GlycolPump::instance().startupFrequency);
+                vfd.start();
+                break;
+            case NOP:
+                break;
+        }
+        _next_requests.pop();
+
+        if (n_r == NOP) {
+            return NOP;
+        }
+
+        _transport->commands(vfd, 2s, this);
+    }
+
+    return n_r;
 }
 
 void PumpThread::run(std::unique_lock<std::mutex>& lock) {
     runCondition.wait_for(lock, std::chrono::seconds(3));
-    int error_count = 0;
 
     SPDLOG_INFO("Running Pump Thread.");
     while (keepRunning) {
@@ -54,39 +96,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
         try {
             vfd.clear();
 
-            {
-                std::lock_guard<std::mutex> lg(_requests_lock);
-
-                if (not(_next_requests.empty())) {
-                    n_r = _next_requests.front();
-                    switch (n_r) {
-                        case START:
-                            vfd.start();
-                            break;
-                        case STOP:
-                            vfd.stop();
-                            break;
-                        case RESET:
-                            vfd.reset();
-                            break;
-                        case FREQ:
-                            vfd.setFrequency(_target_frequency);
-                            break;
-                        case STARTUP:
-                            vfd.reset();
-                            vfd.setFrequency(Settings::GlycolPump::instance().startupFrequency);
-                            vfd.start();
-                            break;
-                        case NOP:
-                            break;
-                    }
-                    _next_requests.pop();
-
-                    if (n_r != NOP) {
-                        _transport->commands(vfd, 2s, this);
-                    }
-                }
-            }
+            n_r = _check_commands();
 
             vfd.readInfo();
 
@@ -105,10 +115,13 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
             if (ret != SAL__OK) {
                 SPDLOG_WARN("Cannot send VFD: {}", ret);
             }
-            error_count = 0;
+
+            _error_count = 0;
+            _success_count++;
         } catch (std::exception& ex) {
             SPDLOG_ERROR("Error in running Glycol Pump thread: {}", ex.what());
-            error_count++;
+            _error_count++;
+            _success_count = 0;
             if (n_r == STARTUP) {
                 SPDLOG_INFO("Queing again failed startup sequence.");
                 startup();
