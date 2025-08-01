@@ -65,9 +65,12 @@ request_type PumpThread::_check_commands() {
                 vfd.setFrequency(_target_frequency);
                 break;
             case STARTUP:
-                vfd.reset();
-                vfd.setFrequency(Settings::GlycolPump::instance().startupFrequency);
-                vfd.start();
+                if (_success_count > 2) {
+                    vfd.reset();
+                    vfd.setFrequency(Settings::GlycolPump::instance().startupFrequency);
+                    vfd.start();
+                } else if (_error_count > 30) {
+                }
                 break;
             case NOP:
                 break;

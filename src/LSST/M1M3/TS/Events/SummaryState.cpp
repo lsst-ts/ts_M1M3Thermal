@@ -22,7 +22,8 @@
 
 #include <spdlog/fmt/fmt.h>
 
-#include <Events/SummaryState.h>
+#include "Events/ErrorCode.h"
+#include "Events/SummaryState.h"
 
 using namespace LSST::M1M3::TS::Events;
 using namespace MTM1M3TS;
@@ -52,6 +53,11 @@ bool SummaryState::active() {
 bool SummaryState::enabled() {
     std::lock_guard<std::mutex> lockG(_state_mutex);
     return summaryState == MTM1M3TS_shared_SummaryStates_EnabledState;
+}
+
+void SummaryState::fail(int error_code, const std::string &error_report, const std::string &traceback) {
+    _switch_state(MTM1M3TS_shared_SummaryStates_FaultState);
+    Events::ErrorCode::instance().set(error_code, error_report, traceback);
 }
 
 void SummaryState::_switch_state(int new_state) {

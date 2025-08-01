@@ -23,13 +23,13 @@
 #ifndef _TS_Event_SummaryState_
 #define _TS_Event_SummaryState_
 
+#include <mutex>
+#include <spdlog/spdlog.h>
+
 #include <SAL_MTM1M3TS.h>
 #include <cRIO/Singleton.h>
 
-#include <TSPublisher.h>
-
-#include <mutex>
-#include <spdlog/spdlog.h>
+#include "TSPublisher.h"
 
 namespace LSST {
 namespace M1M3 {
@@ -62,6 +62,11 @@ public:
      * @multithreading safe
      */
     bool enabled();
+
+    /**
+     * Transition CSC to failed state, send fail message.
+     */
+    void fail(int error_code, const std::string &error_report, const std::string &traceback);
 
     /**
      *

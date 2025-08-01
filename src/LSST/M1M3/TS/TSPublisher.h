@@ -31,9 +31,9 @@
 
 #include <cRIO/Singleton.h>
 
-#include <Telemetry/FlowMeterThread.h>
-#include <Telemetry/GlycolTemperatureThread.h>
-#include <Telemetry/PumpThread.h>
+#include "Telemetry/FlowMeterThread.h"
+#include "Telemetry/GlycolTemperatureThread.h"
+#include "Telemetry/PumpThread.h"
 
 namespace LSST {
 namespace M1M3 {
@@ -49,6 +49,8 @@ public:
     static std::shared_ptr<SAL_MTM1M3TS> SAL() { return instance()._m1m3TSSAL; }
 
     void setLogLevel(int newLevel);
+
+    void log_error_code(MTM1M3TS_logevent_errorCodeC *data) { _m1m3TSSAL->logEvent_errorCode(data, 0); }
 
     void logSoftwareVersions();
     void logSimulationMode();

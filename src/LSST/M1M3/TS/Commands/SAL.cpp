@@ -29,6 +29,7 @@
 #include "Commands/SAL.h"
 #include "Events/AppliedSetpoints.h"
 #include "Events/EngineeringMode.h"
+#include "Events/ErrorCode.h"
 #include "Events/FcuTargets.h"
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
@@ -72,6 +73,8 @@ bool SAL_start::validate() {
 void SAL_start::execute() {
     SPDLOG_INFO("Starting, settings={}", params.configurationOverride);
     Settings::Controller::instance().load(params.configurationOverride);
+
+    Events::ErrorCode::instance().clear("CSC started");
 
     try {
         changeAllILCsMode(ILC::Mode::Disabled);
@@ -127,6 +130,7 @@ void SAL_disable::execute() {
 void SAL_standby::execute() {
     TSPublisher::instance().stopFlowMeterThread();
     TSPublisher::instance().stopPumpThread();
+    Events::ErrorCode::instance().clear("Error cleared");
 
     changeAllILCsMode(ILC::Mode::ClearFaults);
     changeAllILCsMode(ILC::Mode::Standby);
