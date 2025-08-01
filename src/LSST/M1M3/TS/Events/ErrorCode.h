@@ -37,7 +37,7 @@ namespace Events {
 
 class ErrorCode : MTM1M3TS_logevent_errorCodeC, public cRIO::Singleton<ErrorCode> {
 public:
-    enum Type { NoFault = 0, EGWPump = 1 };
+    enum Type { NoFault = 0, EGWPump = 1, TemperatureSensors = 2 };
 
     ErrorCode(token);
 

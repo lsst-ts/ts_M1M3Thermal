@@ -23,6 +23,7 @@
 #ifndef __TS_MPU_GLYCOLTEMPERATURE__
 #define __TS_MPU_GLYCOLTEMPERATURE__
 
+#include <atomic>
 #include <vector>
 
 #include <cRIO/MPU.h>
@@ -61,6 +62,11 @@ public:
      * @return last parsed buffer
      */
     std::string getDataBuffer();
+
+    /**
+     * Number of consecutive failures to receive data from temperature sensor.
+     */
+    std::atomic<int> receiving_error_count;
 
 private:
     std::shared_ptr<Transports::Transport> _transport;

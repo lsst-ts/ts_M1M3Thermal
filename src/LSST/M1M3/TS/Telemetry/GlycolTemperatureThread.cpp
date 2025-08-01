@@ -24,6 +24,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "Events/ErrorCode.h"
 #include "Events/SummaryState.h"
 #include "IFPGA.h"
 #include "TSPublisher.h"
@@ -39,6 +40,10 @@ GlycolTemperatureThread::GlycolTemperatureThread(std::shared_ptr<Transports::Tra
 void GlycolTemperatureThread::updated() {
     if (Events::SummaryState::instance().active() == false) {
         return;
+    }
+    if (receiving_error_count > 10) {
+        Events::SummaryState::instance().fail(Events::ErrorCode::TemperatureSensors,
+                                              "Cannot read data from the temperature sensors", "");
     }
     GlycolLoopTemperature::instance().update(getTemperatures());
 }
