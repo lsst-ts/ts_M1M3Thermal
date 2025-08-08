@@ -22,7 +22,9 @@
 
 #include <spdlog/spdlog.h>
 
+#include "Events/ErrorCode.h"
 #include "Events/GlycolPumpStatus.h"
+#include "Events/SummaryState.h"
 #include "IFPGA.h"
 #include "TSPublisher.h"
 #include "Telemetry/PumpThread.h"
@@ -70,6 +72,8 @@ request_type PumpThread::_check_commands() {
                     vfd.setFrequency(Settings::GlycolPump::instance().startupFrequency);
                     vfd.start();
                 } else if (_error_count > 30) {
+                    Events::SummaryState::instance().fail(Events::ErrorCode::EGWPumpStartup,
+                                                          "Cannot start the EGW pump.", "");
                 }
                 break;
             case NOP:
