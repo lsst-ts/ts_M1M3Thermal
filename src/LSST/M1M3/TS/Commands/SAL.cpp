@@ -37,6 +37,7 @@
 #include "Settings/MixingValve.h"
 #include "Settings/Setpoint.h"
 #include "Tasks/Controller.h"
+#include "Telemetry/GlycolLoopTemperature.h"
 #include "TSApplication.h"
 #include "TSPublisher.h"
 
@@ -244,22 +245,41 @@ void SAL_coolantPumpReset::execute() {
 }
 
 bool SAL_applySetpoints::validate() {
-    if (params.glycolSetpoint < Settings::Setpoint::instance().low ||
-        params.glycolSetpoint > Settings::Setpoint::instance().high) {
+    auto &s_setpoint = Settings::Setpoint::instance();
+
+    if (params.glycolSetpoint < s_setpoint.low || params.glycolSetpoint > s_setpoint.high) {
         ackFailed(fmt::format(
-                "Glycol loop temperature setpoint must be between {} and {}, attempted to set to {}.",
-                Settings::Setpoint::instance().low, Settings::Setpoint::instance().high,
-                params.glycolSetpoint));
+                "Commanded Glycol/EGW loop temperature setpoint must be between {:.02f} \u00b0C and "
+                "{:.02f} \u00b0C, attempted to set to {:.02f} \u00b0C.",
+                s_setpoint.low, s_setpoint.high, params.glycolSetpoint));
         return false;
     }
-    if (params.heatersSetpoint < Settings::Setpoint::instance().low ||
-        params.heatersSetpoint > Settings::Setpoint::instance().high) {
-        ackFailed(fmt::format(
-                "FCU heaters temperature setpoint must be between {} and {}, attempted to set to {}.",
-                Settings::Setpoint::instance().low, Settings::Setpoint::instance().high,
-                params.heatersSetpoint));
+    if (params.heatersSetpoint < s_setpoint.low || params.heatersSetpoint > s_setpoint.high) {
+        ackFailed(
+                fmt::format("Commanded FCU heaters temperature setpoint must be between {:.02f} \u00b0C and "
+                            "{:.02f} \ubb00C, attempted to set to {:.02f} \u00b0C.",
+                            s_setpoint.low, s_setpoint.high, params.heatersSetpoint));
         return false;
     }
+
+    float above_mirror = Telemetry::GlycolLoopTemperature::instance().get_above_mirror_temperature();
+    float diff = fabs(above_mirror - params.glycolSetpoint);
+    if (diff > s_setpoint.safetyRange) {
+        ackFailed(fmt::format(
+                "Commanded Glycol/EGW loop temperature setpoint {:.02f} \u00b0C is too far from above "
+                "mirror temperature of {:.02f} \u00b0C.",
+                params.glycolSetpoint, above_mirror));
+        return false;
+    }
+    diff = fabs(above_mirror - params.heatersSetpoint);
+    if (diff > s_setpoint.safetyRange) {
+        ackFailed(
+                fmt::format("command FiCU heaters temperature setpoint {:.02f} \u00b0C is too far from above "
+                            "mirror temperature of {:.02f} \u00b0C.",
+                            params.heatersSetpoint, above_mirror));
+        return false;
+    }
+
     return true;
 }
 

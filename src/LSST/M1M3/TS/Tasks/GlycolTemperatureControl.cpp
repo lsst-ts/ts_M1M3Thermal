@@ -56,7 +56,7 @@ LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
 
     SPDLOG_INFO(
             "TemperatureControlLoop: new valve position is {:.1f}% ({:0.04f}), temperature difference was "
-            "{:+.3f}",
+            "{:+.3f}\u00b0C",
             target_mixing_valve, target_v, diff);
 
     IFPGA::get().setMixingValvePosition(target_v);

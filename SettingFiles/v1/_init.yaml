@@ -2,6 +2,7 @@ FCU:
   AutoDisable: true
   FailuresToDisable: 3
   Disabled: []
+  DefaultFanSpeed: 700
 
 FlowMeter:
   Enabled: true
