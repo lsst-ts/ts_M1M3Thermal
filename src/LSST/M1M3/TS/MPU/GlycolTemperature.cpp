@@ -25,8 +25,8 @@
 
 #include <spdlog/spdlog.h>
 
-#include <IFPGA.h>
-#include <MPU/GlycolTemperature.h>
+#include "IFPGA.h"
+#include "MPU/GlycolTemperature.h"
 
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
@@ -44,7 +44,6 @@ void GlycolTemperature::run(std::unique_lock<std::mutex>& lock) {
 
     auto last_data = std::chrono::steady_clock::now();
     int proc_error_count = 0;
-    int rec_error_count = 0;
 
     while (keepRunning) {
         auto end = std::chrono::steady_clock::now() + 100ms;
@@ -53,12 +52,12 @@ void GlycolTemperature::run(std::unique_lock<std::mutex>& lock) {
 
         try {
             new_data = _transport->read(10, 400ms, this);
-            rec_error_count = 0;
+            receiving_error_count = 0;
         } catch (std::runtime_error& er) {
-            if (rec_error_count == 0) {
+            if (receiving_error_count == 0) {
                 SPDLOG_WARN("Cannot read Glycol temperature data: {}", er.what());
             }
-            rec_error_count++;
+            receiving_error_count++;
 
             runCondition.wait_until(lock, end);
 

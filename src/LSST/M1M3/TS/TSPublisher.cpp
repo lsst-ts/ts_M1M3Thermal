@@ -23,18 +23,18 @@
 #include <spdlog/spdlog.h>
 
 #ifdef SIMULATOR
-#include <MPU/SimulatedFlowMeter.h>
-#include <MPU/SimulatedGlycolTemperature.h>
-#include <MPU/SimulatedVFDPump.h>
+#include "MPU/SimulatedFlowMeter.h"
+#include "MPU/SimulatedGlycolTemperature.h"
+#include "MPU/SimulatedVFDPump.h"
 #else
-#include <Transports/FPGASerialDevice.h>
-#include <ThermalFPGA.h>
+#include "Transports/FPGASerialDevice.h"
+#include "ThermalFPGA.h"
 #endif
 
-#include <NiFpga/NiFpga_ts_M1M3ThermalFPGA.h>
+#include "NiFpga/NiFpga_ts_M1M3ThermalFPGA.h"
 
-#include <IFPGA.h>
-#include <TSPublisher.h>
+#include "IFPGA.h"
+#include "TSPublisher.h"
 
 using namespace LSST::M1M3::TS;
 
@@ -67,6 +67,7 @@ void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_appliedSetpoints");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_engineeringMode");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_enabledILC");
+    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_errorCode");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_fcuTargets");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_heartbeat");
     _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_logLevel");
@@ -153,6 +154,8 @@ void TSPublisher::startPumpThread() {
 #endif
     pump_thread->start();
 }
+
+void TSPublisher::startupPump() { pump_thread->startup(); }
 
 void TSPublisher::stopFlowMeterThread() {
     if (_flowMeterThread == NULL) {

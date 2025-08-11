@@ -8,6 +8,7 @@ v2.2.0
 ------
 
 * FCU heaters controlled by PID
+* EGW Pump autostart, error stat reporting
 
 v2.1.0
 ------

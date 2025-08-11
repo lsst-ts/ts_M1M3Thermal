@@ -1,5 +1,5 @@
 /*
- * Publish MPU Glycol Pump status.
+ * TS ErrorCode.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,34 +20,20 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Event_GlycolPumpStatus_
-#define _TS_Event_GlycolPumpStatus_
+#include "Events/ErrorCode.h"
 
-#include <SAL_MTM1M3TS.h>
-#include <cRIO/Singleton.h>
+using namespace LSST::M1M3::TS;
 
-#include <MPU/VFD.h>
+Events::ErrorCode::ErrorCode(token) { errorCode = -1; }
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Events {
+void Events::ErrorCode::set(int _error_code, const std::string &_error_report,
+                            const std::string &_traceback) {
+    if (_error_code != errorCode) {
+        errorCode = _error_code;
+        errorReport = _error_report;
+        traceback = _traceback;
+        send();
+    }
+}
 
-class GlycolPumpStatus final : MTM1M3TS_logevent_glycolPumpStatusC, public cRIO::Singleton<GlycolPumpStatus> {
-public:
-    GlycolPumpStatus(token);
-
-    void update(VFD* vfd);
-
-private:
-    uint16_t _last_status;
-    uint16_t _last_errorCode;
-    int _error_count;
-};
-
-}  // namespace Events
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
-
-#endif  //!_TS_Event_GlycolPumpStatus_
+void Events::ErrorCode::clear(const std::string &error_code) { set(NoFault, error_code, ""); }

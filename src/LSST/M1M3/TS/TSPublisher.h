@@ -31,9 +31,9 @@
 
 #include <cRIO/Singleton.h>
 
-#include <Telemetry/FlowMeterThread.h>
-#include <Telemetry/GlycolTemperatureThread.h>
-#include <Telemetry/PumpThread.h>
+#include "Telemetry/FlowMeterThread.h"
+#include "Telemetry/GlycolTemperatureThread.h"
+#include "Telemetry/PumpThread.h"
 
 namespace LSST {
 namespace M1M3 {
@@ -50,6 +50,8 @@ public:
 
     void setLogLevel(int newLevel);
 
+    void log_error_code(MTM1M3TS_logevent_errorCodeC *data) { _m1m3TSSAL->logEvent_errorCode(data, 0); }
+
     void logSoftwareVersions();
     void logSimulationMode();
     void logThermalInfo(MTM1M3TS_logevent_thermalInfoC *data) { _m1m3TSSAL->logEvent_thermalInfo(data, 0); }
@@ -60,6 +62,7 @@ public:
     void startFlowMeterThread();
     void startGlycolTemperatureThread();
     void startPumpThread();
+    void startupPump();
 
     void stopFlowMeterThread();
     void stopGlycolTemperatureThread();

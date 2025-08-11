@@ -22,10 +22,13 @@
 
 #include <spdlog/spdlog.h>
 
-#include <Events/GlycolPumpStatus.h>
-#include <IFPGA.h>
-#include <TSPublisher.h>
-#include <Telemetry/PumpThread.h>
+#include "Events/ErrorCode.h"
+#include "Events/GlycolPumpStatus.h"
+#include "Events/SummaryState.h"
+#include "IFPGA.h"
+#include "TSPublisher.h"
+#include "Telemetry/PumpThread.h"
+#include "Settings/GlycolPump.h"
 
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
@@ -38,40 +41,69 @@ PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
     outputCurrent = NAN;
     busVoltage = NAN;
     outputVoltage = NAN;
+
+    _error_count = 0;
+    _success_count = 0;
+}
+
+request_type PumpThread::_check_commands() {
+    request_type n_r = NOP;
+
+    std::lock_guard<std::mutex> lg(_requests_lock);
+
+    if (not(_next_requests.empty())) {
+        n_r = _next_requests.front();
+        switch (n_r) {
+            case START:
+                vfd.start();
+                break;
+            case STOP:
+                vfd.stop();
+                break;
+            case RESET:
+                vfd.reset();
+                break;
+            case FREQ:
+                vfd.setFrequency(_target_frequency);
+                break;
+            case STARTUP:
+                if (_success_count > 2) {
+                    vfd.reset();
+                    vfd.setFrequency(Settings::GlycolPump::instance().startupFrequency);
+                    vfd.start();
+                } else if (_error_count > 30) {
+                    Events::SummaryState::instance().fail(Events::ErrorCode::EGWPumpStartup,
+                                                          "Cannot start the EGW pump.", "");
+                }
+                break;
+            case NOP:
+                break;
+        }
+        _next_requests.pop();
+
+        if (n_r == NOP) {
+            return NOP;
+        }
+
+        _transport->commands(vfd, 2s, this);
+    }
+
+    return n_r;
 }
 
 void PumpThread::run(std::unique_lock<std::mutex>& lock) {
     runCondition.wait_for(lock, std::chrono::seconds(3));
-    int error_count = 0;
 
     SPDLOG_INFO("Running Pump Thread.");
     while (keepRunning) {
         auto end = std::chrono::steady_clock::now() + 2s;
 
+        request_type n_r = NOP;
+
         try {
             vfd.clear();
 
-            switch (_next_request) {
-                case START:
-                    vfd.start();
-                    break;
-                case STOP:
-                    vfd.stop();
-                    break;
-                case RESET:
-                    vfd.reset();
-                    break;
-                case FREQ:
-                    vfd.setFrequency(_target_frequency);
-                    break;
-                case NOP:
-                    break;
-            }
-
-            if (_next_request != NOP) {
-                _transport->commands(vfd, 2s, this);
-                _next_request = NOP;
-            }
+            n_r = _check_commands();
 
             vfd.readInfo();
 
@@ -90,21 +122,18 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
             if (ret != SAL__OK) {
                 SPDLOG_WARN("Cannot send VFD: {}", ret);
             }
-            error_count = 0;
-        } catch (std::exception& ex) {
-            // if (error_count == 0) {
-            SPDLOG_ERROR("Error in running Glycol Pump thread: {}", ex.what());
-            //}
-            error_count++;
-            std::this_thread::sleep_for(2s);
-            //	    try {
-            //               _transport->flush();
-            //	       SPDLOG_INFO("Flushed Pump FIFOs");
-            //	    } catch (std::runtime_error& er) {
-            //	SPDLOG_WARN("Error in flushing data: {}", er.what());
 
-            //            }
-            //	    std::this_thread::sleep_for(100ms);
+            _error_count = 0;
+            _success_count++;
+        } catch (std::exception& ex) {
+            SPDLOG_ERROR("Error in running Glycol Pump thread: {}", ex.what());
+            _error_count++;
+            _success_count = 0;
+            if (n_r == STARTUP) {
+                SPDLOG_INFO("Queing again failed startup sequence.");
+                startup();
+            }
+            std::this_thread::sleep_for(2s);
         }
 
         runCondition.wait_until(lock, end);
@@ -113,11 +142,25 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
     SPDLOG_DEBUG("Pump Thread Stopped.");
 }
 
-void PumpThread::start_pump() { _next_request = START; }
+void PumpThread::start_pump() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _next_requests.push(START);
+}
 
-void PumpThread::stop_pump() { _next_request = STOP; }
-void PumpThread::reset_pump() { _next_request = RESET; }
+void PumpThread::stop_pump() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _next_requests.push(STOP);
+}
+void PumpThread::reset_pump() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _next_requests.push(RESET);
+}
 void PumpThread::set_target_frequency(float frequency) {
+    std::lock_guard<std::mutex> lg(_requests_lock);
     _target_frequency = frequency;
-    _next_request = FREQ;
+    _next_requests.push(FREQ);
+}
+void PumpThread::startup() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _next_requests.push(STARTUP);
 }

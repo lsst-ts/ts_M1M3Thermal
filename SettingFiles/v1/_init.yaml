@@ -9,6 +9,7 @@ FlowMeter:
 
 GlycolPump:
   Enabled: true
+  StartupFrequency: 30
 
 MixingValve:
   # units are mA (milliamperes)

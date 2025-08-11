@@ -23,19 +23,21 @@
 #ifndef _TS_Telemetry_PumpThread_
 #define _TS_Telemetry_PumpThread_
 
+#include <queue>
+
 #include <SAL_MTM1M3TS.h>
 
 #include <cRIO/Thread.h>
 #include <Transports/Transport.h>
 
-#include <MPU/VFD.h>
+#include "MPU/VFD.h"
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
-typedef enum { NOP, START, STOP, RESET, FREQ } request_type;
+typedef enum { NOP, START, STOP, RESET, FREQ, STARTUP } request_type;
 
 /**
  * Thread reading out pump values. Started from TSPublisher when CSC
@@ -51,13 +53,20 @@ public:
     void stop_pump();
     void reset_pump();
     void set_target_frequency(float frequency);
+    void startup();
 
 private:
     VFD vfd;
     std::shared_ptr<Transports::Transport> _transport;
 
-    std::atomic<request_type> _next_request;
+    std::queue<request_type> _next_requests;
+    std::mutex _requests_lock;
     float _target_frequency;
+
+    request_type _check_commands();
+
+    int _error_count;
+    int _success_count;
 };
 
 }  // namespace Telemetry

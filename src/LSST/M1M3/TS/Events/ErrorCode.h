@@ -1,5 +1,5 @@
 /*
- * Publish MPU Glycol Pump status.
+ * TS ErrorCode.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,29 +20,32 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Event_GlycolPumpStatus_
-#define _TS_Event_GlycolPumpStatus_
+#ifndef _TS_Event_ErrorCodes_
+#define _TS_Event_ErrorCodes_
+
+#include <string>
 
 #include <SAL_MTM1M3TS.h>
-#include <cRIO/Singleton.h>
 
-#include <MPU/VFD.h>
+#include "cRIO/Singleton.h"
+#include "TSPublisher.h"
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Events {
 
-class GlycolPumpStatus final : MTM1M3TS_logevent_glycolPumpStatusC, public cRIO::Singleton<GlycolPumpStatus> {
+class ErrorCode : MTM1M3TS_logevent_errorCodeC, public cRIO::Singleton<ErrorCode> {
 public:
-    GlycolPumpStatus(token);
+    enum Type { NoFault = 0, EGWPump = 1, TemperatureSensors = 2, EGWPumpStartup = 3 };
 
-    void update(VFD* vfd);
+    ErrorCode(token);
 
-private:
-    uint16_t _last_status;
-    uint16_t _last_errorCode;
-    int _error_count;
+    void set(int error_code, const std::string &error_report, const std::string &traceback);
+
+    void clear(const std::string &error_report);
+
+    void send() { TSPublisher::instance().log_error_code(this); }
 };
 
 }  // namespace Events
@@ -50,4 +53,4 @@ private:
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //!_TS_Event_GlycolPumpStatus_
+#endif  // ! _TS_Event_ErrorCodes_
