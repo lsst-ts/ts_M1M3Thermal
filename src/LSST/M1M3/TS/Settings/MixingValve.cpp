@@ -62,6 +62,6 @@ float MixingValve::position_to_percents(float position) {
         return 100;
     }
 
-    float ret = positionFeedbackA * exp(positionFeedbackB * position);
+    float ret = positionFeedbackA + positionFeedbackB * position;
     return std::max(0.0f, std::min(100.0f, ret));
 }

@@ -23,8 +23,8 @@ MixingValve:
   PositionFeedback:
     FullyClosed: 0.021
     FullyOpened: 9.69
-    a: 5.48326
-    b: 0.297239
+    a: 2.48351
+    b: 9.91749
 
   PID:
     Timestep: 2.0
