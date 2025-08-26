@@ -288,7 +288,7 @@ bool SAL_applySetpoints::validate() {
     diff = fabs(above_mirror - params.heatersSetpoint);
     if (diff > s_setpoint.safetyRange) {
         ackFailed(
-                fmt::format("command FiCU heaters temperature setpoint {:.02f} \u00b0C is too far from above "
+                fmt::format("command FCU heaters temperature setpoint {:.02f} \u00b0C is too far from above "
                             "mirror temperature of {:.02f} \u00b0C.",
                             params.heatersSetpoint, above_mirror));
         return false;
