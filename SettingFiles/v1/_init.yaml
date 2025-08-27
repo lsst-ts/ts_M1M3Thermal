@@ -10,6 +10,15 @@ FlowMeter:
 GlycolPump:
   Enabled: true
   StartupFrequency: 30
+  Communication:
+    # Timeout in seconds. When no data are received for the given period, CSC
+    # will either fault or try to recover, based on the AutoRecoverAttempts
+    # value and history of previous recoveries.
+    Timeout: 120
+    # On communication timeout, outside of the engineering mode, try to
+    # autorecover - turn off the pump power, wait for RecoverPowerOff seconds, turn the power back.
+    AutoRecoverAttempts: 3
+    RecoverPowerOff: 15
 
 MixingValve:
   # units are mA (milliamperes)
