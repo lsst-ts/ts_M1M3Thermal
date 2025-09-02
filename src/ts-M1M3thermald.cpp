@@ -88,7 +88,6 @@ void M1M3thermald::init() {
         _m1m3tsSAL = std::make_shared<SAL_MTM1M3TS>();
     } catch (std::runtime_error &er) {
         SPDLOG_CRITICAL("Cannot initialize SAL: {}", er.what());
-
     }
 
     _m1m3tsSAL->setDebugLevel(getDebugLevelSAL());

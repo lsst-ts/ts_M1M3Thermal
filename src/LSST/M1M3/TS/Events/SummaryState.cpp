@@ -58,6 +58,7 @@ bool SummaryState::enabled() {
 void SummaryState::fail(int error_code, const std::string &error_report, const std::string &traceback) {
     _switch_state(MTM1M3TS_shared_SummaryStates_FaultState);
     Events::ErrorCode::instance().set(error_code, error_report, traceback);
+    SPDLOG_ERROR("Faulted ({}): {}", error_code, error_report);
 }
 
 void SummaryState::_switch_state(int new_state) {
