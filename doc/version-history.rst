@@ -9,6 +9,7 @@ v2.2.0
 
 * FCU heaters controlled by PID
 * EGW Pump autostart, error stat reporting
+* Liner maping of mixing valve encoder voltage to %
 
 v2.1.0
 ------
