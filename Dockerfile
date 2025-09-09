@@ -22,7 +22,7 @@ export CPP_FLAGS="-I\$CONDA_PREFIX/include" \\n
 
 RUN source ~/.crio_setup.sh && cd $TS_XML_DIR \
     && ~/.checkout_repo.sh $XML_BRANCH develop && git pull \
-    && salgenerator generate cpp MTM1M3TS
+    && salgeneratorKafka generate cpp MTM1M3TS
 
 FROM crio-develop
 

@@ -134,6 +134,8 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
                 startup();
             }
             std::this_thread::sleep_for(2s);
+            SPDLOG_INFO("Flushing queue..");
+            _transport->flush();
         }
 
         runCondition.wait_until(lock, end);
