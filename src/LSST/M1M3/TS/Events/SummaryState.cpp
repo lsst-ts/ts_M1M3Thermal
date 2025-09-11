@@ -90,7 +90,8 @@ void SummaryState::_switch_state(int new_state) {
             break;
         case MTM1M3TS_shared_SummaryStates_StandbyState:
             if (summaryState != MTM1M3TS_shared_SummaryStates_DisabledState &&
-                summaryState != MTM1M3TS_shared_SummaryStates_OfflineState) {
+                summaryState != MTM1M3TS_shared_SummaryStates_OfflineState &&
+                summaryState != MTM1M3TS_shared_SummaryStates_FaultState) {
                 throw std::runtime_error(fmt::format("Cannot switch to Standby state from {}", summaryState));
             }
             break;
