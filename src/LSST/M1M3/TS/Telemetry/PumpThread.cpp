@@ -133,9 +133,10 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
                 SPDLOG_INFO("Queing again failed startup sequence.");
                 startup();
             }
-            std::this_thread::sleep_for(2s);
-            SPDLOG_INFO("Flushing queue..");
-            _transport->flush();
+            auto buf = _transport->read(200, 2s, this);
+            if (!(buf.empty())) {
+                SPDLOG_ERROR("Read \"{}\" after error.", Modbus::hexDump(buf));
+            }
         }
 
         runCondition.wait_until(lock, end);
