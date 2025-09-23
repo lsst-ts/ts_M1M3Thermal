@@ -9,7 +9,8 @@ v2.2.0
 
 * FCU heaters controlled by PID
 * EGW Pump autostart, error stat reporting
-* Liner maping of mixing valve encoder voltage to %
+* Linear maping of mixing valve encoder voltage to %
+* Removed OpenSplice reference
 
 v2.1.0
 ------
