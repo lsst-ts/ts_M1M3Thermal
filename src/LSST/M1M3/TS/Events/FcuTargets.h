@@ -40,7 +40,7 @@ public:
      */
     void send();
 
-    void set_FCU_heaters_fans(const std::vector<int> &heater_PWM, const std::vector<int> &fan_RPM);
+    void set_FCU_heaters_fans(std::vector<int> heater_PWM, std::vector<int> fan_RPM);
 
     void recover();
 

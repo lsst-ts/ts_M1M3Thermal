@@ -53,13 +53,23 @@ void FcuTargets::send() {
     _updated = false;
 }
 
-void FcuTargets::set_FCU_heaters_fans(const std::vector<int> &heater_PWM, const std::vector<int> &fan_RPM) {
+void FcuTargets::set_FCU_heaters_fans(std::vector<int> _heater_PWM, std::vector<int> _fan_RPM) {
     auto &app = TSApplication::instance();
 
     app.ilc()->clear();
 
-    app.callFunctionOnAllIlcs([heater_PWM, fan_RPM](uint8_t address) -> void {
-        TSApplication::ilc()->setThermalDemand(address, heater_PWM[address - 1], fan_RPM[address - 1]);
+    app.callFunctionOnAllIlcs([&](uint8_t address) -> void {
+        auto i = address - 1;
+        int heater = _heater_PWM[i];
+        if (heater < 0 || heater > 255) {
+            _heater_PWM[i] = heater = heaterPWM[i];
+        }
+        int fan = _fan_RPM[i];
+        if (fan < 0 || fan > 255) {
+            _fan_RPM[i] = fan = fanRPM[i];
+        }
+
+        TSApplication::ilc()->setThermalDemand(address, heater, fan);
     });
 
     IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
@@ -69,9 +79,10 @@ void FcuTargets::set_FCU_heaters_fans(const std::vector<int> &heater_PWM, const 
 
     // converts 0-255 values to human readable values
     for (int i = 0; i < cRIO::NUM_TS_ILC; i++) {
-        target_heater_PWM[i] = 100.0 * (heater_PWM[i] / 255.0);
-        target_fan_RPM[i] = fan_RPM[i] * 10;
+        target_heater_PWM[i] = 100.0 * (_heater_PWM[i] / 255.0);
+        target_fan_RPM[i] = _fan_RPM[i] * 10;
     }
+
     _set_fcu_targets(target_heater_PWM, target_fan_RPM);
 
     const auto [h_min, h_max] = std::minmax_element(begin(target_heater_PWM), end(target_heater_PWM));

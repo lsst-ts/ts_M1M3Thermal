@@ -159,8 +159,8 @@ void SAL_setEngineeringMode::execute() {
 }
 
 bool SAL_fanCoilsHeatersPower::validate() {
-    if (Events::EngineeringMode::instance().is_enabled() == false) {
-        ackFailed("CSC must be in enabled state to set heater on.");
+    if (Events::SummaryState::instance().enabled() == false) {
+        ackFailed("CSC must be in enabled state to set FCU's heaters power.");
         return false;
     };
     return true;
@@ -172,8 +172,8 @@ void SAL_fanCoilsHeatersPower::execute() {
 }
 
 bool SAL_heaterFanDemand::validate() {
-    if (Events::EngineeringMode::instance().is_enabled() == false) {
-        ackFailed("CSC must be in enabled state to set heater and fan demands.");
+    if (Events::SummaryState::instance().enabled() == false) {
+        ackFailed("CSC must be in enabled state to set FCU's heaters and fans demands.");
         return false;
     };
     return true;
