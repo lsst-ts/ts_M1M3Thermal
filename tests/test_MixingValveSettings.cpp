@@ -1,5 +1,5 @@
 /*
- * This file is part of LSST cRIOcpp test suite. Tests MixingVakve settings.
+ * This file is part of LSST cRIOcpp test suite. Tests MixingValve settings.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -27,9 +27,9 @@
 
 #include <cRIO/Settings/Path.h>
 
-#include <Settings/Controller.h>
-#include <Settings/MixingValve.h>
-#include <TSPublisher.h>
+#include "Settings/Controller.h"
+#include "Settings/MixingValve.h"
+#include "TSPublisher.h"
 
 using Catch::Approx;
 using namespace LSST::M1M3::TS;
@@ -47,9 +47,12 @@ TEST_CASE("Test conversions", "[MixingValveSettings]") {
     LSST::cRIO::Settings::Path::setRootPath("data");
     REQUIRE_NOTHROW(Controller::instance().load("data/_init.yaml"));
 
-    REQUIRE(MixingValve::instance().positionToPercents(10) == 100);
-    REQUIRE(MixingValve::instance().positionToPercents(-1) == 0);
+    REQUIRE(MixingValve::instance().backlashStep == 6);
+    REQUIRE(MixingValve::instance().minimalMove == 10);
 
-    REQUIRE(MixingValve::instance().percentsToCommanded(100) == Approx(0.020f));
-    REQUIRE(MixingValve::instance().percentsToCommanded(50) == Approx(0.012f));
+    REQUIRE(MixingValve::instance().position_to_percents(10) == 100);
+    REQUIRE(MixingValve::instance().position_to_percents(-1) == 0);
+
+    REQUIRE(MixingValve::instance().percents_to_commanded(100) == Approx(0.020f));
+    REQUIRE(MixingValve::instance().percents_to_commanded(50) == Approx(0.012f));
 }
