@@ -27,8 +27,10 @@ MixingValve:
     b: 9.91749
 
   FinerControl:
+    InPosition: 1
     BacklashStep: 6
     MinimalMove: 10
+    MaxMovingTime: 20
 
   PID:
     Timestep: 2.0
