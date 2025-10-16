@@ -35,6 +35,21 @@ MixingValve:
     a: 2.48351
     b: 9.91749
 
+  # Finer mixing valve control. Move above/below target values when change is requested.
+  FinerControl:
+    # Range to consider mixing valve in position. In percents.
+    InPosition: 1
+    # Step size in % of the opened mixing valve. The mixing valve will be
+    # commanded to go above this value first, when change is less than
+    # MinimalMove from the current target value.
+    BacklashStep: 6
+    # Move below this value will first move + BacklashStep to compensate for backlash.
+    MinimalMove: 10
+    # Moving timeout in seconds. If valve doesn't finish move in given time, mixing valve will fault.
+    MaxMovingTime: 20
+
+  # PID for adjusting mixing valve position to achieve target EGW loop
+  # temperature.
   PID:
     Timestep: 2.0
     P : -40.0

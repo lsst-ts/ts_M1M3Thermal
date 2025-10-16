@@ -45,6 +45,11 @@ void MixingValve::load(YAML::Node doc) {
     positionFeedbackA = doc["PositionFeedback"]["a"].as<float>();
     positionFeedbackB = doc["PositionFeedback"]["b"].as<float>();
 
+    inPosition = doc["FinerControl"]["InPosition"].as<float>();
+    backlashStep = doc["FinerControl"]["BacklashStep"].as<float>();
+    minimalMove = doc["FinerControl"]["MinimalMove"].as<float>();
+    maxMovingTime = doc["FinerControl"]["MaxMovingTime"].as<float>();
+
     pid_parameters.load(doc["PID"]);
 }
 

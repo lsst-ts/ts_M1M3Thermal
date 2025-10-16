@@ -50,6 +50,12 @@ public:
     float position_to_percents(float position);
 
     PID::PIDParameters pid_parameters;
+
+    // TODO: move to XML
+    float inPosition;
+    float backlashStep;
+    float minimalMove;
+    float maxMovingTime;
 };
 
 }  // namespace Settings

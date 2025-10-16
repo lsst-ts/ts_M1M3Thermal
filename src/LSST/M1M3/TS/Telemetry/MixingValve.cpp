@@ -20,13 +20,16 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <Settings/MixingValve.h>
-#include <TSPublisher.h>
-#include <Telemetry/MixingValve.h>
-#include <cRIO/ThermalILC.h>
+#include <cmath>
+
 #include <spdlog/spdlog.h>
 
-#include <cmath>
+#include "cRIO/ThermalILC.h"
+#include "IFPGA.h"
+#include "Settings/MixingValve.h"
+#include "Telemetry/FinerControl.h"
+#include "Telemetry/MixingValve.h"
+#include "TSPublisher.h"
 
 using namespace LSST::M1M3::TS;
 using namespace LSST::M1M3::TS::Telemetry;
@@ -36,6 +39,12 @@ MixingValve::MixingValve(token) { rawValvePosition = NAN; }
 void MixingValve::sendPosition(float position) {
     rawValvePosition = position;
     valvePosition = Settings::MixingValve::instance().position_to_percents(position);
+
+    auto new_percents = FinerControl::instance().get_target(valvePosition);
+    if (!isnan(new_percents)) {
+        float target = Settings::MixingValve::instance().percents_to_commanded(new_percents);
+        IFPGA::get().setMixingValvePosition(target);
+    }
 
     salReturn ret = TSPublisher::SAL()->putSample_mixingValve(this);
     if (ret != SAL__OK) {

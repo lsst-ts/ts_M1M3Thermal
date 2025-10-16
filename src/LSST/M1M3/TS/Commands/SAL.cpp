@@ -35,9 +35,9 @@
 #include "Events/ThermalInfo.h"
 #include "Settings/Controller.h"
 #include "Settings/GlycolPump.h"
-#include "Settings/MixingValve.h"
 #include "Settings/Setpoint.h"
 #include "Tasks/Controller.h"
+#include "Telemetry/FinerControl.h"
 #include "Telemetry/GlycolLoopTemperature.h"
 #include "TSApplication.h"
 #include "TSPublisher.h"
@@ -197,10 +197,9 @@ bool SAL_setMixingValve::validate() {
 }
 
 void SAL_setMixingValve::execute() {
-    float target = Settings::MixingValve::instance().percents_to_commanded(params.mixingValveTarget);
-    IFPGA::get().setMixingValvePosition(target);
+    Telemetry::FinerControl::instance().set_target(params.mixingValveTarget);
     ackComplete();
-    SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.05f})", params.mixingValveTarget, target);
+    SPDLOG_INFO("Changed mixing valve to {:0.01f}%", params.mixingValveTarget);
 }
 
 bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().is_enabled(); }

@@ -1,5 +1,5 @@
 /*
- * TS ErrorCode.
+ * Finer control for the mixing valve.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -20,44 +20,40 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Event_ErrorCodes_
-#define _TS_Event_ErrorCodes_
+#ifndef _TS_FinerControl_
+#define _TS_FinerControl_
 
-#include <string>
+#include <chrono>
+#include <mutex>
 
-#include <SAL_MTM1M3TS.h>
-
-#include "cRIO/Singleton.h"
-#include "TSPublisher.h"
+#include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
-namespace Events {
+namespace Telemetry {
 
-class ErrorCode : MTM1M3TS_logevent_errorCodeC, public cRIO::Singleton<ErrorCode> {
+class FinerControl : public cRIO::Singleton<FinerControl> {
 public:
-    enum Type {
-        NoFault = 0,
-        EGWPump = 1,
-        TemperatureSensors = 2,
-        EGWPumpStartup = 3,
-        MixingValveTimeout = 4,
-        MixingValveMovedOutOfTarget = 5
-    };
+    FinerControl(token);
 
-    ErrorCode(token);
+    void set_target(float demand);
 
-    void set(int error_code, const std::string &error_report, const std::string &traceback);
+    float get_target(float valve_position);
 
-    void clear(const std::string &error_report);
+    enum { MOVING_TO_COMPENSATED_TARGET, MOVING_TO_TARGET, ON_TARGET, FAULTED } state;
 
-    void send() { TSPublisher::instance().log_error_code(this); }
+private:
+    std::mutex _lock;
+
+    std::chrono::time_point<std::chrono::steady_clock> _move_timeout;
+    float _comp_setpoint;
+    float _last_setpoint;
 };
 
-}  // namespace Events
+}  // namespace Telemetry
 }  // namespace TS
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // ! _TS_Event_ErrorCodes_
+#endif  // !_TS_FinerControl_
