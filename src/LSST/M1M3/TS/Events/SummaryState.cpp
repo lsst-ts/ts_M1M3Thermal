@@ -65,6 +65,10 @@ void SummaryState::_switch_state(int new_state) {
     std::lock_guard<std::mutex> lockG(_state_mutex);
     SPDLOG_TRACE("SummaryState::_switch_state from {} to {}", summaryState, new_state);
     if (summaryState == new_state) {
+        // it is legal to go to fault from fault state, as the code might hit
+        if (new_state == MTM1M3TS_shared_SummaryStates_FaultState) {
+            return;
+        }
         throw std::runtime_error(fmt::format("Already in {} state", new_state));
     }
     switch (new_state) {
