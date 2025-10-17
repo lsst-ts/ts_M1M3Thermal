@@ -47,6 +47,8 @@ public:
 
     float percents_to_commanded(float target);
 
+    float current_to_voltage(float current);
+
     float position_to_percents(float position);
 
     PID::PIDParameters pid_parameters;

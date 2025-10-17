@@ -26,6 +26,7 @@
 #include <cRIO/ModbusBuffer.h>
 #include <cRIO/Timestamp.h>
 
+#include "Settings/MixingValve.h"
 #include "SimulatedFPGA.h"
 #include "TSPublisher.h"
 
@@ -34,7 +35,7 @@ using namespace LSST::M1M3::TS;
 
 SimulatedFPGA::SimulatedFPGA() : ILC::ILCBusList(1), IFPGA(), ThermalILC(1), _U16ResponseStatus(IDLE) {
     _broadcastCounter = 0;
-    _mixingValve = 0;
+    _mixing_valve = 0;
     srandom(time(NULL));
     for (int i = 0; i < NUM_TS_ILC; i++) {
         _mode[i] = ILC::Mode::Standby;
@@ -55,7 +56,8 @@ void SimulatedFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t tim
                 break;
             case FPGAAddress::MIXING_VALVE_COMMAND:
                 d++;
-                memcpy(&_mixingValve, d, 4);
+                memcpy(&_mixing_valve, d, 4);
+                _mixing_valve = Settings::MixingValve::instance().current_to_voltage(_mixing_valve);
                 d += 2;
                 break;
             case FPGAAddress::MODBUS_A_TX:
@@ -89,7 +91,7 @@ void SimulatedFPGA::writeRequestFIFO(uint16_t *data, size_t length, uint32_t tim
 
 void SimulatedFPGA::readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) {
     for (size_t i = 0; i < length; i++) {
-        data[i] = _mixingValve + random() / (float)RAND_MAX / 1000.0;
+        data[i] = _mixing_valve + random() / (float)RAND_MAX / 1000.0;
     }
 }
 

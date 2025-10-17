@@ -58,6 +58,11 @@ float MixingValve::percents_to_commanded(float target) {
            1000.0f;
 }
 
+float MixingValve::current_to_voltage(float current) {
+    return ((current * 1000.0f) - commandingFullyClosed) *
+           (10.0f / (commandingFullyOpened - commandingFullyClosed));
+}
+
 float MixingValve::position_to_percents(float position) {
     if (position < positionFeedbackFullyClosed) {
         return 0;

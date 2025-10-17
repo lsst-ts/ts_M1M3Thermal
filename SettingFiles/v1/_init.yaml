@@ -38,7 +38,7 @@ MixingValve:
   # Finer mixing valve control. Move above/below target values when change is requested.
   FinerControl:
     # Range to consider mixing valve in position. In percents.
-    InPosition: 1
+    InPosition: 3
     # Step size in % of the opened mixing valve. The mixing valve will be
     # commanded to go above this value first, when change is less than
     # MinimalMove from the current target value.

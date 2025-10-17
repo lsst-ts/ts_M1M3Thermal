@@ -78,7 +78,7 @@ protected:
 
 private:
     uint8_t _broadcastCounter;
-    float _mixingValve;
+    float _mixing_valve;
     LSST::cRIO::SimulatedILC _response;
     std::map<uint8_t, Modbus::Buffer> _mpuResponses;
 
