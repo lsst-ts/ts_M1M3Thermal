@@ -76,6 +76,9 @@ void SAL_start::execute() {
 
     Events::ErrorCode::instance().clear("CSC started");
 
+    Telemetry::FinerControl::instance().set_target(0);
+    IFPGA::get().setMixingValvePosition(0);
+
     try {
         changeAllILCsMode(ILC::Mode::Disabled);
 
@@ -122,6 +125,8 @@ void SAL_disable::execute() {
     changeAllILCsMode(ILC::Mode::Disabled);
     IFPGA::get().setFCUPower(false);
     IFPGA::get().setCoolantPumpPower(false);
+    Telemetry::FinerControl::instance().set_target(0);
+    IFPGA::get().setMixingValvePosition(0);
 
     Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
