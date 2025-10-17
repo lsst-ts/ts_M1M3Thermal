@@ -38,6 +38,7 @@ Setpoint::Setpoint(token) {
 void Setpoint::load(YAML::Node doc) {
     SPDLOG_INFO("Loading mixing valve settigns");
     timestep = doc["Timestep"].as<float>();
+    mixingValveStep = doc["MixingValveStep"].as<float>();
 
     glycolSupplyPercentage = doc["GlycolSupplyPercentage"].as<float>();
     if (glycolSupplyPercentage < 0 || glycolSupplyPercentage > 100) {

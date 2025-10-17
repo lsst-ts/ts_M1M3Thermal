@@ -81,8 +81,6 @@ Heaters:
 Setpoint:
   # Loop run time in seconds
   Timestep: 10
-  # Target temperature control tolerance in degrees C
-  Tolerance: 0.05
   # Mixing valve step size - change in % every time difference between coolant temperature and target temperature is greater than tolerance
   MixingValveStep: 5
   # Percentage of mirror supply temperature on glycol loop target value

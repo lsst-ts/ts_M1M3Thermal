@@ -49,7 +49,9 @@ LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
 
     float diff = mirror_loop - target_glycol_temp;
 
-    float target_mixing_valve = round(target_pid.process(target_glycol_temp, mirror_loop) / 5.0) * 5.0;
+    auto step = Settings::Setpoint::instance().mixingValveStep;
+
+    float target_mixing_valve = round(target_pid.process(target_glycol_temp, mirror_loop) / step) * step;
 
     target_mixing_valve = std::max(0.0f, std::min(target_mixing_valve, 100.0f));
 
