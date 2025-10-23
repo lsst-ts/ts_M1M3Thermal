@@ -35,7 +35,7 @@ MixingValve::MixingValve(token) {
 }
 
 void MixingValve::load(YAML::Node doc) {
-    SPDLOG_INFO("Loading mixing valve settigns");
+    SPDLOG_INFO("Loading Mixing Valve settigns.");
     commandingFullyClosed = doc["Commanding"]["FullyClosed"].as<float>();
     commandingFullyOpened = doc["Commanding"]["FullyOpened"].as<float>();
 
