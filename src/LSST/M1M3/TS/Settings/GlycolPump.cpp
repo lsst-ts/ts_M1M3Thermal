@@ -33,7 +33,7 @@ GlycolPump::GlycolPump(token) {
 }
 
 void GlycolPump::load(YAML::Node doc) {
-    SPDLOG_INFO("Loading Glycol Pump settings");
+    SPDLOG_INFO("Loading Glycol Pump settings.");
 
     enabled = doc["Enabled"].as<bool>();
     startupFrequency = doc["StartupFrequency"].as<float>();

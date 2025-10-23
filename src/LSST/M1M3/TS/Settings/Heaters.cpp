@@ -39,7 +39,7 @@ Heaters::~Heaters() {
 }
 
 void Heaters::load(YAML::Node doc) {
-    SPDLOG_INFO("Loading heaters settigns");
+    SPDLOG_INFO("Loading Heaters settigns.");
     auto pids = doc["PID"];
 
     PID::PIDParameters default_params;
