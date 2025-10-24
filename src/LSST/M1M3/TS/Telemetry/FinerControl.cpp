@@ -73,16 +73,21 @@ float FinerControl::get_target(float valve_position) {
 
     auto now = std::chrono::steady_clock::now();
 
+    auto &mixing_settings = Settings::MixingValve::instance();
+
+    // do not change state for at least two seconds, as the valve moves with delay
+    bool transition =
+            (_move_timeout - now) < std::chrono::milliseconds((int)mixing_settings.maxMovingTime * 800);
+
     /**
      * Runs state machine, based on what the valve shall do.
      */
     switch (state) {
         // when in idle and setpint changed, change state.
         case MOVING_TO_COMPENSATED_TARGET:
-            if (abs(valve_position - _comp_setpoint) < Settings::MixingValve::instance().inPosition) {
+            if (abs(valve_position - _comp_setpoint) < mixing_settings.inPosition && transition) {
                 state = MOVING_TO_TARGET;
-                _move_timeout = now + std::chrono::milliseconds(
-                                              (int)(Settings::MixingValve::instance().maxMovingTime * 1000));
+                _move_timeout = now + std::chrono::milliseconds((int)(mixing_settings.maxMovingTime * 1000));
                 return _last_setpoint;
             }
             if (now >= _move_timeout) {
@@ -97,7 +102,7 @@ float FinerControl::get_target(float valve_position) {
             }
             return _comp_setpoint;
         case MOVING_TO_TARGET:
-            if (abs(valve_position - _last_setpoint) < Settings::MixingValve::instance().inPosition) {
+            if (abs(valve_position - _last_setpoint) < mixing_settings.inPosition && transition) {
                 state = ON_TARGET;
                 return NAN;
             } else if (now >= _move_timeout) {
@@ -111,7 +116,7 @@ float FinerControl::get_target(float valve_position) {
             }
             return _last_setpoint;
         case ON_TARGET:
-            if (abs(valve_position - _last_setpoint) >= Settings::MixingValve::instance().inPosition) {
+            if (abs(valve_position - _last_setpoint) >= mixing_settings.inPosition) {
                 Events::SummaryState::instance().fail(
                         Events::ErrorCode::MixingValveMovedOutOfTarget,
                         fmt::format("Moved out of target while on target: {}, demand was {}.", valve_position,
