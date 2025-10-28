@@ -36,7 +36,7 @@ Setpoint::Setpoint(token) {
 }
 
 void Setpoint::load(YAML::Node doc) {
-    SPDLOG_INFO("Loading mixing valve settigns");
+    SPDLOG_INFO("Loading mixing valve settings");
     timestep = doc["Timestep"].as<float>();
     mixingValveStep = doc["MixingValveStep"].as<float>();
 
