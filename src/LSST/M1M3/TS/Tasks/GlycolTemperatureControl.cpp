@@ -1,5 +1,5 @@
 /*
- * Tasks controlling mixing valve position.
+ * Task controlling mixing valve position.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -23,11 +23,12 @@
 #include <spdlog/spdlog.h>
 
 #include "Events/AppliedSetpoints.h"
-#include "IFPGA.h"
 #include "Settings/MixingValve.h"
 #include "Settings/Setpoint.h"
 #include "Tasks/GlycolTemperatureControl.h"
+#include "Telemetry/FinerControl.h"
 #include "Telemetry/GlycolLoopTemperature.h"
+#include "Telemetry/MixingValve.h"
 
 using namespace LSST::M1M3::TS::Tasks;
 
@@ -48,18 +49,18 @@ LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
 
     float diff = mirror_loop - target_glycol_temp;
 
-    float target_mixing_valve = round(target_pid.process(target_glycol_temp, mirror_loop) / 5.0) * 5.0;
+    auto step = Settings::Setpoint::instance().mixingValveStep;
+
+    float target_mixing_valve = round(target_pid.process(target_glycol_temp, mirror_loop) / step) * step;
 
     target_mixing_valve = std::max(0.0f, std::min(target_mixing_valve, 100.0f));
 
-    float target_v = Settings::MixingValve::instance().percents_to_commanded(target_mixing_valve);
-
     SPDLOG_INFO(
-            "TemperatureControlLoop: new valve position is {:.1f}% ({:0.04f}), temperature difference was "
+            "TemperatureControlLoop: new valve position is {:.1f}%, temperature difference was "
             "{:+.3f}\u00b0C",
-            target_mixing_valve, target_v, diff);
+            target_mixing_valve, diff);
 
-    IFPGA::get().setMixingValvePosition(target_v);
+    Telemetry::FinerControl::instance().set_target(target_mixing_valve);
 
     return Settings::Setpoint::instance().timestep * 1000.0;
 }

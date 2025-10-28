@@ -25,6 +25,7 @@
 #include <cRIO/MPU.h>
 
 #include "SimulatedVFDPump.h"
+#include "VFD.h"
 
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
@@ -43,7 +44,10 @@ void SimulatedVFDPump::generate_response(const unsigned char* buf, size_t len) {
             for (size_t i = 0; i < reg_len; i += 2, reg++) {
                 // simulates various registers
                 switch (reg) {
-                    case 0x2106:
+                    case VFD::REGISTERS::DRIVE_ERROR_CODE:
+                        _response.write<uint16_t>(0);
+                        break;
+                    case VFD::REGISTERS::OUTPUT_VOLTAGE:
                         _response.write<uint16_t>(_pump_voltage);
                         _pump_voltage += 1;
                         break;

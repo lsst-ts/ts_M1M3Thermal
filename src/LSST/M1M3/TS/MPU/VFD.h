@@ -40,6 +40,18 @@ namespace TS {
  */
 class VFD : public cRIO::MPU {
 public:
+    enum REGISTERS {
+        COMMAND = 0x2000,
+        SET_FREQUENCY = 0x2001,
+        VELOCITY_BITS = 0x2100,
+        DRIVE_ERROR_CODE = 0x2101,
+        FREQUENCY_COMMAND = 0x2102,
+        OUTPUT_FREQUENCY = 0x2103,
+        OUTPUT_CURRENT = 0x2104,
+        DC_BUS_VOLTAGE = 0x2105,
+        OUTPUT_VOLTAGE = 0x2106
+    };
+
     VFD() : MPU(100) {}
 
     void readInfo();
@@ -47,53 +59,45 @@ public:
     /**
      * Starts pump - make sure it is running.
      */
-    void start() { presetHoldingRegister(0x2000, 0x1a); }
+    void start() { presetHoldingRegister(REGISTERS::COMMAND, 0x1a); }
 
     /**
      * Stops pump - stop its motor.
      */
-    void stop() { presetHoldingRegister(0x2000, 0x01); }
+    void stop() { presetHoldingRegister(REGISTERS::COMMAND, 0x01); }
 
     /**
      * Reset pump state - clear all errors.
      */
-    void resetCommand() { presetHoldingRegister(0x2000, 0x08); }
+    void resetCommand() { presetHoldingRegister(REGISTERS::COMMAND, 0x08); }
 
     /**
      * Set pump output frequency.
      */
-    void setFrequency(float freq) { presetHoldingRegister(0x2001, freq * 100.0f); }
+    void setFrequency(float freq) { presetHoldingRegister(REGISTERS::SET_FREQUENCY, freq * 100.0f); }
 
     /**
      * Returns pump status.
      */
-    uint16_t getStatus() { return getRegister(0x2000); }
+    uint16_t getStatus() { return getRegister(REGISTERS::COMMAND); }
 
-    float getCommandedFrequency() { return getRegister(0x2001) / 100.0f; }
+    float getCommandedFrequency() { return getRegister(REGISTERS::SET_FREQUENCY) / 100.0f; }
 
-    uint16_t getVelocityPositionBits() { return getRegister(0x2100); }
-    uint16_t getDriveErrorCodes() { return getRegister(0x2101); }
-    float getTargetFrequency() { return getRegister(0x2102) / 100.0f; }
-    float getOutputFrequency() { return getRegister(0x2103) / 100.0f; }
-    float getOutputCurrent() { return getRegister(0x2104) / 100.0f; }
-    uint16_t getDCBusVoltage() { return getRegister(0x2105); }
-    float getOutputVoltage() { return getRegister(0x2106) / 10.0f; }
+    uint16_t getVelocityPositionBits() { return getRegister(REGISTERS::VELOCITY_BITS); }
+    uint16_t getDriveErrorCodes() { return getRegister(REGISTERS::DRIVE_ERROR_CODE); }
+    float getTargetFrequency() { return getRegister(REGISTERS::FREQUENCY_COMMAND) / 100.0f; }
+    float getOutputFrequency() { return getRegister(REGISTERS::OUTPUT_FREQUENCY) / 100.0f; }
+    float getOutputCurrent() { return getRegister(REGISTERS::OUTPUT_CURRENT) / 100.0f; }
+    uint16_t getDCBusVoltage() { return getRegister(REGISTERS::DC_BUS_VOLTAGE); }
+    float getOutputVoltage() { return getRegister(REGISTERS::OUTPUT_VOLTAGE) / 10.0f; }
 
     void readParameters() { readHoldingRegisters(1, 50); }
 
     /**
-     * Reads VFD registers.
-     *
-     * Register   | Content
-     * ---------- | -----------------
-     * 0x2101     | Drive Error Code
-     * 0x2102     | Frequency Command
-     * 0x2103     | Output Frequency
-     * 0x2104     | Output Current
-     * 0x2105     | DC-BUS Voltage
-     * 0x2106     | Output Voltage
+     * Reads VFD registers. Starts from the "Driver Error Code" and reads all registers containing current
+     * data.
      */
-    void update() { readHoldingRegisters(0x2101, 6); }
+    void update() { readHoldingRegisters(REGISTERS::DRIVE_ERROR_CODE, 6); }
 
     static const char *getDriveError(uint16_t code);
 };

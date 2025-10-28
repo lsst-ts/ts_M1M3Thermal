@@ -1,5 +1,5 @@
 /*
- * Tasks controlling mixing valve position.
+ * Task controlling mixing valve position.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -23,6 +23,8 @@
 #ifndef _TS_Tasks_GlycolTemperatureControl_
 #define _TS_Tasks_GlycolTemperatureControl_
 
+#include <chrono>
+
 #include "cRIO/Task.h"
 #include "PID/LimitedPID.h"
 
@@ -31,6 +33,14 @@ namespace M1M3 {
 namespace TS {
 namespace Tasks {
 
+/***
+ * Task class controlling glycol loop temperature. Set mixing valve opening ratio.
+ *
+ * The class uses a state machine to properly compensate for a backlash. It was
+ * observed the mixing valve cannot be commanded by a small increments. But
+ * commanding a bigger opening, and then returning to the target value, allows
+ * finer control.
+ */
 class GlycolTemperatureControl : public cRIO::Task {
 public:
     GlycolTemperatureControl();
@@ -40,9 +50,6 @@ public:
     float target_mixing_valve = 0;
 
     PID::LimitedPID target_pid;
-
-private:
-    int safety_violations;
 };
 
 }  // namespace Tasks

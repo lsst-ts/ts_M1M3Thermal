@@ -45,12 +45,22 @@ void MixingValve::load(YAML::Node doc) {
     positionFeedbackA = doc["PositionFeedback"]["a"].as<float>();
     positionFeedbackB = doc["PositionFeedback"]["b"].as<float>();
 
+    inPosition = doc["FinerControl"]["InPosition"].as<float>();
+    backlashStep = doc["FinerControl"]["BacklashStep"].as<float>();
+    minimalMove = doc["FinerControl"]["MinimalMove"].as<float>();
+    maxMovingTime = doc["FinerControl"]["MaxMovingTime"].as<float>();
+
     pid_parameters.load(doc["PID"]);
 }
 
 float MixingValve::percents_to_commanded(float target) {
     return (commandingFullyClosed + (commandingFullyOpened - commandingFullyClosed) * (target / 100.0f)) /
            1000.0f;
+}
+
+float MixingValve::current_to_voltage(float current) {
+    return ((current * 1000.0f) - commandingFullyClosed) *
+           (10.0f / (commandingFullyOpened - commandingFullyClosed));
 }
 
 float MixingValve::position_to_percents(float position) {

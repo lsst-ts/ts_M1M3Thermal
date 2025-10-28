@@ -7,6 +7,7 @@ Version History
 v2.3.0
 ------
 
+* Finer mixing valve control.
 * Allow heater control in non-engineering enabled mode.
 
 v2.2.0

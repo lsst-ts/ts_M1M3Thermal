@@ -65,14 +65,25 @@ public:
 
     /**
      * Transition CSC to failed state, send fail message.
+     *
+     * @param error_code Error code associated with the failure.
+     * @param error_report Error report string.
+     * @param traceback Error traceback.
      */
     void fail(int error_code, const std::string &error_report, const std::string &traceback);
 
     /**
+     * Change CSC state.
+     *
+     * @param new_state New CSC state.
      *
      * @multithreading safe
      */
-    static void set_state(int newState) { instance()._switch_state(newState); }
+    static void set_state(int new_state) { instance()._switch_state(new_state); }
+
+    /**
+     * Sends update CSC state.
+     */
     static void send();
 
 private:

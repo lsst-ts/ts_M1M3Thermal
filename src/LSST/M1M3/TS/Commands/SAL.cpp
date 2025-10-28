@@ -35,9 +35,9 @@
 #include "Events/ThermalInfo.h"
 #include "Settings/Controller.h"
 #include "Settings/GlycolPump.h"
-#include "Settings/MixingValve.h"
 #include "Settings/Setpoint.h"
 #include "Tasks/Controller.h"
+#include "Telemetry/FinerControl.h"
 #include "Telemetry/GlycolLoopTemperature.h"
 #include "TSApplication.h"
 #include "TSPublisher.h"
@@ -75,6 +75,9 @@ void SAL_start::execute() {
     Settings::Controller::instance().load(params.configurationOverride);
 
     Events::ErrorCode::instance().clear("CSC started");
+
+    Telemetry::FinerControl::instance().set_target(0);
+    IFPGA::get().setMixingValvePosition(0);
 
     try {
         changeAllILCsMode(ILC::Mode::Disabled);
@@ -122,6 +125,8 @@ void SAL_disable::execute() {
     changeAllILCsMode(ILC::Mode::Disabled);
     IFPGA::get().setFCUPower(false);
     IFPGA::get().setCoolantPumpPower(false);
+    Telemetry::FinerControl::instance().set_target(0);
+    IFPGA::get().setMixingValvePosition(0);
 
     Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
@@ -197,10 +202,9 @@ bool SAL_setMixingValve::validate() {
 }
 
 void SAL_setMixingValve::execute() {
-    float target = Settings::MixingValve::instance().percents_to_commanded(params.mixingValveTarget);
-    IFPGA::get().setMixingValvePosition(target);
+    Telemetry::FinerControl::instance().set_target(params.mixingValveTarget);
     ackComplete();
-    SPDLOG_INFO("Changed mixing valve to {:0.01f}% ({:0.05f})", params.mixingValveTarget, target);
+    SPDLOG_INFO("Changed mixing valve to {:0.01f}%", params.mixingValveTarget);
 }
 
 bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().is_enabled(); }

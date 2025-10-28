@@ -43,6 +43,7 @@ public:
     void load(YAML::Node doc);
 
     float timestep;
+    float mixingValveStep;
     float glycolSupplyPercentage;
     float high;
     float low;
