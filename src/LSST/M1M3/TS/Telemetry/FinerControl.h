@@ -33,14 +33,54 @@ namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
+/***
+ * Provides finer control of the mixing valve. Compensates for mixing valve
+ * hysteresis.
+ *
+ * Runs internal state machine, so calls to get_target return proper new
+ * targets.
+ */
 class FinerControl : public cRIO::Singleton<FinerControl> {
 public:
     FinerControl(token);
 
+    /***
+     * Sets new mxing valve target. Changes state machine either to MOVING_TO_COMPENSATED_TARGET (if
+     * compensation target move is required) or to MOVING_TO_TARGET (if far from the new target, and
+     * compensation isn't required).
+     *
+     * @param demand new mixing valve demand, in %.
+     */
     void set_target(float demand);
 
+    /***
+     * Returns new target, based on the current mixing valve position and internal state.
+     *
+     * @param valve_position current mixing valve position, in %, read from the input.
+     *
+     * @return new target for the mixing valve - or NAN if mixing valve shall not be changed.
+     */
     float get_target(float valve_position);
 
+    /***
+     * State machine states.
+     *
+     * - MOVING_TO_COMPENSATED_TARGET
+     *   the target was to close to the current position, so first move a bit
+     *   over (or under) the current position to wake the valve up.
+     *
+     * - MOVING_TO_TARGET
+     *   when moving to new target - either because new demand was far from the
+     *   current target, or the mixing valve moved closed enough to compensated
+     *   target.
+     *
+     * - ON_TARGET
+     *   when close to demand value. get_target then moves to FAULT if the mixing valve veered too far from
+     * the target value.
+     *
+     * - FAULTED
+     *   when something goes wrong.
+     */
     enum { MOVING_TO_COMPENSATED_TARGET, MOVING_TO_TARGET, ON_TARGET, FAULTED } state;
 
 private:

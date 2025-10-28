@@ -47,12 +47,21 @@ void FinerControl::set_target(float demand) {
             state = MOVING_TO_TARGET;
         } else {
             state = MOVING_TO_COMPENSATED_TARGET;
+            // The following code handles all cases of future demand
+            // (_comp_setpoint) being < 0 or > 100.
+            //
+            // First if demand is lower than the current setpoint..
             if (demand < _last_setpoint) {
+                // if demand is below backlash_step, move to higher opening
+                // first - set _comp_setpoint to _last_setpoint + backlash_step
                 if (demand < backlash_step) {
                     _comp_setpoint = _last_setpoint + backlash_step;
+                    // in other cases, move down first - demand will then move up
                 } else {
                     _comp_setpoint = demand - backlash_step;
                 }
+                // Similar for when moving up - don't move over 100, and guarantee
+                // that the minimal move is larger than backlash_step.
             } else {
                 if (demand > (100 - backlash_step)) {
                     _comp_setpoint = _last_setpoint - backlash_step;
@@ -61,6 +70,8 @@ void FinerControl::set_target(float demand) {
                 }
             }
         }
+        // move to demand after mixing valve moves close enough to
+        // _comp_setpoint target.
         _last_setpoint = demand;
         _move_timeout =
                 std::chrono::steady_clock::now() +
@@ -83,7 +94,8 @@ float FinerControl::get_target(float valve_position) {
      * Runs state machine, based on what the valve shall do.
      */
     switch (state) {
-        // when in idle and setpint changed, change state.
+        // when moving to compensated target, check if mixing valve is close
+        // enough to it. If that's the case, change state to MOVING_TO_TARGET.
         case MOVING_TO_COMPENSATED_TARGET:
             if (abs(valve_position - _comp_setpoint) < mixing_settings.inPosition && transition) {
                 state = MOVING_TO_TARGET;
@@ -101,6 +113,7 @@ float FinerControl::get_target(float valve_position) {
                 return NAN;
             }
             return _comp_setpoint;
+        // when moving to target
         case MOVING_TO_TARGET:
             if (abs(valve_position - _last_setpoint) < mixing_settings.inPosition && transition) {
                 state = ON_TARGET;

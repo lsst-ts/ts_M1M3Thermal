@@ -53,7 +53,7 @@ public:
 
     PID::PIDParameters pid_parameters;
 
-    // TODO: move to XML
+    // TODO: move to XML - OSW-1311
     float inPosition;
     float backlashStep;
     float minimalMove;
