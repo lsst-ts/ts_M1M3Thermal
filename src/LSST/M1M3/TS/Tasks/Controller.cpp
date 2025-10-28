@@ -32,21 +32,35 @@ Controller::Controller(token) {}
 void Controller::set_setpoints(float glycol, float heaters) {
     const std::lock_guard<std::mutex> lock(_lock);
 
-    Events::AppliedSetpoints::instance().set_applied_setpoints(glycol, heaters);
+    auto small_change = Events::AppliedSetpoints::instance().set_applied_setpoints(glycol, heaters);
 
-    if (_glycol_temperature_task != nullptr) {
-        cRIO::ControllerThread::instance().remove(_glycol_temperature_task);
+    if (small_change.first) {
+        if (_glycol_temperature_task == nullptr) {
+            _glycol_temperature_task = std::make_shared<GlycolTemperatureControl>();
+            cRIO::ControllerThread::instance().enqueue(_glycol_temperature_task);
+        }
+    } else {
+        if (_glycol_temperature_task != nullptr) {
+            cRIO::ControllerThread::instance().remove(_glycol_temperature_task);
+        }
+
+        _glycol_temperature_task = std::make_shared<GlycolTemperatureControl>();
+        cRIO::ControllerThread::instance().enqueue(_glycol_temperature_task);
     }
 
-    _glycol_temperature_task = std::make_shared<GlycolTemperatureControl>();
-    cRIO::ControllerThread::instance().enqueue(_glycol_temperature_task);
+    if (small_change.second) {
+        if (_heaters_temperature_task == nullptr) {
+            _heaters_temperature_task = std::make_shared<HeatersTemperatureControl>();
+            cRIO::ControllerThread::instance().enqueue(_heaters_temperature_task);
+        }
+    } else {
+        if (_heaters_temperature_task != nullptr) {
+            cRIO::ControllerThread::instance().remove(_heaters_temperature_task);
+        }
 
-    if (_heaters_temperature_task != nullptr) {
-        cRIO::ControllerThread::instance().remove(_heaters_temperature_task);
+        _heaters_temperature_task = std::make_shared<HeatersTemperatureControl>();
+        cRIO::ControllerThread::instance().enqueue(_heaters_temperature_task);
     }
-
-    _heaters_temperature_task = std::make_shared<HeatersTemperatureControl>();
-    cRIO::ControllerThread::instance().enqueue(_heaters_temperature_task);
 
     Events::AppliedSetpoints::instance().send();
     SPDLOG_INFO("Glycol setpoints: {:0.2f} FCU heaters setpoint: {:0.2f}", glycol, heaters);

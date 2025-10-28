@@ -58,6 +58,9 @@ public:
     float backlashStep;
     float minimalMove;
     float maxMovingTime;
+
+    float clearPIDGlycol;
+    float clearPIDHeaters;
 };
 
 }  // namespace Settings

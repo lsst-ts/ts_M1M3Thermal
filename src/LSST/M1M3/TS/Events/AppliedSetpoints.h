@@ -42,7 +42,7 @@ public:
      */
     void send();
 
-    void set_applied_setpoints(float new_glycol_setpoint, float new_heaters_setpoint);
+    std::pair<bool, bool> set_applied_setpoints(float new_glycol_setpoint, float new_heaters_setpoint);
 
     float get_applied_glycol_setpoint() { return glycolSetpoint; }
 
