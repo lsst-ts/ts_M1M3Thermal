@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.4.0
+------
+
+* Load and publish AirNozzles settings.
+
 v2.3.0
 ------
 

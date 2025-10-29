@@ -24,6 +24,7 @@
 #include <spdlog/spdlog.h>
 #include <yaml-cpp/yaml.h>
 
+#include "Settings/AirNozzles.h"
 #include "Settings/Controller.h"
 #include "Settings/FlowMeter.h"
 #include "Settings/GlycolPump.h"
@@ -52,5 +53,12 @@ void Controller::load(const std::string &configuration_override) {
                                ex.mark.column, ex.what());
         SPDLOG_ERROR(msg);
         throw std::runtime_error(msg);
+    }
+
+    try {
+        AirNozzles::instance().load("AirNozzles.csv");
+    } catch (std::runtime_error &er) {
+        SPDLOG_ERROR(er.what());
+        throw er;
     }
 }
