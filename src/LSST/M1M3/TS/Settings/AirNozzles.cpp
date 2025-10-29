@@ -51,9 +51,11 @@ void AirNozzles::load(const char *filename) {
         }
 
         for (size_t row = 0; row < table.GetRowCount(); row++) {
-            auto label = table.GetCell<std::string>(0, row);
-            auto type_str = table.GetCell<std::string>(1, row);
+            std::string label, type_str;
             try {
+                label = table.GetCell<std::string>(0, row);
+                type_str = table.GetCell<std::string>(1, row);
+
                 // trim..
                 type_str.erase(0, type_str.find_first_not_of(" \t"));
                 type_str.erase(type_str.find_last_not_of(" \t") + 1);
@@ -73,7 +75,7 @@ void AirNozzles::load(const char *filename) {
                             fmt::format("Unknown nozzle type for label {}: '{}'", label, type_str));
                 };
                 int index = std::stoi(label.substr(1)) - 1;
-                if (index < 0 || index > NOZZLE_NUM) {
+                if (index < 0 || index >= NOZZLE_NUM) {
                     throw std::runtime_error(
                             fmt::format("Invalid index in label {} on row {} should be in 1-{}.", label, row,
                                         NOZZLE_NUM));
@@ -99,8 +101,8 @@ void AirNozzles::load(const char *filename) {
                         break;
                     default:
                         throw std::runtime_error(fmt::format(
-                                "Mis-formatted nozzle label - expected [A-F][1-9]?, find on row {} '{}'", row,
-                                label));
+                                "Mis-formatted nozzle label - expected [A-F][1-{}], find on row {} '{}'",
+                                NOZZLE_NUM, row, label));
                 }
             } catch (std::exception &ex) {
                 throw std::runtime_error(fmt::format("Cannot read AirNozzles table - in {}:{} ({}, {}) - {}",
