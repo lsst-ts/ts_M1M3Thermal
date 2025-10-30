@@ -8,6 +8,7 @@ v2.4.0
 ------
 
 * Load and publish AirNozzles settings.
+* Don't reset EGW's/Heaters PIDs on small setpoint change.
 
 v2.3.0
 ------

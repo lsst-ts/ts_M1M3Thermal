@@ -55,14 +55,14 @@ std::pair<bool, bool> AppliedSetpoints::set_applied_setpoints(float new_glycol_s
     const auto &mixing_settings = Settings::MixingValve::instance();
 
     if (glycolSetpoint != new_glycol_setpoint) {
-        if (abs(glycolSetpoint - new_glycol_setpoint) > mixing_settings.clearPIDGlycol) {
+        if (abs(glycolSetpoint - new_glycol_setpoint) < mixing_settings.clearPIDGlycol) {
             ret.first = true;
         }
         glycolSetpoint = new_glycol_setpoint;
         _updated = true;
     }
     if (heatersSetpoint != new_heaters_setpoint) {
-        if (abs(heatersSetpoint - new_heaters_setpoint) > mixing_settings.clearPIDHeaters) {
+        if (abs(heatersSetpoint - new_heaters_setpoint) < mixing_settings.clearPIDHeaters) {
             ret.second = true;
         }
         heatersSetpoint = new_heaters_setpoint;

@@ -42,6 +42,7 @@ void Controller::set_setpoints(float glycol, float heaters) {
     } else {
         if (_glycol_temperature_task != nullptr) {
             cRIO::ControllerThread::instance().remove(_glycol_temperature_task);
+            SPDLOG_INFO("EGW's control PID reset.");
         }
 
         _glycol_temperature_task = std::make_shared<GlycolTemperatureControl>();
@@ -56,6 +57,7 @@ void Controller::set_setpoints(float glycol, float heaters) {
     } else {
         if (_heaters_temperature_task != nullptr) {
             cRIO::ControllerThread::instance().remove(_heaters_temperature_task);
+            SPDLOG_INFO("Heaters control PID reset.");
         }
 
         _heaters_temperature_task = std::make_shared<HeatersTemperatureControl>();
