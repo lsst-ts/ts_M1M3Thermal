@@ -42,7 +42,14 @@ public:
      */
     void send();
 
-    void set_applied_setpoints(float new_glycol_setpoint, float new_heaters_setpoint);
+    /**
+     * Set applied setpoints. Returns a pair of booleans, indicating if the
+     * EGW/glycol and heaters change is small.
+     *
+     * @return pair of bools - first for glycol/EGW, second for heaters. If
+     * true, the performed change is small and PIDs shall not be restarted.
+     */
+    std::pair<bool, bool> set_applied_setpoints(float new_glycol_setpoint, float new_heaters_setpoint);
 
     float get_applied_glycol_setpoint() { return glycolSetpoint; }
 

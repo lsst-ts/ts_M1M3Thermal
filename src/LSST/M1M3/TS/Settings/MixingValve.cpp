@@ -32,6 +32,8 @@ MixingValve::MixingValve(token) {
     commandingFullyOpened = NAN;
     positionFeedbackFullyClosed = NAN;
     positionFeedbackFullyOpened = NAN;
+    clearPIDGlycol = NAN;
+    clearPIDHeaters = NAN;
 }
 
 void MixingValve::load(YAML::Node doc) {
@@ -51,6 +53,9 @@ void MixingValve::load(YAML::Node doc) {
     maxMovingTime = doc["FinerControl"]["MaxMovingTime"].as<float>();
 
     pid_parameters.load(doc["PID"]);
+
+    clearPIDGlycol = doc["ClearPIDs"]["Glycol"].as<float>();
+    clearPIDHeaters = doc["ClearPIDs"]["Heaters"].as<float>();
 }
 
 float MixingValve::percents_to_commanded(float target) {

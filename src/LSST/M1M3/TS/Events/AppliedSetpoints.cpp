@@ -23,6 +23,7 @@
 #include <spdlog/spdlog.h>
 
 #include <Events/AppliedSetpoints.h>
+#include <Settings/MixingValve.h>
 #include <TSPublisher.h>
 
 using namespace LSST::M1M3::TS::Events;
@@ -47,13 +48,26 @@ void AppliedSetpoints::send() {
     _updated = false;
 }
 
-void AppliedSetpoints::set_applied_setpoints(float new_glycol_setpoint, float new_heaters_setpoint) {
+std::pair<bool, bool> AppliedSetpoints::set_applied_setpoints(float new_glycol_setpoint,
+                                                              float new_heaters_setpoint) {
+    std::pair<bool, bool> ret(false, false);
+
+    const auto &mixing_settings = Settings::MixingValve::instance();
+
     if (glycolSetpoint != new_glycol_setpoint) {
+        if (abs(glycolSetpoint - new_glycol_setpoint) < mixing_settings.clearPIDGlycol) {
+            ret.first = true;
+        }
         glycolSetpoint = new_glycol_setpoint;
         _updated = true;
     }
     if (heatersSetpoint != new_heaters_setpoint) {
+        if (abs(heatersSetpoint - new_heaters_setpoint) < mixing_settings.clearPIDHeaters) {
+            ret.second = true;
+        }
         heatersSetpoint = new_heaters_setpoint;
         _updated = true;
     }
+
+    return ret;
 }

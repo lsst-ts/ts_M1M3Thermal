@@ -57,6 +57,11 @@ MixingValve:
     D : -0.1
     N : 0.5
 
+  # Values for restarting loops/ignoring 
+  ClearPIDs:
+    Glycol: 0.2
+    Heaters: 0.2
+
 Heaters:
   # PID settings. 
   PID:
