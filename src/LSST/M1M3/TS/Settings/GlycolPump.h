@@ -43,8 +43,12 @@ public:
 
     void load(YAML::Node doc);
 
+    // TODO move to XML - OSW-1311
     bool enabled;
     float startupFrequency;
+    int communicationTimeout;
+    int communicationAutoRecoverAttempts;
+    int communicationRecoverPowerOff;
 };
 
 }  // namespace Settings

@@ -121,12 +121,28 @@ void SAL_enable::execute() {
 
 void SAL_disable::execute() {
     auto zeros = std::vector<int>(cRIO::NUM_TS_ILC, 0);
-    Events::FcuTargets::instance().set_FCU_heaters_fans(zeros, zeros);
+
+    try {
+        Events::FcuTargets::instance().set_FCU_heaters_fans(zeros, zeros);
+    } catch (std::runtime_error &er) {
+        SPDLOG_WARN(
+                "Cannot set FCUs heaters and fans demands to 0/0 as the system transitions to disabled "
+                "state: {}",
+                er.what());
+    }
+
     changeAllILCsMode(ILC::Mode::Disabled);
-    IFPGA::get().setFCUPower(false);
-    IFPGA::get().setCoolantPumpPower(false);
-    Telemetry::FinerControl::instance().set_target(0);
-    IFPGA::get().setMixingValvePosition(0);
+
+    try {
+        IFPGA::get().setMixingValvePosition(0);
+        IFPGA::get().setFCUPower(false);
+        Telemetry::FinerControl::instance().set_target(0);
+    } catch (std::runtime_error &er) {
+        SPDLOG_WARN(
+                "Cannot close mixing valve or power down FCUs and finer control as the system transitions to "
+                "disabled state: {}",
+                er.what());
+    }
 
     Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
@@ -135,10 +151,11 @@ void SAL_disable::execute() {
 void SAL_standby::execute() {
     TSPublisher::instance().stopFlowMeterThread();
     TSPublisher::instance().stopPumpThread();
-    Events::ErrorCode::instance().clear("Error cleared");
+    IFPGA::get().setCoolantPumpPower(false);
 
     changeAllILCsMode(ILC::Mode::ClearFaults);
     changeAllILCsMode(ILC::Mode::Standby);
+
     Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_StandbyState);
     ackComplete();
     SPDLOG_INFO("Standby");

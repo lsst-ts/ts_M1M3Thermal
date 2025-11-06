@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.5.0
+------
+
+* EGW pump auto recovery. Power down the pump in standby state.
+
 v2.4.0
 ------
 

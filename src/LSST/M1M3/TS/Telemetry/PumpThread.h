@@ -23,6 +23,7 @@
 #ifndef _TS_Telemetry_PumpThread_
 #define _TS_Telemetry_PumpThread_
 
+#include <chrono>
 #include <queue>
 
 #include <SAL_MTM1M3TS.h>
@@ -65,8 +66,9 @@ private:
 
     request_type _check_commands();
 
-    int _error_count;
+    int _recovery_left_attempts;
     int _success_count;
+    std::chrono::steady_clock::time_point _fail_after;
 };
 
 }  // namespace Telemetry

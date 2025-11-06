@@ -21,6 +21,7 @@
  */
 
 #include <string.h>
+#include <thread>
 
 #include <cRIO/ThermalILC.h>
 
@@ -33,11 +34,15 @@
 
 #include "Events/FcuTargets.h"
 #include "Events/SummaryState.h"
+#include "Settings/GlycolPump.h"
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
 
-IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
+IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {
+    _next_egw_powerup = std::chrono::steady_clock::now() +
+                        std::chrono::seconds(Settings::GlycolPump::instance().communicationRecoverPowerOff);
+}
 
 IFPGA &IFPGA::get() {
 #ifdef SIMULATOR
@@ -80,6 +85,16 @@ void IFPGA::setFCUPower(bool on) {
 }
 
 void IFPGA::setCoolantPumpPower(bool on) {
+    if (on) {
+        if (_next_egw_powerup > std::chrono::steady_clock::now()) {
+            SPDLOG_INFO("Waiting for EGW pump power down.");
+            std::this_thread::sleep_until(_next_egw_powerup);
+        }
+    } else {
+        _next_egw_powerup =
+                std::chrono::steady_clock::now() +
+                std::chrono::seconds(Settings::GlycolPump::instance().communicationRecoverPowerOff);
+    }
     uint16_t buf[2];
     buf[0] = FPGAAddress::COOLANT_PUMP_ON;
     buf[1] = on;
