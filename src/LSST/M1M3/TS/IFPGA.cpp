@@ -35,6 +35,7 @@
 #include "Events/FcuTargets.h"
 #include "Events/SummaryState.h"
 #include "Settings/GlycolPump.h"
+#include "Telemetry/FinerControl.h"
 
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
@@ -109,14 +110,15 @@ void IFPGA::setHeartbeat(bool heartbeat) {
 }
 
 void IFPGA::panic() {
-    setCoolantPumpPower(false);
+    Telemetry::FinerControl::instance().set_target(NAN);
     setMixingValvePosition(0);
 
     std::vector<int> zeros(0, cRIO::NUM_TS_ILC);
-    Events::FcuTargets::instance().set_FCU_heaters_fans(zeros, zeros);
-
-    Events::SummaryState::set_state(MTM1M3TS::MTM1M3TS_shared_SummaryStates_FaultState);
+    try {
+        Events::FcuTargets::instance().set_FCU_heaters_fans(zeros, zeros);
+    } catch (std::exception &ex) {
+        SPDLOG_WARN("Cannot zeroe fans and heaters on panic: {}.", ex.what());
+    }
 
     setFCUPower(0);
-    SPDLOG_INFO("Thermal system entered fault state.");
 }

@@ -34,6 +34,26 @@ namespace M1M3 {
 namespace TS {
 
 /**
+ * Drive status 2, page 114 of the VFD manual.
+ */
+static const std::string str_status_2[16] = {"Jogging",
+                                             "Flux Breaking",
+                                             "Motor Overload",
+                                             "AutoRst Ctdn",
+                                             "DC Braking",
+                                             "At Frequency",
+                                             "Auto Tuning",
+                                             "EM Braking",
+                                             "Current Limit",
+                                             "",
+                                             "Safety S1",
+                                             "Safety S2",
+                                             "F111 Status",
+                                             "SafeTqPermit",
+                                             "",
+                                             ""};
+
+/**
  * Glycol pump VFD (Variable Frequency Drive) control.
  * [Documentation](https://confluence.lsstcorp.org/display/LTS/Datasheets?preview=/154697856/154697879/VFD%20Users%20Guide.pdf).
  * [Datasheets](https://confluence.lsstcorp.org/display/LTS/Datasheets).
@@ -41,6 +61,7 @@ namespace TS {
 class VFD : public cRIO::MPU {
 public:
     enum REGISTERS {
+        DRIVE_STATUS_2 = 393,
         COMMAND = 0x2000,
         SET_FREQUENCY = 0x2001,
         VELOCITY_BITS = 0x2100,
@@ -76,6 +97,8 @@ public:
      */
     void setFrequency(float freq) { presetHoldingRegister(REGISTERS::SET_FREQUENCY, freq * 100.0f); }
 
+    uint16_t get_drive_status_2() { return getRegister(REGISTERS::DRIVE_STATUS_2); }
+
     /**
      * Returns pump status.
      */
@@ -97,7 +120,7 @@ public:
      * Reads VFD registers. Starts from the "Driver Error Code" and reads all registers containing current
      * data.
      */
-    void update() { readHoldingRegisters(REGISTERS::DRIVE_ERROR_CODE, 6); }
+    void update();
 
     static const char *getDriveError(uint16_t code);
 };

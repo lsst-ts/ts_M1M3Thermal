@@ -72,13 +72,19 @@ request_type PumpThread::_check_commands() {
                 break;
             case STARTUP:
                 if (_success_count > 2) {
+                    auto freq = Settings::GlycolPump::instance().startupFrequency;
                     vfd.reset();
-                    vfd.setFrequency(Settings::GlycolPump::instance().startupFrequency);
+                    vfd.setFrequency(freq);
                     vfd.start();
+
+                    SPDLOG_INFO("Commanded pump to start at frequency {} Hz.", freq);
                 } else if (_fail_after < std::chrono::steady_clock::now()) {
                     Events::SummaryState::instance().fail(
                             Events::ErrorCode::EGWPumpStartup,
                             "Cannot start the EGW pump - no communication detected.", "");
+                } else {
+                    // repeat startup - but don't lock again mutex
+                    _next_requests.push(STARTUP);
                 }
                 break;
             case NOP:
@@ -114,7 +120,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
 
             vfd.readInfo();
 
-            _transport->commands(vfd, 2s, this);
+            _transport->commands(vfd, 3s, this);
 
             Events::GlycolPumpStatus::instance().update(&vfd);
 
@@ -142,10 +148,10 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
                                 "Cannot communicate with the EGW pump for more than {}, last error was {}.",
                                 pump_settings.communicationTimeout, ex.what()),
                         "");
-                continue;
+                break;
             }
 
-            SPDLOG_ERROR("Error in running Glycol Pump thread: {}", ex.what());
+            SPDLOG_WARN("Error in running Glycol Pump thread: {}", ex.what());
             _success_count = 0;
             if (n_r == STARTUP) {
                 if (_recovery_left_attempts > 0) {
@@ -161,6 +167,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
                                         "pump.",
                                         pump_settings.communicationAutoRecoverAttempts),
                             "");
+                    break;
                 }
             }
             auto buf = _transport->read(200, 2s, this);
@@ -172,7 +179,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
         runCondition.wait_until(lock, end);
     }
 
-    SPDLOG_DEBUG("Pump Thread Stopped.");
+    SPDLOG_INFO("Pump Thread stopped.");
 }
 
 void PumpThread::start_pump() {

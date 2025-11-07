@@ -64,6 +64,8 @@ void ThermalFPGA::open() {
         default:
             throw std::runtime_error(fmt::format("Unknow FPGA state: {}", ni_state));
     }
+    setMixingValvePosition(0);
+    setCoolantPumpPower(false);
 }
 
 void ThermalFPGA::close() {

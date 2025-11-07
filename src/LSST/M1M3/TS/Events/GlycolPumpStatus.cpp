@@ -22,6 +22,7 @@
 
 #include <algorithm>
 
+#include <fmt/ranges.h>
 #include <spdlog/spdlog.h>
 
 #include "Events/ErrorCode.h"
@@ -34,6 +35,7 @@ using namespace LSST::M1M3::TS::Events;
 
 GlycolPumpStatus::GlycolPumpStatus(token) {
     _last_status = 0xFFFF;
+    _last_drive_status_2 = 0xFFFF;
     _last_errorCode = 0xFFFF;
     _error_count = 0;
 }
@@ -41,6 +43,7 @@ GlycolPumpStatus::GlycolPumpStatus(token) {
 void GlycolPumpStatus::update(VFD *vfd) {
     // mask unused bits
     auto status = vfd->getStatus() & 0x0ebf;
+    auto drive_status_2 = vfd->get_drive_status_2();
     errorCode = vfd->getDriveErrorCodes();
 
     // pump failed
@@ -74,6 +77,21 @@ void GlycolPumpStatus::update(VFD *vfd) {
         }
     } else {
         _error_count = 0;
+    }
+
+    // TODO move to XML - OSW-1311
+    if (drive_status_2 != _last_drive_status_2) {
+        std::vector<std::string> msg;
+
+        int i = 0;
+        for (uint16_t bit = 0x01; bit != 0; bit <<= 1, i++) {
+            if (str_status_2[i] != "") {
+                msg.push_back(fmt::format("{}: {}", str_status_2[i], (drive_status_2 & bit) ? "1" : "0"));
+            }
+        }
+
+        SPDLOG_WARN("New driver 2 status: {}", fmt::join(msg, ","));
+        _last_drive_status_2 = drive_status_2;
     }
 
     if (status != _last_status || errorCode != _last_errorCode) {

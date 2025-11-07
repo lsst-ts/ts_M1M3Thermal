@@ -30,8 +30,14 @@
 using namespace LSST::M1M3::TS;
 
 void VFD::readInfo() {
-    readHoldingRegisters(0x2000, 3, 1500);
-    readHoldingRegisters(0x2100, 7, 1500);
+    readHoldingRegisters(REGISTERS::DRIVE_STATUS_2, 1, 1500);
+    readHoldingRegisters(REGISTERS::COMMAND, 3, 1500);
+    readHoldingRegisters(REGISTERS::VELOCITY_BITS, 7, 1500);
+}
+
+void VFD::update() {
+    readHoldingRegisters(REGISTERS::DRIVE_STATUS_2, 1, 1500);
+    readHoldingRegisters(REGISTERS::DRIVE_ERROR_CODE, 6);
 }
 
 const char *VFD::getDriveError(uint16_t code) {
@@ -72,8 +78,7 @@ void VFDPrint::print() {
 
     uint16_t bits = getVelocityPositionBits();
 
-    std::cout << std::setfill(' ') << std::setw(20) << "Status: " << "0x" << std::hex << getStatus()
-              << std::endl
+    std::cout << std::setfill(' ') << std::setw(20) << "Status: 0x" << std::hex << getStatus() << std::endl
               << std::setw(20) << "Commanded Freq.: " << std::fixed << std::setprecision(2)
               << getCommandedFrequency() << std::endl
               << std::setw(20) << "Vel./Pos. Bits: " << std::hex << bits << std::dec << std::endl;
@@ -82,6 +87,17 @@ void VFDPrint::print() {
         if (bits & 0x01)
             std::cout << "         " << (bits == 0x01 ? "┗" : "┣") << "━━▶ " << status[i] << std::endl;
         bits >>= 1;
+    }
+
+    uint16_t bits_2 = get_drive_status_2();
+
+    std::cout << std::setw(20) << "Drive Status 2 Bits: 0x" << std::hex << bits_2 << std::dec << std::endl;
+
+    for (int i = 0; i < 16; i++) {
+        if (bits_2 & 0x01)
+            std::cout << "         " << (bits_2 == 0x01 ? "┗" : "┣") << "━━▶ " << str_status_2[i]
+                      << std::endl;
+        bits_2 >>= 1;
     }
 
     std::cout << std::setw(20) << "Drive Error Codes: " << getDriveErrorCodes() << std::endl
