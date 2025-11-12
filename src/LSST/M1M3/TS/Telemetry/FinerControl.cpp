@@ -34,7 +34,7 @@ FinerControl::FinerControl(token) {
             2 * std::chrono::milliseconds((int)(Settings::MixingValve::instance().maxMovingTime * 1000));
     _comp_setpoint = NAN;
     _last_setpoint = 0;
-    state = ON_TARGET;
+    state = MOVING_TO_TARGET;
 }
 
 void FinerControl::set_target(float demand) {
