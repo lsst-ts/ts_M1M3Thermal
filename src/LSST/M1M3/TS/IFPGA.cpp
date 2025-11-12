@@ -113,12 +113,12 @@ void IFPGA::panic() {
     Telemetry::FinerControl::instance().set_target(NAN);
     setMixingValvePosition(0);
 
-    std::vector<int> zeros(0, cRIO::NUM_TS_ILC);
+    setFCUPower(0);
+
+    std::vector<int> zeros(cRIO::NUM_TS_ILC, 0);
     try {
         Events::FcuTargets::instance().set_FCU_heaters_fans(zeros, zeros);
     } catch (std::exception &ex) {
         SPDLOG_WARN("Cannot zeroe fans and heaters on panic: {}.", ex.what());
     }
-
-    setFCUPower(0);
 }

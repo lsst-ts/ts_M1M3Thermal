@@ -140,6 +140,9 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
             }
 
             _success_count++;
+            if (n_r == STARTUP) {
+                _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
+            }
         } catch (std::exception& ex) {
             if (_fail_after < std::chrono::steady_clock::now()) {
                 Events::SummaryState::instance().fail(
