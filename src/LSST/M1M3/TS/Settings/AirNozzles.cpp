@@ -33,22 +33,25 @@ using namespace LSST::M1M3::TS::Settings;
 
 const int NOZZLE_NUM = 275;
 
-AirNozzles::AirNozzles(token) {}
+AirNozzles::AirNozzles(token) {
+    for (int index = 0; index < NOZZLE_NUM; index++) {
+        nozzlesA[index] = -1;
+        nozzlesB[index] = -1;
+        nozzlesC[index] = -1;
+        nozzlesD[index] = -1;
+        nozzlesE[index] = -1;
+        nozzlesF[index] = -1;
+    }
+}
 
 void AirNozzles::load(const char *filename) {
     auto full_path = cRIO::Settings::Path::getFilePath("v1/tables/AirNozzles.csv");
+    bool changed = false;
+
     SPDLOG_INFO("Loading AirNozzles table from {}", full_path);
     try {
         rapidcsv::Document table(full_path, rapidcsv::LabelParams(), rapidcsv::SeparatorParams(),
                                  rapidcsv::ConverterParams(), rapidcsv::LineReaderParams(true, '#'));
-        for (int index = 0; index < NOZZLE_NUM; index++) {
-            nozzlesA[index] = -1;
-            nozzlesB[index] = -1;
-            nozzlesC[index] = -1;
-            nozzlesD[index] = -1;
-            nozzlesE[index] = -1;
-            nozzlesF[index] = -1;
-        }
 
         for (size_t row = 0; row < table.GetRowCount(); row++) {
             std::string label, type_str;
@@ -80,24 +83,30 @@ void AirNozzles::load(const char *filename) {
                             fmt::format("Invalid index in label {} on row {} should be in 1-{}.", label, row,
                                         NOZZLE_NUM));
                 }
+                auto check_changes = [&changed](auto &arr, int index, int type) {
+                    if (arr[index] != type) {
+                        changed = true;
+                        arr[index] = type;
+                    }
+                };
                 switch (label[0]) {
                     case 'A':
-                        nozzlesA[index] = type;
+                        check_changes(nozzlesA, index, type);
                         break;
                     case 'B':
-                        nozzlesB[index] = type;
+                        check_changes(nozzlesB, index, type);
                         break;
                     case 'C':
-                        nozzlesC[index] = type;
+                        check_changes(nozzlesC, index, type);
                         break;
                     case 'D':
-                        nozzlesD[index] = type;
+                        check_changes(nozzlesD, index, type);
                         break;
                     case 'E':
-                        nozzlesE[index] = type;
+                        check_changes(nozzlesE, index, type);
                         break;
                     case 'F':
-                        nozzlesF[index] = type;
+                        check_changes(nozzlesF, index, type);
                         break;
                     default:
                         throw std::runtime_error(fmt::format(
@@ -128,6 +137,11 @@ void AirNozzles::load(const char *filename) {
         CHECK(E);
         CHECK(F);
     }
+
+    if (changed) {
+        SPDLOG_INFO("Send airN");
+        send();
+    }
 }
 
 void AirNozzles::send() {
@@ -135,4 +149,5 @@ void AirNozzles::send() {
     if (ret != SAL__OK) {
         SPDLOG_WARN("Cannot publis AirNozzles: {}", ret);
     }
+    SPDLOG_INFO("Send AirNozzles");
 }
