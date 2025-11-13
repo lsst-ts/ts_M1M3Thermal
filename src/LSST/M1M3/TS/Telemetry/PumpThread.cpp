@@ -42,8 +42,12 @@ PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
     busVoltage = NAN;
     outputVoltage = NAN;
 
-    _error_count = 0;
+    auto& pump_settings = Settings::GlycolPump::instance();
+
+    _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
     _success_count = 0;
+
+    _fail_after = std::chrono::steady_clock::now() + std::chrono::seconds(pump_settings.communicationTimeout);
 }
 
 request_type PumpThread::_check_commands() {
@@ -68,12 +72,19 @@ request_type PumpThread::_check_commands() {
                 break;
             case STARTUP:
                 if (_success_count > 2) {
+                    auto freq = Settings::GlycolPump::instance().startupFrequency;
                     vfd.reset();
-                    vfd.setFrequency(Settings::GlycolPump::instance().startupFrequency);
+                    vfd.setFrequency(freq);
                     vfd.start();
-                } else if (_error_count > 30) {
-                    Events::SummaryState::instance().fail(Events::ErrorCode::EGWPumpStartup,
-                                                          "Cannot start the EGW pump.", "");
+
+                    SPDLOG_INFO("Commanded pump to start at frequency {} Hz.", freq);
+                } else if (_fail_after < std::chrono::steady_clock::now()) {
+                    Events::SummaryState::instance().fail(
+                            Events::ErrorCode::EGWPumpStartup,
+                            "Cannot start the EGW pump - no communication detected.", "");
+                } else {
+                    // repeat startup - but don't lock again mutex
+                    _next_requests.push(STARTUP);
                 }
                 break;
             case NOP:
@@ -94,6 +105,8 @@ request_type PumpThread::_check_commands() {
 void PumpThread::run(std::unique_lock<std::mutex>& lock) {
     runCondition.wait_for(lock, std::chrono::seconds(3));
 
+    auto& pump_settings = Settings::GlycolPump::instance();
+
     SPDLOG_INFO("Running Pump Thread.");
     while (keepRunning) {
         auto end = std::chrono::steady_clock::now() + 2s;
@@ -107,7 +120,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
 
             vfd.readInfo();
 
-            _transport->commands(vfd, 2s, this);
+            _transport->commands(vfd, 3s, this);
 
             Events::GlycolPumpStatus::instance().update(&vfd);
 
@@ -118,20 +131,47 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
             busVoltage = vfd.getDCBusVoltage();
             outputVoltage = vfd.getOutputVoltage();
 
+            _fail_after = std::chrono::steady_clock::now() +
+                          std::chrono::seconds(pump_settings.communicationTimeout);
+
             salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
             if (ret != SAL__OK) {
                 SPDLOG_WARN("Cannot send VFD: {}", ret);
             }
 
-            _error_count = 0;
             _success_count++;
+            if (n_r == STARTUP) {
+                _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
+            }
         } catch (std::exception& ex) {
-            SPDLOG_ERROR("Error in running Glycol Pump thread: {}", ex.what());
-            _error_count++;
+            if (_fail_after < std::chrono::steady_clock::now()) {
+                Events::SummaryState::instance().fail(
+                        Events::ErrorCode::EGWPump,
+                        fmt::format(
+                                "Cannot communicate with the EGW pump for more than {}, last error was {}.",
+                                pump_settings.communicationTimeout, ex.what()),
+                        "");
+                break;
+            }
+
+            SPDLOG_WARN("Error in running Glycol Pump thread: {}", ex.what());
             _success_count = 0;
             if (n_r == STARTUP) {
-                SPDLOG_INFO("Queing again failed startup sequence.");
-                startup();
+                if (_recovery_left_attempts > 0) {
+                    SPDLOG_INFO("Queing again failed startup sequence - try {}/{}.",
+                                pump_settings.communicationAutoRecoverAttempts + 1 - _recovery_left_attempts,
+                                pump_settings.communicationAutoRecoverAttempts);
+                    _recovery_left_attempts--;
+                    startup();
+                } else {
+                    Events::SummaryState::instance().fail(
+                            Events::ErrorCode::EGWPumpStartup,
+                            fmt::format("Run out of allowed auto-recovery attempts {} - cannot start the EGW "
+                                        "pump.",
+                                        pump_settings.communicationAutoRecoverAttempts),
+                            "");
+                    break;
+                }
             }
             auto buf = _transport->read(200, 2s, this);
             if (!(buf.empty())) {
@@ -142,7 +182,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
         runCondition.wait_until(lock, end);
     }
 
-    SPDLOG_DEBUG("Pump Thread Stopped.");
+    SPDLOG_INFO("Pump Thread stopped.");
 }
 
 void PumpThread::start_pump() {

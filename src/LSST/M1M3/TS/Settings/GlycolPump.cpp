@@ -37,4 +37,14 @@ void GlycolPump::load(YAML::Node doc) {
 
     enabled = doc["Enabled"].as<bool>();
     startupFrequency = doc["StartupFrequency"].as<float>();
+
+    communicationTimeout = doc["Communication"]["Timeout"].as<int>();
+    communicationAutoRecoverAttempts = doc["Communication"]["AutoRecoverAttempts"].as<int>();
+    communicationRecoverPowerOff = doc["Communication"]["RecoverPowerOff"].as<int>();
+
+    if (communicationAutoRecoverAttempts < 0) {
+        throw std::runtime_error(
+                fmt::format("Communication/AutoRecoveryAttempts must be greater or equal 0, is {}",
+                            communicationAutoRecoverAttempts));
+    }
 }

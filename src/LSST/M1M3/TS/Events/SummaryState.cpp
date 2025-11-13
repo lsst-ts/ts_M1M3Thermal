@@ -24,6 +24,8 @@
 
 #include "Events/ErrorCode.h"
 #include "Events/SummaryState.h"
+#include "IFPGA.h"
+#include "Telemetry/FinerControl.h"
 
 using namespace LSST::M1M3::TS::Events;
 using namespace MTM1M3TS;
@@ -59,6 +61,13 @@ void SummaryState::fail(int error_code, const std::string &error_report, const s
     _switch_state(MTM1M3TS_shared_SummaryStates_FaultState);
     Events::ErrorCode::instance().set(error_code, error_report, traceback);
     SPDLOG_ERROR("Faulted ({}): {}", error_code, error_report);
+
+    // cleanup - close mixing valve
+    try {
+        IFPGA::get().panic();
+    } catch (std::runtime_error &er) {
+        SPDLOG_ERROR("Cannot panic CSC: {}", er.what());
+    }
 }
 
 void SummaryState::_switch_state(int new_state) {

@@ -34,7 +34,7 @@ FinerControl::FinerControl(token) {
             2 * std::chrono::milliseconds((int)(Settings::MixingValve::instance().maxMovingTime * 1000));
     _comp_setpoint = NAN;
     _last_setpoint = 0;
-    state = ON_TARGET;
+    state = MOVING_TO_TARGET;
 }
 
 void FinerControl::set_target(float demand) {
@@ -42,7 +42,10 @@ void FinerControl::set_target(float demand) {
 
     auto backlash_step = Settings::MixingValve::instance().backlashStep;
 
-    if (demand != _last_setpoint) {
+    if (isnan(demand)) {
+        state = FAULTED;
+        _last_setpoint = _comp_setpoint = NAN;
+    } else if (demand != _last_setpoint) {
         if (abs(demand - _last_setpoint) > Settings::MixingValve::instance().minimalMove) {
             state = MOVING_TO_TARGET;
         } else {

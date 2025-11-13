@@ -41,6 +41,7 @@ public:
 
 private:
     uint16_t _last_status;
+    uint16_t _last_drive_status_2;
     uint16_t _last_errorCode;
     int _error_count;
 };
