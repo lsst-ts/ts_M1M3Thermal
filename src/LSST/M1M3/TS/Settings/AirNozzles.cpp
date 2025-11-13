@@ -147,7 +147,7 @@ void AirNozzles::load(const char *filename) {
 void AirNozzles::send() {
     salReturn ret = TSPublisher::SAL()->putSample_logevent_airNozzles(this);
     if (ret != SAL__OK) {
-        SPDLOG_WARN("Cannot publis AirNozzles: {}", ret);
+        SPDLOG_WARN("Cannot publish AirNozzles: {}", ret);
     }
     SPDLOG_INFO("Send AirNozzles");
 }
