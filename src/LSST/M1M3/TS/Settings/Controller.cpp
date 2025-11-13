@@ -47,18 +47,11 @@ void Controller::load(const std::string &configuration_override) {
         Heaters::instance().load(doc["Heaters"]);
         Setpoint::instance().load(doc["Setpoint"]);
         Thermal::instance().load(doc["FCU"]);
-
+        AirNozzles::instance().load("AirNozzles.csv");
     } catch (YAML::Exception &ex) {
         auto msg = fmt::format("YAML Loading {}:{}:{} (line, column): {}", filename, ex.mark.line,
                                ex.mark.column, ex.what());
         SPDLOG_ERROR(msg);
         throw std::runtime_error(msg);
-    }
-
-    try {
-        AirNozzles::instance().load("AirNozzles.csv");
-    } catch (std::runtime_error &er) {
-        SPDLOG_ERROR(er.what());
-        throw er;
     }
 }

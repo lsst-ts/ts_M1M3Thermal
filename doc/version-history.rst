@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.5.1
+------
+
+* Bug fix - send loaded AirNozzles settings.
+
 v2.5.0
 ------
 
