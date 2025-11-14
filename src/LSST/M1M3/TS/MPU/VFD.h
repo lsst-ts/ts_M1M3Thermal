@@ -90,12 +90,12 @@ public:
     /**
      * Reset pump state - clear all errors.
      */
-    void resetCommand() { presetHoldingRegister(REGISTERS::COMMAND, 0x08); }
+    void reset() { presetHoldingRegister(REGISTERS::COMMAND, 0x08); }
 
     /**
      * Set pump output frequency.
      */
-    void setFrequency(float freq) { presetHoldingRegister(REGISTERS::SET_FREQUENCY, freq * 100.0f); }
+    void set_frequency(float freq) { presetHoldingRegister(REGISTERS::SET_FREQUENCY, freq * 100.0f); }
 
     uint16_t get_drive_status_2() { return getRegister(REGISTERS::DRIVE_STATUS_2); }
 

@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.6.0
+------
+
+* Renamed ModbusBuffer::reset, change setFrequency to set_frequency.
+
 v2.5.1
 ------
 
