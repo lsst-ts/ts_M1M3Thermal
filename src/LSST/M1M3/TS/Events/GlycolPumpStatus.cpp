@@ -63,6 +63,7 @@ void GlycolPumpStatus::update(VFD *vfd) {
             if (errorCode != _last_errorCode) {
                 SPDLOG_WARN("Auto resetting pump error {}", errorCode);
                 TSPublisher::instance().pump_thread->reset_pump();
+                TSPublisher::instance().pump_thread->start_pump();
             } else {
                 _error_count++;
                 if (_error_count > 5) {

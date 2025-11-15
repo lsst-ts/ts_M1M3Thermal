@@ -68,13 +68,13 @@ request_type PumpThread::_check_commands() {
                 vfd.reset();
                 break;
             case FREQ:
-                vfd.setFrequency(_target_frequency);
+                vfd.set_frequency(_target_frequency);
                 break;
             case STARTUP:
                 if (_success_count > 2) {
                     auto freq = Settings::GlycolPump::instance().startupFrequency;
                     vfd.reset();
-                    vfd.setFrequency(freq);
+                    vfd.set_frequency(freq);
                     vfd.start();
 
                     SPDLOG_INFO("Commanded pump to start at frequency {} Hz.", freq);
