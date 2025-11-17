@@ -257,7 +257,7 @@ int M1M3TScli::mpuRead(command_vec cmds) {
         return -1;
     }
 
-    mpu->reset();
+    mpu->next_message();
 
     std::vector<std::pair<uint16_t, uint8_t>> registers;
 
@@ -324,14 +324,12 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
     auto transport = get_transport(mpu);
 
     mpu->clear();
-    mpu->reset();
 
     uint16_t addrs = stoi(cmds[1], nullptr, 0);
     uint16_t value = stoi(cmds[2], nullptr, 0);
 
     mpu->presetHoldingRegister(addrs, value);
 
-    mpu->reset();
     mpu->clear();
 
     transport->commands(*mpu, 2s);
@@ -367,7 +365,7 @@ int M1M3TScli::printPump(command_vec cmds) {
                 std::cerr << "Invalid frequency: " << cmds[1] << std::endl;
                 return 1;
             }
-            vfd->setFrequency(targetFreq);
+            vfd->set_frequency(targetFreq);
         } else {
             fpga->setCoolantPumpPower(onOff(cmds[0]));
             std::cout << "Turned pump " << cmds[0] << std::endl;
