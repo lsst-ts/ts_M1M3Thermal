@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.7.0
+------
+
+* OrificesDiameter in AirNozzle table.
+
 v2.6.0
 ------
 

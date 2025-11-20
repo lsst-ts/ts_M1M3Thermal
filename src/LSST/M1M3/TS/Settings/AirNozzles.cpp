@@ -41,6 +41,13 @@ AirNozzles::AirNozzles(token) {
         nozzlesD[index] = -1;
         nozzlesE[index] = -1;
         nozzlesF[index] = -1;
+
+        orificesDiameterA[index] = -1;
+        orificesDiameterB[index] = -1;
+        orificesDiameterC[index] = -1;
+        orificesDiameterD[index] = -1;
+        orificesDiameterE[index] = -1;
+        orificesDiameterF[index] = -1;
     }
 }
 
@@ -55,9 +62,11 @@ void AirNozzles::load(const char *filename) {
 
         for (size_t row = 0; row < table.GetRowCount(); row++) {
             std::string label, type_str;
+            float diameter;
             try {
                 label = table.GetCell<std::string>(0, row);
                 type_str = table.GetCell<std::string>(1, row);
+                diameter = table.GetCell<float>(2, row);
 
                 // trim..
                 type_str.erase(0, type_str.find_first_not_of(" \t"));
@@ -92,21 +101,27 @@ void AirNozzles::load(const char *filename) {
                 switch (label[0]) {
                     case 'A':
                         check_changes(nozzlesA, index, type);
+                        check_changes(orificesDiameterA, index, diameter);
                         break;
                     case 'B':
                         check_changes(nozzlesB, index, type);
+                        check_changes(orificesDiameterB, index, diameter);
                         break;
                     case 'C':
                         check_changes(nozzlesC, index, type);
+                        check_changes(orificesDiameterC, index, diameter);
                         break;
                     case 'D':
                         check_changes(nozzlesD, index, type);
+                        check_changes(orificesDiameterD, index, diameter);
                         break;
                     case 'E':
                         check_changes(nozzlesE, index, type);
+                        check_changes(orificesDiameterE, index, diameter);
                         break;
                     case 'F':
                         check_changes(nozzlesF, index, type);
+                        check_changes(orificesDiameterF, index, diameter);
                         break;
                     default:
                         throw std::runtime_error(fmt::format(
@@ -129,7 +144,12 @@ void AirNozzles::load(const char *filename) {
     if (nozzles##SECTOR[index] == -1) {                                                                      \
         throw std::runtime_error(                                                                            \
                 fmt::format("File {} doesn't contain data for nozzle " #SECTOR "{}", full_path, index + 1)); \
+    }                                                                                                        \
+    if (orificesDiameter##SECTOR[index] == -1) {                                                             \
+        throw std::runtime_error(fmt::format(                                                                \
+                "File {} doesn't contain data for orifice diameter " #SECTOR "{}", full_path, index + 1));   \
     }
+
         CHECK(A);
         CHECK(B);
         CHECK(C);
