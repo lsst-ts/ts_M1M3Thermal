@@ -4,10 +4,11 @@
 Version History
 ===============
 
-v2.6.1
+v2.7.0
 ------
 
-* Fixed Enabled: false options for FlowMeter and GlycolPump
+* OrificesDiameter in AirNozzle table.
+* Fixed Enabled: false options for FlowMeter and GlycolPump.
 
 v2.6.0
 ------
