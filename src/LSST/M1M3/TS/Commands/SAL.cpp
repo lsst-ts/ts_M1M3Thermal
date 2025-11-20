@@ -35,6 +35,7 @@
 #include "Events/ThermalInfo.h"
 #include "Settings/Controller.h"
 #include "Settings/GlycolPump.h"
+#include "Settings/FlowMeter.h"
 #include "Settings/Setpoint.h"
 #include "Tasks/Controller.h"
 #include "Telemetry/FinerControl.h"
@@ -94,7 +95,9 @@ void SAL_start::execute() {
         ackFailed(fmt::format("Cannot communicate with FCU's ILCs on startup: {}", ex.what()));
     }
 
-    TSPublisher::instance().startFlowMeterThread();
+    if (Settings::FlowMeter::instance().enabled) {
+        TSPublisher::instance().startFlowMeterThread();
+    }
 
     if (Settings::GlycolPump::instance().enabled) {
         IFPGA::get().setCoolantPumpPower(true);
@@ -112,7 +115,9 @@ void SAL_enable::execute() {
     changeAllILCsMode(ILC::Mode::Enabled);
     IFPGA::get().setFCUPower(true);
 
-    TSPublisher::instance().startupPump();
+    if (Settings::GlycolPump::instance().enabled) {
+        TSPublisher::instance().startupPump();
+    }
 
     Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_EnabledState);
     ackComplete();
