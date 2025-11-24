@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.6.1
+------
+
+* Fixed Enabled: false options for FlowMeter and GlycolPump
+
 v2.6.0
 ------
 

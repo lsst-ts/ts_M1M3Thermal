@@ -139,7 +139,6 @@ void AirNozzles::load(const char *filename) {
     }
 
     if (changed) {
-        SPDLOG_INFO("Send airN");
         send();
     }
 }
@@ -149,5 +148,4 @@ void AirNozzles::send() {
     if (ret != SAL__OK) {
         SPDLOG_WARN("Cannot publish AirNozzles: {}", ret);
     }
-    SPDLOG_INFO("Send AirNozzles");
 }

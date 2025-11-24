@@ -55,7 +55,7 @@ LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
 
     target_mixing_valve = std::max(0.0f, std::min(target_mixing_valve, 100.0f));
 
-    SPDLOG_INFO(
+    SPDLOG_DEBUG(
             "TemperatureControlLoop: new valve position is {:.1f}%, temperature difference was "
             "{:+.3f}\u00b0C",
             target_mixing_valve, diff);

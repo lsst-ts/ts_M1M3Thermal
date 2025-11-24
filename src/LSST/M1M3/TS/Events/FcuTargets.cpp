@@ -88,8 +88,8 @@ void FcuTargets::set_FCU_heaters_fans(std::vector<int> _heater_PWM, std::vector<
     const auto [h_min, h_max] = std::minmax_element(begin(target_heater_PWM), end(target_heater_PWM));
     const auto [f_min, f_max] = std::minmax_element(begin(target_fan_RPM), end(target_fan_RPM));
 
-    SPDLOG_INFO("Changed targets: heaters {:.1f} % to {:.1f} %, fans {:d} to {:d}.", *h_min, *h_max, *f_min,
-                *f_max);
+    SPDLOG_DEBUG("Changed targets: heaters {:.1f} % to {:.1f} %, fans {:d} to {:d}.", *h_min, *h_max, *f_min,
+                 *f_max);
 }
 
 void FcuTargets::recover() {
