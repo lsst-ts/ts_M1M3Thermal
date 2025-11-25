@@ -36,32 +36,55 @@ namespace TS {
  */
 class FlowMeter : public cRIO::MPU {
 public:
+    /**
+     * Flow Meter registers. 0-based, so -1 from what's in the documentation.
+     */
     enum REGISTERS {
         FLOW_RATE = 1600,
         VELOCITY = 1604,
         NET_TOTALIZER = 2800,
         POSITIVE_TOTALIZER = 2804,
         NEGATIVE_TOTALIZER = 2808,
-        SIGNAL_STRENGTH = 5500
+        SIGNAL_STRENGTH = 5500,
+        TAG = 7000,
+        PART_NUMBER = 7064,
+        SERIAL_NUMBER = 7128,
+        FIRMWARE_VERSION = 7192,
+        CALIBRATION_DATE = 7256,
+        DATE_CODE = 7320,
     };
 
     FlowMeter() : MPU(1) {}
 
     /**
-     * Push calls to readout FlowMeter registers.
+     * Push class to readout identification registers.
      */
-    void readInfo();
+    void read_identification();
 
-    uint16_t getSignalStrength() { return getRegister(SIGNAL_STRENGTH); }
-    double getFlowRate() { return _getDoubleValue(FLOW_RATE); }
-    double getVelocity() { return _getDoubleValue(VELOCITY); }
-    double getNetTotalizer() { return _getDoubleValue(NET_TOTALIZER); }
-    double getPositiveTotalizer() { return _getDoubleValue(POSITIVE_TOTALIZER); }
-    double getNegativeTotalizer() { return _getDoubleValue(NEGATIVE_TOTALIZER); }
+    /**
+     * Push calls to readout telemetry FlowMeter registers.
+     */
+    void read_telemetry();
+
+    uint16_t get_signal_strength() { return getRegister(SIGNAL_STRENGTH); }
+    double get_flow_rate() { return _get_double_value(FLOW_RATE); }
+    double get_velocity() { return _get_double_value(VELOCITY); }
+    double get_net_totalizer() { return _get_double_value(NET_TOTALIZER); }
+    double get_positive_totalizer() { return _get_double_value(POSITIVE_TOTALIZER); }
+    double get_negative_totalizer() { return _get_double_value(NEGATIVE_TOTALIZER); }
+
+    std::string get_tag() { return _get_string(TAG, 21); }
+    std::string get_part_number() { return _get_string(PART_NUMBER, 21); }
+    std::string get_serial_number() { return _get_string(SERIAL_NUMBER, 10); }
+    std::string get_firmware_version() { return _get_string(FIRMWARE_VERSION, 10); }
+    std::string get_calibration_date() { return _get_string(CALIBRATION_DATE, 10); }
+    std::string get_date_code() { return _get_string(DATE_CODE, 10); }
 
 private:
-    float _getFloatValue(uint16_t reg);
-    double _getDoubleValue(uint16_t reg);
+    float _get_float_value(uint16_t reg);
+    double _get_double_value(uint16_t reg);
+
+    std::string _get_string(uint16_t reg, uint8_t len);
 };
 
 /**
@@ -69,6 +92,7 @@ private:
  */
 class FlowMeterPrint : public FlowMeter {
 public:
+    void print_identification();
     void print();
 };
 

@@ -48,17 +48,17 @@ void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
         auto end = std::chrono::steady_clock::now() + 2s;
 
         try {
-            readInfo();
+            read_telemetry();
 
             _transport->commands(*this, 2s, this);
 
             SPDLOG_TRACE("Sending FlowMeterMPUStatus");
 
-            signalStrength = getSignalStrength();
-            flowRate = getFlowRate();
-            netTotalizer = getNetTotalizer();
-            positiveTotalizer = getPositiveTotalizer();
-            negativeTotalizer = getNegativeTotalizer();
+            signalStrength = get_signal_strength();
+            flowRate = get_flow_rate();
+            netTotalizer = get_net_totalizer();
+            positiveTotalizer = get_positive_totalizer();
+            negativeTotalizer = get_negative_totalizer();
 
             salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
             if (ret != SAL__OK) {
