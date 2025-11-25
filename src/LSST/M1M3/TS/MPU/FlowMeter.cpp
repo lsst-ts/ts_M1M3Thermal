@@ -31,9 +31,9 @@ using namespace LSST::M1M3::TS;
 
 void FlowMeter::readInfo() {
     clear();
-    readHoldingRegisters(1600, 4, 255);
-    readHoldingRegisters(2600, 12, 255);
-    readHoldingRegisters(5500, 1, 255);
+    readHoldingRegisters(FLOW_RATE, 8, 255);
+    readHoldingRegisters(NET_TOTALIZER, 12, 255);
+    readHoldingRegisters(SIGNAL_STRENGTH, 1, 255);
 }
 
 float FlowMeter::_getFloatValue(uint16_t reg) {
@@ -60,9 +60,10 @@ double FlowMeter::_getDoubleValue(uint16_t reg) {
 
 void FlowMeterPrint::print() {
     std::cout << std::setfill(' ') << std::fixed << "Signal Strength: " << getSignalStrength() << std::endl
-              << std::setw(20) << "Flow Rate: " << getFlowRate() << std::endl
-              << std::setw(20) << "Net Totalizer: " << getNetTotalizer() << std::endl
-              << std::setw(20) << "Positive Totalizer: " << getPositiveTotalizer() << std::endl
-              << std::setw(20) << "Negative Totalizer: " << getNegativeTotalizer() << std::endl
+              << std::setw(20) << "Flow Rate: " << getFlowRate() << " l/min" << std::endl
+              << std::setw(20) << "Velocity: " << getVelocity() << " m/sec" << std::endl
+              << std::setw(20) << "Net Totalizer: " << getNetTotalizer() << " l" << std::endl
+              << std::setw(20) << "Positive Totalizer: " << getPositiveTotalizer() << " l" << std::endl
+              << std::setw(20) << "Negative Totalizer: " << getNegativeTotalizer() << " l" << std::endl
               << std::endl;
 }
