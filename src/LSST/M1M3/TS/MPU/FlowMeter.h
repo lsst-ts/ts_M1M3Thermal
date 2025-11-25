@@ -36,6 +36,15 @@ namespace TS {
  */
 class FlowMeter : public cRIO::MPU {
 public:
+    enum REGISTERS {
+        FLOW_RATE = 1600,
+        VELOCITY = 1604,
+        NET_TOTALIZER = 2800,
+        POSITIVE_TOTALIZER = 2804,
+        NEGATIVE_TOTALIZER = 2808,
+        SIGNAL_STRENGTH = 5500
+    };
+
     FlowMeter() : MPU(1) {}
 
     /**
@@ -43,11 +52,12 @@ public:
      */
     void readInfo();
 
-    uint16_t getSignalStrength() { return getRegister(5500); }
-    double getFlowRate() { return _getFloatValue(1600); }
-    double getNetTotalizer() { return _getDoubleValue(2600); }
-    double getPositiveTotalizer() { return _getDoubleValue(2604); }
-    double getNegativeTotalizer() { return _getDoubleValue(2608); }
+    uint16_t getSignalStrength() { return getRegister(SIGNAL_STRENGTH); }
+    double getFlowRate() { return _getDoubleValue(FLOW_RATE); }
+    double getVelocity() { return _getDoubleValue(VELOCITY); }
+    double getNetTotalizer() { return _getDoubleValue(NET_TOTALIZER); }
+    double getPositiveTotalizer() { return _getDoubleValue(POSITIVE_TOTALIZER); }
+    double getNegativeTotalizer() { return _getDoubleValue(NEGATIVE_TOTALIZER); }
 
 private:
     float _getFloatValue(uint16_t reg);
