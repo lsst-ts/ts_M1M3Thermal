@@ -11,11 +11,14 @@ v2.7.0
 * Uses EGW Pump's VFD DriveStatus2 event.
 * Additional MixingValveSettings parameters.
 * Fixed Enabled: false options for FlowMeter and GlycolPump.
+* Read flow meter identification.
 
 v2.6.0
 ------
 
 * Renamed ModbusBuffer::reset, change setFrequency to set_frequency.
+* Properly read out flow meter.
+* Fixed Enabled: false options for FlowMeter and GlycolPump
 
 v2.5.1
 ------

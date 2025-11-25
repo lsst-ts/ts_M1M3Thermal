@@ -271,9 +271,10 @@ int M1M3TScli::mpuRead(command_vec cmds) {
         }
     }
 
+    mpu->clear();
+
     for (auto r : registers) {
         mpu->readHoldingRegisters(r.first, r.second, 255);
-        mpu->clear();
     }
 
     transport->commands(*mpu, 2s);
@@ -338,8 +339,12 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 }
 
 int M1M3TScli::printFlowMeter(command_vec cmds) {
-    flowMeter->readInfo();
+    flowMeter->read_identification();
+    _flow_meter_device->commands(*flowMeter, 2s);
 
+    flowMeter->print_identification();
+
+    flowMeter->read_telemetry();
     _flow_meter_device->commands(*flowMeter, 2s);
 
     flowMeter->print();
