@@ -22,6 +22,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "Events/DriveStatus2.h"
 #include "Events/ErrorCode.h"
 #include "Events/GlycolPumpStatus.h"
 #include "Events/SummaryState.h"
@@ -123,6 +124,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
             _transport->commands(vfd, 3s, this);
 
             Events::GlycolPumpStatus::instance().update(&vfd);
+            Events::DriveStatus2::instance().set(vfd.get_drive_status_2());
 
             commandedFrequency = vfd.getCommandedFrequency();
             targetFrequency = vfd.getTargetFrequency();
