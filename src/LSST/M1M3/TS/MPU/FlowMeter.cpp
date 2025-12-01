@@ -29,14 +29,27 @@
 
 using namespace LSST::M1M3::TS;
 
-void FlowMeter::readInfo() {
+void FlowMeter::read_identification() {
     clear();
-    readHoldingRegisters(1600, 4, 255);
-    readHoldingRegisters(2600, 12, 255);
-    readHoldingRegisters(5500, 1, 255);
+
+    int start = TAG;
+    for (; start < SERIAL_NUMBER; start += 64) {
+        readHoldingRegisters(start, 21);
+    }
+
+    for (; start <= DATE_CODE; start += 64) {
+        readHoldingRegisters(start, 10);
+    }
 }
 
-float FlowMeter::_getFloatValue(uint16_t reg) {
+void FlowMeter::read_telemetry() {
+    clear();
+    readHoldingRegisters(FLOW_RATE, 8, 255);
+    readHoldingRegisters(NET_TOTALIZER, 12, 255);
+    readHoldingRegisters(SIGNAL_STRENGTH, 1, 255);
+}
+
+float FlowMeter::_get_float_value(uint16_t reg) {
     union {
         uint16_t data[2];
         float dfloat;
@@ -46,7 +59,7 @@ float FlowMeter::_getFloatValue(uint16_t reg) {
     return buffer.dfloat;
 }
 
-double FlowMeter::_getDoubleValue(uint16_t reg) {
+double FlowMeter::_get_double_value(uint16_t reg) {
     union {
         uint16_t data[4];
         double ddouble;
@@ -58,11 +71,37 @@ double FlowMeter::_getDoubleValue(uint16_t reg) {
     return buffer.ddouble;
 }
 
+std::string FlowMeter::_get_string(uint16_t reg, uint8_t len) {
+    std::string ret;
+
+    for (auto r = reg; r < reg + len; r++) {
+        auto data = getRegister(r);
+        if (data == 0) {
+            return ret;
+        }
+        ret.push_back(static_cast<char>(data & 0xFF));
+    }
+
+    return ret;
+}
+
+void FlowMeterPrint::print_identification() {
+    std::cout << std::setfill(' ') << std::setw(20) << "Tag: " << get_tag() << std::endl
+              << std::setw(20) << "Part number: " << get_part_number() << std::endl
+              << std::setw(20) << "Serial number: " << get_serial_number() << std::endl
+              << std::setw(20) << "Firmware version: " << get_firmware_version() << std::endl
+              << std::setw(20) << "Calibration date: " << get_calibration_date() << std::endl
+              << std::setw(20) << "Data code: " << get_date_code() << std::endl
+              << std::endl;
+}
+
 void FlowMeterPrint::print() {
-    std::cout << std::setfill(' ') << std::fixed << "Signal Strength: " << getSignalStrength() << std::endl
-              << std::setw(20) << "Flow Rate: " << getFlowRate() << std::endl
-              << std::setw(20) << "Net Totalizer: " << getNetTotalizer() << std::endl
-              << std::setw(20) << "Positive Totalizer: " << getPositiveTotalizer() << std::endl
-              << std::setw(20) << "Negative Totalizer: " << getNegativeTotalizer() << std::endl
+    std::cout << std::setfill(' ') << std::fixed << std::setw(20)
+              << "Signal Strength: " << get_signal_strength() << std::endl
+              << std::setw(20) << "Flow Rate: " << get_flow_rate() << " l/min" << std::endl
+              << std::setw(20) << "Velocity: " << get_velocity() << " m/sec" << std::endl
+              << std::setw(20) << "Net Totalizer: " << get_net_totalizer() << " l" << std::endl
+              << std::setw(20) << "Positive Totalizer: " << get_positive_totalizer() << " l" << std::endl
+              << std::setw(20) << "Negative Totalizer: " << get_negative_totalizer() << " l" << std::endl
               << std::endl;
 }
