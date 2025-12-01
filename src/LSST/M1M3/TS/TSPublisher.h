@@ -51,6 +51,9 @@ public:
     void setLogLevel(int newLevel);
 
     void log_error_code(MTM1M3TS_logevent_errorCodeC *data) { _m1m3TSSAL->logEvent_errorCode(data, 0); }
+    void log_drive_status_2(MTM1M3TS_logevent_driveStatus2C *data) {
+        _m1m3TSSAL->logEvent_driveStatus2(data, 0);
+    }
 
     void logSoftwareVersions();
     void logSimulationMode();

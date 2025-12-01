@@ -37,7 +37,7 @@ namespace M1M3 {
 namespace TS {
 namespace Settings {
 
-class MixingValve : public cRIO::Singleton<MixingValve>, MTM1M3TS_logevent_mixingValveSettingsC {
+class MixingValve : public cRIO::Singleton<MixingValve>, public MTM1M3TS_logevent_mixingValveSettingsC {
 public:
     MixingValve(token);
 
@@ -52,15 +52,6 @@ public:
     float position_to_percents(float position);
 
     PID::PIDParameters pid_parameters;
-
-    // TODO: move to XML - OSW-1311
-    float inPosition;
-    float backlashStep;
-    float minimalMove;
-    float maxMovingTime;
-
-    float clearPIDGlycol;
-    float clearPIDHeaters;
 };
 
 }  // namespace Settings
