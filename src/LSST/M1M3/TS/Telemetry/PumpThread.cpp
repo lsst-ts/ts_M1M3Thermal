@@ -39,6 +39,7 @@ PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
     commandedFrequency = NAN;
     targetFrequency = NAN;
     outputFrequency = NAN;
+    speedFeedback = NAN;
     outputCurrent = NAN;
     busVoltage = NAN;
     outputVoltage = NAN;
@@ -129,6 +130,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
             commandedFrequency = vfd.getCommandedFrequency();
             targetFrequency = vfd.getTargetFrequency();
             outputFrequency = vfd.getOutputFrequency();
+            speedFeedback = vfd.get_speed_feedback();
             outputCurrent = vfd.getOutputCurrent();
             busVoltage = vfd.getDCBusVoltage();
             outputVoltage = vfd.getOutputVoltage();

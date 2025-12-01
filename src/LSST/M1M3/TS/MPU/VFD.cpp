@@ -30,6 +30,7 @@
 using namespace LSST::M1M3::TS;
 
 void VFD::readInfo() {
+    readHoldingRegisters(REGISTERS::SPEED_FEEDBACK, 1, 1500);
     readHoldingRegisters(REGISTERS::DRIVE_STATUS_2, 1, 1500);
     readHoldingRegisters(REGISTERS::COMMAND, 3, 1500);
     readHoldingRegisters(REGISTERS::VELOCITY_BITS, 7, 1500);
@@ -104,6 +105,7 @@ void VFDPrint::print() {
               << std::setw(20) << "Target Frequency: " << std::fixed << std::setprecision(2)
               << getTargetFrequency() << std::endl
               << std::setw(20) << "Output Frequency: " << getOutputFrequency() << std::endl
+              << std::setw(20) << "Speed feedback: " << get_speed_feedback() << std::endl
               << std::setw(20) << "Output Current: " << getOutputCurrent() << std::endl
               << std::setw(20) << "DC Bus Voltage: " << std::dec << getDCBusVoltage() << std::endl
               << std::setw(20) << "Output Voltage: " << std::fixed << std::setprecision(1)
