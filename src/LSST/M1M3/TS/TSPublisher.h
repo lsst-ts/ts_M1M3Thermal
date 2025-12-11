@@ -31,6 +31,7 @@
 
 #include <cRIO/Singleton.h>
 
+#include "MPU/FlowMeter.h"
 #include "Telemetry/FlowMeterThread.h"
 #include "Telemetry/GlycolTemperatureThread.h"
 #include "Telemetry/PumpThread.h"
@@ -71,21 +72,7 @@ public:
     void stopGlycolTemperatureThread();
     void stopPumpThread();
 
-    static double getTimestamp() {
-#ifdef SIMULATOR
-        struct timex tx;
-        struct timespec now;
-        double taiTime;
-
-        memset(&tx, 0, sizeof(tx));
-        adjtimex(&tx);
-        clock_gettime(CLOCK_TAI, &now);
-        taiTime = (double)now.tv_sec + (double)now.tv_nsec / 1000000000.;
-        return taiTime;
-#else
-        return instance()._m1m3TSSAL->getCurrentTime();
-#endif
-    }
+    static double getTimestamp() { return instance()._m1m3TSSAL->getCurrentTime(); }
 
     Telemetry::PumpThread *pump_thread;
 
@@ -94,7 +81,7 @@ private:
 
     MTM1M3TS_logevent_logLevelC _logLevel;
 
-    Telemetry::FlowMeterThread *_flowMeterThread;
+    Telemetry::FlowMeterThread *_flow_meter_thread;
     Telemetry::GlycolTemperatureThread *_glycolTemperatureThread;
 };
 

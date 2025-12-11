@@ -117,11 +117,13 @@ private:
 
     std::shared_ptr<Transports::Transport> get_transport(std::shared_ptr<MPU> mpu);
 
-    std::shared_ptr<FlowMeterPrint> flowMeter;
+    std::shared_ptr<FlowMeterPrint> flow_meter_1;
+    std::shared_ptr<FlowMeterPrint> flow_meter_2;
     std::shared_ptr<VFDPrint> vfd;
     std::shared_ptr<GlycolTemperature> glycolTemperatureBus;
 
-    std::shared_ptr<Transports::Transport> _flow_meter_device, _vfd_device, _glycol_temperature_device;
+    std::shared_ptr<Transports::Transport> _flow_meter_1_device, _flow_meter_2_device, _vfd_device,
+            _glycol_temperature_device;
 };
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
@@ -204,8 +206,11 @@ M1M3TScli::M1M3TScli(const char *name, const char *description) : FPGACliApp(nam
 
     addILC(std::make_shared<PrintThermalILC>(1));
 
-    flowMeter = std::make_shared<FlowMeterPrint>();
-    addMPU("flow", flowMeter);
+    flow_meter_1 = std::make_shared<FlowMeterPrint>();
+    addMPU("flow-1", flow_meter_1);
+
+    flow_meter_2 = std::make_shared<FlowMeterPrint>();
+    addMPU("flow-2", flow_meter_2);
 
     vfd = std::make_shared<VFDPrint>();
     addMPU("vfd", vfd);
@@ -219,15 +224,20 @@ int M1M3TScli::openFPGA(command_vec cmds) {
     int ret = FPGACliApp::openFPGA(cmds);
 
 #ifdef SIMULATOR
-    _flow_meter_device = std::make_shared<SimulatedFlowMeter>();
+    _flow_meter_1_device = std::make_shared<SimulatedFlowMeter>();
+    _flow_meter_2_device = std::make_shared<SimulatedFlowMeter>();
     _vfd_device = std::make_shared<SimulatedVFDPump>();
     _glycol_temperature_device = std::make_shared<SimulatedGlycolTemperature>();
 #else
     int session = dynamic_cast<ThermalFPGA *>(getFPGA())->getSession();
 
-    _flow_meter_device = std::make_shared<PrintFPGASerialDevice>(
-            session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeterWrite,
-            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeterRead, 10ms);
+    _flow_meter_1_device = std::make_shared<PrintFPGASerialDevice>(
+            session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
+            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read, 10ms);
+
+    _flow_meter_2_device = std::make_shared<PrintFPGASerialDevice>(
+            session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter2Write,
+            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter2Read, 10ms);
 
     _vfd_device = std::make_shared<PrintFPGASerialDevice>(
             session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite,
@@ -339,15 +349,19 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
 }
 
 int M1M3TScli::printFlowMeter(command_vec cmds) {
-    flowMeter->read_identification();
-    _flow_meter_device->commands(*flowMeter, 2s);
+    for (auto fl :
+         std::list<std::pair<std::shared_ptr<FlowMeterPrint>, std::shared_ptr<Transports::Transport>>>(
+                 {{flow_meter_1, _flow_meter_1_device}, {flow_meter_2, _flow_meter_2_device}})) {
+        fl.first->read_identification();
+        fl.second->commands(*fl.first, 2s);
 
-    flowMeter->print_identification();
+        fl.first->print_identification();
 
-    flowMeter->read_telemetry();
-    _flow_meter_device->commands(*flowMeter, 2s);
+        fl.first->read_telemetry();
+        fl.second->commands(*fl.first, 2s);
 
-    flowMeter->print();
+        fl.first->print();
+    }
 
     return 0;
 }
@@ -591,8 +605,10 @@ void M1M3TScli::printTelemetry(const std::string &name, std::shared_ptr<MPU> mpu
 std::shared_ptr<Transports::Transport> M1M3TScli::get_transport(std::shared_ptr<MPU> mpu) {
     if (mpu == vfd) {
         return _vfd_device;
-    } else if (mpu == flowMeter) {
-        return _flow_meter_device;
+    } else if (mpu == flow_meter_1) {
+        return _flow_meter_1_device;
+    } else if (mpu == flow_meter_2) {
+        return _flow_meter_2_device;
     } else if (mpu == glycolTemperatureBus) {
         return _glycol_temperature_device;
     }
