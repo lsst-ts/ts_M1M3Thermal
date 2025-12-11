@@ -31,6 +31,7 @@
 
 #include <cRIO/Singleton.h>
 
+#include "MPU/FlowMeter.h"
 #include "Telemetry/FlowMeterThread.h"
 #include "Telemetry/GlycolTemperatureThread.h"
 #include "Telemetry/PumpThread.h"
@@ -62,12 +63,12 @@ public:
         _m1m3TSSAL->logEvent_thermalWarning(data, 0);
     }
 
-    void startFlowMeterThread();
+    void startFlowMeterThread(int flow_meter);
     void startGlycolTemperatureThread();
     void startPumpThread();
     void startupPump();
 
-    void stopFlowMeterThread();
+    void stopFlowMeterThread(int flow_meter);
     void stopGlycolTemperatureThread();
     void stopPumpThread();
 
@@ -94,7 +95,7 @@ private:
 
     MTM1M3TS_logevent_logLevelC _logLevel;
 
-    Telemetry::FlowMeterThread *_flowMeterThread;
+    Telemetry::FlowMeterThread *_flow_meter_thread[FLOW_METER_NUMBER];
     Telemetry::GlycolTemperatureThread *_glycolTemperatureThread;
 };
 

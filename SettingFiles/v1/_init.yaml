@@ -5,7 +5,7 @@ FCU:
   DefaultFanSpeed: 700
 
 FlowMeter:
-  Enabled: true
+  Enabled: [true, true]
 
 GlycolPump:
   Enabled: true

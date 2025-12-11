@@ -27,10 +27,21 @@
 
 using namespace LSST::M1M3::TS::Settings;
 
-FlowMeter::FlowMeter(token) { enabled = false; }
+FlowMeter::FlowMeter(token) {
+    enabled[0] = false;
+    enabled[1] = false;
+}
 
 void FlowMeter::load(YAML::Node doc) {
     SPDLOG_INFO("Loading Flow Meter settings.");
 
-    enabled = doc["Enabled"].as<bool>();
+    auto en = doc["Enabled"].as<std::vector<bool>>();
+
+    if (en.size() != 2) {
+        throw std::runtime_error("Invalid size of FlowMeter.enabled setting - expected 2, received " +
+                                 std::to_string(en.size()));
+    }
+
+    enabled[0] = en[0];
+    enabled[1] = en[1];
 }

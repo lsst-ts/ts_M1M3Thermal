@@ -33,6 +33,7 @@
 #include "Events/FcuTargets.h"
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
+#include "MPU/FlowMeter.h"
 #include "Settings/Controller.h"
 #include "Settings/GlycolPump.h"
 #include "Settings/FlowMeter.h"
@@ -95,10 +96,14 @@ void SAL_start::execute() {
         ackFailed(fmt::format("Cannot communicate with FCU's ILCs on startup: {}", ex.what()));
     }
 
-    if (Settings::FlowMeter::instance().enabled) {
-        TSPublisher::instance().startFlowMeterThread();
-    } else {
-        SPDLOG_WARN("Skipping flow meter telemetry - the flow meter wasn't enabled in the M1M3TS config.");
+    for (int i = 0; i < FLOW_METER_NUMBER; i++) {
+        if (Settings::FlowMeter::instance().enabled[i]) {
+            TSPublisher::instance().startFlowMeterThread(i);
+        } else {
+            SPDLOG_WARN(
+                    "Skipping flow meter #{} telemetry - the flow meter wasn't enabled in the M1M3TS config.",
+                    i);
+        }
     }
 
     if (Settings::GlycolPump::instance().enabled) {
@@ -158,7 +163,9 @@ void SAL_disable::execute() {
 }
 
 void SAL_standby::execute() {
-    TSPublisher::instance().stopFlowMeterThread();
+    for (int i = 0; i < FLOW_METER_NUMBER; i++) {
+        TSPublisher::instance().stopFlowMeterThread(i);
+    }
     TSPublisher::instance().stopPumpThread();
     IFPGA::get().setCoolantPumpPower(false);
 

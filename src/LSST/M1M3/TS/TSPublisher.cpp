@@ -43,13 +43,17 @@ extern const char *VERSION;
 TSPublisher::TSPublisher(token) {
     _logLevel.level = -1;
 
-    _flowMeterThread = NULL;
+    for (int i = 0; i < FLOW_METER_NUMBER; i++) {
+        _flow_meter_thread[i] = NULL;
+    }
     pump_thread = NULL;
     _glycolTemperatureThread = NULL;
 }
 
 TSPublisher::~TSPublisher() {
-    stopFlowMeterThread();
+    for (int i = 0; i < FLOW_METER_NUMBER; i++) {
+        stopFlowMeterThread(i);
+    }
     stopPumpThread();
 }
 
@@ -111,17 +115,32 @@ void TSPublisher::logSimulationMode() {
     _m1m3TSSAL->logEvent_simulationMode(&simulation, 0);
 }
 
-void TSPublisher::startFlowMeterThread() {
-    delete _flowMeterThread;
+void TSPublisher::startFlowMeterThread(int flow_meter) {
+    delete _flow_meter_thread[flow_meter];
 #ifdef SIMULATOR
-    _flowMeterThread = new Telemetry::FlowMeterThread(std::make_shared<SimulatedFlowMeter>());
+    _flow_meter_thread[flow_meter] = new Telemetry::FlowMeterThread(std::make_shared<SimulatedFlowMeter>());
 #else
-    _flowMeterThread = new Telemetry::FlowMeterThread(std::make_shared<Transports::FPGASerialDevice>(
-            dynamic_cast<ThermalFPGA *>(&IFPGA::get())->getSession(),
-            NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeterWrite,
-            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeterRead, 100ms));
+    switch (flow_meter) {
+        case 0:
+            _flow_meter_thread[flow_meter] =
+                    new Telemetry::FlowMeterThread(std::make_shared<Transports::FPGASerialDevice>(
+                            dynamic_cast<ThermalFPGA *>(&IFPGA::get())->getSession(),
+                            NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
+                            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read, 100ms));
+            break;
+
+        case 1:
+            _flow_meter_thread[flow_meter] =
+                    new Telemetry::FlowMeterThread(std::make_shared<Transports::FPGASerialDevice>(
+                            dynamic_cast<ThermalFPGA *>(&IFPGA::get())->getSession(),
+                            NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter2Write,
+                            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter2Read, 100ms));
+            break;
+        default:
+            throw std::runtime_error("Invalid flow meter index: " + std::to_string(flow_meter));
+    }
 #endif
-    _flowMeterThread->start();
+    _flow_meter_thread[flow_meter]->start();
 }
 
 void TSPublisher::startGlycolTemperatureThread() {
@@ -158,14 +177,14 @@ void TSPublisher::startPumpThread() {
 
 void TSPublisher::startupPump() { pump_thread->startup(); }
 
-void TSPublisher::stopFlowMeterThread() {
-    if (_flowMeterThread == NULL) {
+void TSPublisher::stopFlowMeterThread(int flow_meter) {
+    if (_flow_meter_thread[flow_meter] == NULL) {
         return;
     }
 
-    _flowMeterThread->stop();
-    delete _flowMeterThread;
-    _flowMeterThread = NULL;
+    _flow_meter_thread[flow_meter]->stop();
+    delete _flow_meter_thread[flow_meter];
+    _flow_meter_thread[flow_meter] = NULL;
 }
 
 void TSPublisher::stopGlycolTemperatureThread() {

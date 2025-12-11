@@ -29,6 +29,8 @@ namespace LSST {
 namespace M1M3 {
 namespace TS {
 
+const int FLOW_METER_NUMBER = 2;
+
 /**
  * Reads FlowMeter values.
  * [Documentation](https://rubinobs.atlassian.net/wiki/spaces/LTS/pages/50081742/Datasheets?preview=/50081742/50505733/FDT40%20Users%20Guide.pdf)

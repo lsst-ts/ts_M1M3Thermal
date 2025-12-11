@@ -47,6 +47,7 @@
 #include "Commands/ReloadConfiguration.h"
 #include "Commands/SAL.h"
 #include "Events/SummaryState.h"
+#include "MPU/FlowMeter.h"
 #include "SALThermalILC.h"
 #include "TSApplication.h"
 #include "TSPublisher.h"
@@ -129,7 +130,9 @@ void M1M3thermald::done() {
     Events::SummaryState::set_state(MTM1M3TS::MTM1M3TS_shared_SummaryStates_OfflineState);
 
     LSST::cRIO::ControllerThread::instance().stop();
-    TSPublisher::instance().stopFlowMeterThread();
+    for (int i = 0; i < FLOW_METER_NUMBER; i++) {
+        TSPublisher::instance().stopFlowMeterThread(i);
+    }
     TSPublisher::instance().stopPumpThread();
 
     SPDLOG_INFO("Shutting down M1M3thermald");

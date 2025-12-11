@@ -7,6 +7,7 @@ Version History
 v2.8.0
 ------
 
+* Communicate with two flow meters.
 * Read flow meter identification.
 
 v2.7.0

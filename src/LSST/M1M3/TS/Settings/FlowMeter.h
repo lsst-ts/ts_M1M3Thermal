@@ -40,7 +40,7 @@ public:
 
     void load(YAML::Node doc);
 
-    bool enabled;
+    bool enabled[2];
 };
 
 }  // namespace Settings
