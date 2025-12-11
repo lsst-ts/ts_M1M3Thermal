@@ -43,7 +43,7 @@ extern const char *VERSION;
 TSPublisher::TSPublisher(token) {
     _logLevel.level = -1;
 
-    _flowMeterThread = NULL;
+    _flow_meter_thread = NULL;
     pump_thread = NULL;
     _glycolTemperatureThread = NULL;
 }
@@ -112,16 +112,16 @@ void TSPublisher::logSimulationMode() {
 }
 
 void TSPublisher::startFlowMeterThread() {
-    delete _flowMeterThread;
+    delete _flow_meter_thread;
 #ifdef SIMULATOR
-    _flowMeterThread = new Telemetry::FlowMeterThread(std::make_shared<SimulatedFlowMeter>());
+    _flow_meter_thread = new Telemetry::FlowMeterThread(std::make_shared<SimulatedFlowMeter>());
 #else
-    _flowMeterThread = new Telemetry::FlowMeterThread(std::make_shared<Transports::FPGASerialDevice>(
+    _flow_meter_thread = new Telemetry::FlowMeterThread(std::make_shared<Transports::FPGASerialDevice>(
             dynamic_cast<ThermalFPGA *>(&IFPGA::get())->getSession(),
-            NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeterWrite,
-            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeterRead, 100ms));
+            NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
+            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read, 100ms));
 #endif
-    _flowMeterThread->start();
+    _flow_meter_thread->start();
 }
 
 void TSPublisher::startGlycolTemperatureThread() {
@@ -159,13 +159,13 @@ void TSPublisher::startPumpThread() {
 void TSPublisher::startupPump() { pump_thread->startup(); }
 
 void TSPublisher::stopFlowMeterThread() {
-    if (_flowMeterThread == NULL) {
+    if (_flow_meter_thread == NULL) {
         return;
     }
 
-    _flowMeterThread->stop();
-    delete _flowMeterThread;
-    _flowMeterThread = NULL;
+    _flow_meter_thread->stop();
+    delete _flow_meter_thread;
+    _flow_meter_thread = NULL;
 }
 
 void TSPublisher::stopGlycolTemperatureThread() {

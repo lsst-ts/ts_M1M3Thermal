@@ -33,6 +33,7 @@
 #include "Events/FcuTargets.h"
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
+#include "MPU/FlowMeter.h"
 #include "Settings/Controller.h"
 #include "Settings/GlycolPump.h"
 #include "Settings/FlowMeter.h"
