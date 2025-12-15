@@ -61,6 +61,7 @@ static const std::string str_status_2[16] = {"Jogging",
 class VFD : public cRIO::MPU {
 public:
     enum REGISTERS {
+        SPEED_FEEDBACK = 376,
         DRIVE_STATUS_2 = 393,
         COMMAND = 0x2000,
         SET_FREQUENCY = 0x2001,
@@ -110,6 +111,7 @@ public:
     uint16_t getDriveErrorCodes() { return getRegister(REGISTERS::DRIVE_ERROR_CODE); }
     float getTargetFrequency() { return getRegister(REGISTERS::FREQUENCY_COMMAND) / 100.0f; }
     float getOutputFrequency() { return getRegister(REGISTERS::OUTPUT_FREQUENCY) / 100.0f; }
+    float get_speed_feedback() { return getRegister(REGISTERS::SPEED_FEEDBACK); }
     float getOutputCurrent() { return getRegister(REGISTERS::OUTPUT_CURRENT) / 100.0f; }
     uint16_t getDCBusVoltage() { return getRegister(REGISTERS::DC_BUS_VOLTAGE); }
     float getOutputVoltage() { return getRegister(REGISTERS::OUTPUT_VOLTAGE) / 10.0f; }

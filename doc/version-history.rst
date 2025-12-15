@@ -13,7 +13,8 @@ v2.7.0
 ------
 
 * OrificesDiameter in AirNozzle table.
-* Uses EGW Pump's VFD DriveStatus2 event.
+* EGW Pump's VFD DriveStatus2 event.
+* EGW Pump's feedbackSpeed telemetry.
 * Additional MixingValveSettings parameters.
 * Fixed Enabled: false options for FlowMeter and GlycolPump.
 
