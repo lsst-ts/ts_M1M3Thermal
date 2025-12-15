@@ -22,6 +22,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cRIO/NiError.h>
+
 #include "Events/DriveStatus2.h"
 #include "Events/ErrorCode.h"
 #include "Events/GlycolPumpStatus.h"
@@ -145,6 +147,13 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
             if (n_r == STARTUP) {
                 _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
             }
+        } catch (LSST::cRIO::NiError& ni_error) {
+            Events::SummaryState::instance().fail(
+                    Events::ErrorCode::EGWPump,
+                    fmt::format("Cannot communicate with the EGW pump - National Instruments Error: {}. "
+                                "Mostly likely CSC has to be restarted to recover.",
+                                ni_error.what()),
+                    "");
         } catch (std::exception& ex) {
             if (_fail_after < std::chrono::steady_clock::now()) {
                 Events::SummaryState::instance().fail(
@@ -175,9 +184,15 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
                     break;
                 }
             }
-            auto buf = _transport->read(200, 2s, this);
-            if (!(buf.empty())) {
-                SPDLOG_ERROR("Read \"{}\" after error.", Modbus::hexDump(buf));
+            try {
+                auto buf = _transport->read(200, 2s, this);
+                if (!(buf.empty())) {
+                    SPDLOG_ERROR("Read \"{}\" after error.", Modbus::hexDump(buf));
+                }
+            } catch (std::exception& ex) {
+                Events::SummaryState::instance().fail(
+                        Events::ErrorCode::EGWPump,
+                        fmt::format("Cannot read remaining bytes from the EGW pump: {}.", ex.what()), "");
             }
         }
 

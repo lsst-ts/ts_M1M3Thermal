@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.7.1
+------
+
+* Catch error in VFD/EGW Pump read after error.
+
 v2.7.0
 ------
 
