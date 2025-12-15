@@ -97,9 +97,7 @@ void SummaryState::_switch_state(int new_state) {
             break;
         case MTM1M3TS_shared_SummaryStates_OfflineState:
             if (summaryState != MTM1M3TS_shared_SummaryStates_StandbyState) {
-                SPDLOG_ERROR("Ignored request to switch to offline state from non-Standby state - {}.",
-                             summaryState);
-                return;
+                SPDLOG_WARN("Request to switch to offline state from non-Standby state - {}.", summaryState);
             }
             break;
         case MTM1M3TS_shared_SummaryStates_StandbyState:
