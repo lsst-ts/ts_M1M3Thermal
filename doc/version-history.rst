@@ -8,6 +8,7 @@ v2.8.0
 ------
 
 * Read flow meter identification.
+* Catch error in VFD/EGW Pump read after error.
 
 v2.7.0
 ------
