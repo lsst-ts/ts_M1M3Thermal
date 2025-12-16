@@ -4,6 +4,12 @@
 Version History
 ===============
 
+v2.7.2
+------
+
+* Fixed flow meter units.
+* Read flow meter identification.
+
 v2.7.1
 ------
 
@@ -16,7 +22,6 @@ v2.7.0
 * Uses EGW Pump's VFD DriveStatus2 event.
 * Additional MixingValveSettings parameters.
 * Fixed Enabled: false options for FlowMeter and GlycolPump.
-* Read flow meter identification.
 
 v2.6.0
 ------
