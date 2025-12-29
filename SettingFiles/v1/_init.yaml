@@ -105,3 +105,9 @@ Setpoint:
     MaxViolations: 100
     # Maximal age of the air temperature measurements
     AirTemperatureMaxAge: 600
+
+  Save:
+    # Filename for saving and reloading setpoints
+    Filename: saved_setpoints.yaml
+    # Maximal time for a saved setpoints to be considered valid. In seconds.
+    MaxDelta: 86400

@@ -23,17 +23,20 @@
 
 #include <spdlog/spdlog.h>
 
-#include <Settings/Setpoint.h>
+#include "Settings/SavedSetpoints.h"
+#include "Settings/Setpoint.h"
 
 using namespace LSST::M1M3::TS::Settings;
 
-Setpoint::Setpoint(token) {
+Setpoint::Setpoint(token) : _saved_setpoints(nullptr) {
     glycolSupplyPercentage = 100;
     safetyAirTemperatureMaxAge = 600;
 
     low = NAN;
     high = NAN;
 }
+
+Setpoint::~Setpoint() { delete _saved_setpoints; }
 
 void Setpoint::load(YAML::Node doc) {
     SPDLOG_INFO("Loading Setpoint settings.");
@@ -78,4 +81,21 @@ void Setpoint::load(YAML::Node doc) {
     safetyMaxViolations = safety["MaxViolations"].as<int>();
 
     safetyAirTemperatureMaxAge = safety["AirTemperatureMaxAge"].as<float>();
+
+    delete _saved_setpoints;
+
+    auto save = doc["Save"];
+    _saved_setpoints = new SavedSetpoints(save["Filename"].as<std::string>());
+
+    _saved_setpoints->load();
+
+    savedSetpointsMaxAge = save["MaxAge"].as<uint64_t>();
+}
+
+void Setpoint::save_setpoints(float glycol, float heaters) {
+    if (_saved_setpoints == nullptr) {
+        SPDLOG_ERROR("Save setpoints called without valid setpoint file!");
+        return;
+    }
+    _saved_setpoints->save(glycol, heaters);
 }

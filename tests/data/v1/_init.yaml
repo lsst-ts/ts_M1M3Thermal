@@ -11,27 +11,45 @@ GlycolPump:
   Enabled: true
   StartupFrequency: 30
   Communication:
+    # Timeout in seconds. When no data are received for the given period, CSC
+    # will either fault or try to recover, based on the AutoRecoverAttempts
+    # value and history of previous recoveries.
     Timeout: 120
+    # On communication timeout, outside of the engineering mode, try to
+    # autorecover - turn off the pump power, wait for RecoverPowerOff seconds, turn the power back.
     AutoRecoverAttempts: 3
     RecoverPowerOff: 15
 
 MixingValve:
+  # units are mA (milliamperes)
   Commanding:
     FullyClosed: 4
     FullyOpened: 20
   
+  # units are V (Volts)
+  # The function is a * exp(c * (x + b)), where x is measured voltage, and
+  # result is percentage (0-100) of the mixing valve opening.
   PositionFeedback:
     FullyClosed: 0.021
     FullyOpened: 9.69
     a: 2.48351
     b: 9.91749
 
+  # Finer mixing valve control. Move above/below target values when change is requested.
   FinerControl:
-    InPosition: 1
+    # Range to consider mixing valve in position. In percents.
+    InPosition: 3
+    # Step size in % of the opened mixing valve. The mixing valve will be
+    # commanded to go above this value first, when change is less than
+    # MinimalMove from the current target value.
     BacklashStep: 6
+    # Move below this value will first move + BacklashStep to compensate for backlash.
     MinimalMove: 10
+    # Moving timeout in seconds. If valve doesn't finish move in given time, mixing valve will fault.
     MaxMovingTime: 20
 
+  # PID for adjusting mixing valve position to achieve target EGW loop
+  # temperature.
   PID:
     Timestep: 2.0
     P : -40.0
@@ -39,33 +57,55 @@ MixingValve:
     D : -0.1
     N : 0.5
 
+  # Values for restarting loops/ignoring 
+  ClearPIDs:
+    Glycol: 0.2
+    Heaters: 0.2
+
 Heaters:
+  # PID settings. 
   PID:
+    # Unless specified otherwise, those values will be used
     Default:
       Timestep: 10.0
       P: 0.7
       I: 2.0
       D: 0
       N: 0.1
-    FCU:
-      Address: 12
-      P: 0.8
+    # If PID values differ per-FCU, specify those there
     # FCU:
-    #  Address: 15
-    #  D: 0.1
+    #  Address: 12
+    #  P: 0.8
+    # FCU:
+    #  Address: 14
+    #  I: 0.2
 
+  # Checks heaters every interval seconds.
   Interval: 10
 
 Setpoint:
-  Timestep: 60
-  Tolerance: 0.05
+  # Loop run time in seconds
+  Timestep: 10
+  # Mixing valve step size - change in % every time difference between coolant temperature and target temperature is greater than tolerance
   MixingValveStep: 5
+  # Percentage of mirror supply temperature on glycol loop target value
   GlycolSupplyPercentage: 95
+  # Allowed minimal and maximal setpoints
   Low: -15
   High: 25
   Safety:
+    # Safe range for the mirror operation in degC, from air probe measurements
     Range: 3
+    # Minimal offset of the new target from currently invalid temperature
     MinOffset: 0.1
+    # Offset for heaters temperature above glycol temperature
     HeatersOffset: 1
+    # Maximal number of range violations to be ignored. If negative, warning on
+    # crossing the threshold will be printed.
     MaxViolations: 100
+    # Maximal age of the air temperature measurements
     AirTemperatureMaxAge: 600
+
+  Save:
+    # Filename for saving and reloading setpoints
+    Filename: saved_setpoints.yaml

@@ -20,6 +20,9 @@
  * this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <filesystem>
+#include <time.h>
+
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
@@ -27,8 +30,7 @@
 
 #include <cRIO/Settings/Path.h>
 
-#include "Settings/Controller.h"
-#include "Settings/MixingValve.h"
+#include "Settings/SavedSetpoints.h"
 #include "TSPublisher.h"
 
 using Catch::Approx;
@@ -39,20 +41,49 @@ void init_sal() {
     std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL = std::make_shared<SAL_MTM1M3TS>();
     m1m3TSSAL->setDebugLevel(2);
     TSPublisher::instance().setSAL(m1m3TSSAL);
-}
-
-TEST_CASE("Test conversions", "[MixingValveSettings]") {
-    init_sal();
 
     LSST::cRIO::Settings::Path::setRootPath("data");
-    REQUIRE_NOTHROW(Controller::instance().load("_init.yaml"));
+}
 
-    REQUIRE(MixingValve::instance().backlashStep == 6);
-    REQUIRE(MixingValve::instance().minimalMove == 10);
+TEST_CASE("Test setpoints saving and recovery", "[SavedSetpoints]") {
+    init_sal();
 
-    REQUIRE(MixingValve::instance().position_to_percents(10) == 100);
-    REQUIRE(MixingValve::instance().position_to_percents(-1) == 0);
+    SavedSetpoints settings("_setpoints.yaml");
+    std::filesystem::remove(settings.file_path);
 
-    REQUIRE(MixingValve::instance().percents_to_commanded(100) == Approx(0.020f));
-    REQUIRE(MixingValve::instance().percents_to_commanded(50) == Approx(0.012f));
+    REQUIRE(settings.is_valid() == false);
+
+    REQUIRE_NOTHROW(settings.load());
+
+    REQUIRE(settings.is_valid() == false);
+    REQUIRE(settings.date().tm_year == 0);
+
+    REQUIRE_NOTHROW(settings.save(4, 5));
+    REQUIRE_NOTHROW(settings.load());
+
+    REQUIRE(settings.is_valid() == true);
+    REQUIRE(settings.glycol() == 4);
+    REQUIRE(settings.heaters() == 5);
+
+    auto now = time(nullptr);
+    auto file_date = settings.date();
+
+    auto t_delta = difftime(now, mktime(&file_date));
+
+    REQUIRE(t_delta < 1);
+    REQUIRE(t_delta >= 0);
+
+    REQUIRE_NOTHROW(std::filesystem::remove(settings.file_path) == true);
+}
+
+TEST_CASE("Test setpoints too old date loading", "[SavedSetpoints]") {
+    init_sal();
+
+    SavedSetpoints settings("wrong_date_settings.yaml");
+
+    REQUIRE_NOTHROW(settings.load());
+
+    REQUIRE(settings.is_valid() == false);
+    REQUIRE(isnan(settings.glycol()));
+    REQUIRE(isnan(settings.heaters()));
 }

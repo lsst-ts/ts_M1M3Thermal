@@ -21,25 +21,51 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Settings_Controller_h
-#define _TS_Settings_Controller_h
+#ifndef _TS_Settings_SavedSetpoint_h
+#define _TS_Settings_SavedSetpoint_h
 
-#include <cRIO/Settings/Path.h>
-#include <cRIO/Singleton.h>
+#include <time.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Settings {
 
-/**
- * Settings controller. Loads all application settings from YAML file.
+/***
+ * Manages saved setpoints. Contains methods to save and load M1M3 TS setpoitns. The setpoints are stored in a
+ * yaml file.
  */
-class Controller : public cRIO::Singleton<Controller> {
+class SavedSetpoints {
 public:
-    Controller(token);
+    /***
+     * Contructs saved setpoints instance.
+     *
+     * @param filename file where setpoints will be saved
+     */
+    SavedSetpoints(std::string filename);
 
-    void load(const std::string &configuration_override);
+    void load();
+    void save(float glycol, float heaters);
+
+    /***
+     * Returns true if a valid data were loaded from the saved file.
+     *
+     * @return true if valid date were loaded from saved file.
+     */
+    bool is_valid();
+
+    struct tm date() { return _date; }
+    float glycol() { return _glycol; }
+    float heaters() { return _heaters; }
+
+    std::string file_path;
+
+private:
+    struct tm _date;
+    float _glycol;
+    float _heaters;
+
+    bool _is_too_old();
 };
 
 }  // namespace Settings
@@ -47,4 +73,4 @@ public:
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  // !_TS_Settings_Controller_h
+#endif  /// !_TS_Settings_SavedSetpoint_h
