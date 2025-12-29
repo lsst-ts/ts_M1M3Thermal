@@ -23,15 +23,16 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "D637CAD07CAD96C352CC16DA0FDCF038";
+static const char* const NiFpga_ts_M1M3ThermalFPGA_Signature = "0F684E6F1F4C77C92E58D2B6E0113E6B";
 
 #if NiFpga_Cpp
 extern "C" {
 #endif
 
 typedef enum {
-    NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_CoolantTempRead = 10,
-    NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeterRead = 8,
+    NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_CoolantTempRead = 12,
+    NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read = 10,
+    NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter2Read = 8,
     NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead = 6,
     NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_U8ResponseFIFO = 0
 } NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8;
@@ -45,13 +46,14 @@ typedef enum {
 } NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoSgl;
 
 typedef enum {
-    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_CoolantTempWrite = 9,
-    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeterWrite = 7,
+    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_CoolantTempWrite = 11,
+    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write = 9,
+    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter2Write = 7,
     NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite = 5
 } NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8;
 
 typedef enum {
-    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO = 11,
+    NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO = 13,
     NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO = 4
 } NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16;
 
