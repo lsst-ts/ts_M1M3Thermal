@@ -23,6 +23,7 @@
 #include <cRIO/ControllerThread.h>
 
 #include "Events/AppliedSetpoints.h"
+#include "Settings/Setpoint.h"
 #include "Tasks/Controller.h"
 
 using namespace LSST::M1M3::TS::Tasks;
@@ -66,4 +67,5 @@ void Controller::set_setpoints(float glycol, float heaters) {
 
     Events::AppliedSetpoints::instance().send();
     SPDLOG_INFO("Glycol setpoints: {:0.2f} FCU heaters setpoint: {:0.2f}", glycol, heaters);
+    Settings::Setpoint::instance().save_setpoints(glycol, heaters);
 }

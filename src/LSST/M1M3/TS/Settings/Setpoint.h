@@ -28,8 +28,10 @@
 
 #include <SAL_MTM1M3TS.h>
 
-#include <TSPublisher.h>
 #include <cRIO/Singleton.h>
+
+#include "Settings/SavedSetpoints.h"
+#include "TSPublisher.h"
 
 namespace LSST {
 namespace M1M3 {
@@ -39,8 +41,11 @@ namespace Settings {
 class Setpoint : public cRIO::Singleton<Setpoint> {
 public:
     Setpoint(token);
+    ~Setpoint();
 
     void load(YAML::Node doc);
+
+    void save_setpoints(float glycol, float heaters);
 
     float timestep;
     float mixingValveStep;
@@ -53,6 +58,9 @@ public:
     float safetyHeatersOffset;
     int safetyMaxViolations;
     float safetyAirTemperatureMaxAge;
+
+    SavedSetpoints *_saved_setpoints;
+    uint32_t savedSetpointsMaxAge;
 };
 
 }  // namespace Settings

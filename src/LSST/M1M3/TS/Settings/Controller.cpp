@@ -30,10 +30,13 @@
 #include "Settings/GlycolPump.h"
 #include "Settings/Heaters.h"
 #include "Settings/MixingValve.h"
+#include "Settings/SavedSetpoints.h"
 #include "Settings/Setpoint.h"
 #include "Settings/Thermal.h"
 
 using namespace LSST::M1M3::TS::Settings;
+
+Controller::Controller(token) {}
 
 void Controller::load(const std::string &configuration_override) {
     std::string filename = cRIO::Settings::Path::getFilePath("v1/_init.yaml");

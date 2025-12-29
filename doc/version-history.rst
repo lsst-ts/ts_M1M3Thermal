@@ -7,6 +7,7 @@ Version History
 v2.8.0
 ------
 
+* Save and load glycol/heaters setpoints.
 * Read flow meter identification.
 
 v2.7.0
