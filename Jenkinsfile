@@ -65,7 +65,7 @@ node {
              }
         }
 
-        junit 'ts_m1m3thermal/tests/*.xml'
+        junitPublisher 'ts_m1m3thermal/tests/*.xml'
     }
 
     stage('Build documentation')
