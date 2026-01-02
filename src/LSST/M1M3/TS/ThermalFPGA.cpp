@@ -52,12 +52,14 @@ void ThermalFPGA::open() {
     NiOpen("/var/lib/M1M3TS", NiFpga_ts_M1M3ThermalFPGA, "RIO0", NiFpga_OpenAttribute_NoRun, &(_session));
     uint32_t ni_state;
     NiThrowError(__PRETTY_FUNCTION__, "NiFpga_GetFpgaViState", NiFpga_GetFpgaViState(_session, &ni_state));
+    SPDLOG_INFO("FPGA state when starting CSC: {}.", ni_state);
     switch (ni_state) {
         case NiFpga_FpgaViState_Invalid:
             NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Download", NiFpga_Download(_session));
         case NiFpga_FpgaViState_NaturallyStopped:
         case NiFpga_FpgaViState_NotRunning:
         case NiFpga_FpgaViState_Running:
+            NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Abort", NiFpga_Abort(_session));
             NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Reset", NiFpga_Reset(_session));
             NiThrowError(__PRETTY_FUNCTION__, "NiFpga_Run", NiFpga_Run(_session, 0));
             break;
