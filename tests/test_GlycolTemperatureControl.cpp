@@ -1,5 +1,5 @@
 /*
- * This file is part of LSST cRIOcpp test suite. Tests MixingValve settings.
+ * This file is part of LSST cRIOcpp test suite. Tests GlycolLoopTemperature task.
  *
  * Developed for the Vera C. Rubin Observatory Telescope & Site Software
  * Systems. This product includes software developed by the Vera C.Rubin
@@ -23,36 +23,38 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include <SAL_MTM1M3TS.h>
+#include <cmath>
 
 #include <cRIO/Settings/Path.h>
 
 #include "Settings/Controller.h"
 #include "Settings/MixingValve.h"
+#include "Tasks/GlycolTemperatureControl.h"
+#include "Telemetry/FinerControl.h"
 #include "TSPublisher.h"
 
-using Catch::Approx;
 using namespace LSST::M1M3::TS;
-using namespace LSST::M1M3::TS::Settings;
 
-void init_sal() {
+void init() {
     std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL = std::make_shared<SAL_MTM1M3TS>();
     m1m3TSSAL->setDebugLevel(2);
     TSPublisher::instance().setSAL(m1m3TSSAL);
-}
-
-TEST_CASE("Test conversions", "[MixingValveSettings]") {
-    init_sal();
 
     LSST::cRIO::Settings::Path::setRootPath("data");
-    REQUIRE_NOTHROW(Controller::instance().load("_init.yaml"));
+    REQUIRE_NOTHROW(Settings::Controller::instance().load("_init.yaml"));
+}
 
-    REQUIRE(MixingValve::instance().backlashStep == 6);
-    REQUIRE(MixingValve::instance().minimalMove == 10);
+TEST_CASE("Finer Controller", "[FinerControl]") {
+    init();
 
-    REQUIRE(MixingValve::instance().position_to_percents(10) == 100);
-    REQUIRE(MixingValve::instance().position_to_percents(-1) == 0);
+    REQUIRE_NOTHROW(Telemetry::FinerControl::instance().set_target(NAN));
+    REQUIRE(isnan(Telemetry::FinerControl::instance().get_target(10)));
 
-    REQUIRE(MixingValve::instance().percents_to_commanded(100) == Approx(0.020f));
-    REQUIRE(MixingValve::instance().percents_to_commanded(50) == Approx(0.012f));
+    REQUIRE_NOTHROW(Telemetry::FinerControl::instance().set_target(4));
+    REQUIRE(Telemetry::FinerControl::instance().get_target(4) == 10.0);
+    REQUIRE(Telemetry::FinerControl::instance().get_target(4) == 10.0);
+
+    REQUIRE_NOTHROW(Telemetry::FinerControl::instance().set_target(20));
+    REQUIRE(Telemetry::FinerControl::instance().get_target(4) == 20.0);
+    REQUIRE(Telemetry::FinerControl::instance().get_target(4) == 20.0);
 }
