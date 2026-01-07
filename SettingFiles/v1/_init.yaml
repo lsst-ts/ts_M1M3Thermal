@@ -110,4 +110,4 @@ Setpoint:
     # Filename for saving and reloading setpoints
     Filename: saved_setpoints.yaml
     # Maximal time for a saved setpoints to be considered valid. In seconds.
-    MaxDelta: 86400
+    MaxAge: 86400

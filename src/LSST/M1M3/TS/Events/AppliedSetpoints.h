@@ -43,6 +43,11 @@ public:
     void send();
 
     /**
+     * Returns true if the current setpoints refere to a valid (non-NAN) values.
+     */
+    bool is_valid();
+
+    /**
      * Set applied setpoints. Returns a pair of booleans, indicating if the
      * EGW/glycol and heaters change is small.
      *

@@ -111,7 +111,13 @@ void SAL_start::execute() {
     }
 
     Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_DisabledState);
+    Events::EngineeringMode::instance().set_enabled(false);
     Events::EngineeringMode::instance().send();
+
+    Settings::Setpoint::instance().apply_saved_setpoints();
+
+    Events::AppliedSetpoints::instance().send();
+
     ackComplete();
     SPDLOG_INFO("Started");
 }
@@ -122,6 +128,18 @@ void SAL_enable::execute() {
 
     if (Settings::GlycolPump::instance().enabled) {
         TSPublisher::instance().startupPump();
+    }
+
+    auto &applied_setpoints = Events::AppliedSetpoints::instance();
+
+    if (applied_setpoints.is_valid() == false) {
+        auto target_temp = Telemetry::GlycolLoopTemperature::instance().get_above_mirror_temperature();
+        auto glycol = target_temp - 2;
+        auto heaters = target_temp - 1;
+        SPDLOG_INFO("Setting setpoints to {:.2f}°C {:.2f}°C - the above mirror temperature is {:.2f}°C.",
+                    glycol, heaters, target_temp);
+        applied_setpoints.set_applied_setpoints(glycol, heaters);
+        applied_setpoints.send();
     }
 
     Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_EnabledState);
@@ -177,8 +195,8 @@ void SAL_exitControl::execute() {
 }
 
 bool SAL_setEngineeringMode::validate() {
-    if (Events::SummaryState::instance().enabled() == false) {
-        ackFailed("To enter the engineering mode, CSC must be in enabled state.");
+    if (Events::SummaryState::instance().active() == false) {
+        ackFailed("CSC must be in an active (disabled, enabled) state to enter or exit engineering mode.");
         return false;
     }
     return true;
@@ -221,6 +239,12 @@ void SAL_heaterFanDemand::execute() {
 }
 
 bool SAL_setMixingValve::validate() {
+    if (Events::SummaryState::instance().active() == false) {
+        ackFailed(
+                "Manual control of the mixing valve is allowed only in active (enabled or disabled) state.");
+        return false;
+    }
+
     if (params.mixingValveTarget < 0 || params.mixingValveTarget > 100) {
         ackFailed("Mixing valve target must be between 0 and 100.");
         return false;
@@ -290,6 +314,11 @@ void SAL_coolantPumpReset::execute() {
 }
 
 bool SAL_applySetpoints::validate() {
+    if (Events::SummaryState::instance().active() == false) {
+        ackFailed("Setpoints can be changed only in active (enabled or disabled) state.");
+        return false;
+    }
+
     auto &s_setpoint = Settings::Setpoint::instance();
 
     if (params.glycolSetpoint < s_setpoint.low || params.glycolSetpoint > s_setpoint.high) {

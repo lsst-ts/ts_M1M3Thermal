@@ -47,6 +47,8 @@ public:
 
     void save_setpoints(float glycol, float heaters);
 
+    void apply_saved_setpoints();
+
     float timestep;
     float mixingValveStep;
     float glycolSupplyPercentage;

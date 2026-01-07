@@ -23,6 +23,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include "Events/AppliedSetpoints.h"
 #include "Settings/SavedSetpoints.h"
 #include "Settings/Setpoint.h"
 
@@ -85,11 +86,11 @@ void Setpoint::load(YAML::Node doc) {
     delete _saved_setpoints;
 
     auto save = doc["Save"];
+
+    savedSetpointsMaxAge = save["MaxAge"].as<uint64_t>();
     _saved_setpoints = new SavedSetpoints(save["Filename"].as<std::string>());
 
     _saved_setpoints->load();
-
-    savedSetpointsMaxAge = save["MaxAge"].as<uint64_t>();
 }
 
 void Setpoint::save_setpoints(float glycol, float heaters) {
@@ -98,4 +99,9 @@ void Setpoint::save_setpoints(float glycol, float heaters) {
         return;
     }
     _saved_setpoints->save(glycol, heaters);
+}
+
+void Setpoint::apply_saved_setpoints() {
+    Events::AppliedSetpoints::instance().set_applied_setpoints(_saved_setpoints->glycol(),
+                                                               _saved_setpoints->heaters());
 }

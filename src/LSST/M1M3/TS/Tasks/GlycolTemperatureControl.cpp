@@ -23,6 +23,7 @@
 #include <spdlog/spdlog.h>
 
 #include "Events/AppliedSetpoints.h"
+#include "Events/EngineeringMode.h"
 #include "Settings/MixingValve.h"
 #include "Settings/Setpoint.h"
 #include "Tasks/GlycolTemperatureControl.h"
@@ -36,6 +37,10 @@ GlycolTemperatureControl::GlycolTemperatureControl()
         : target_pid(Settings::MixingValve::instance().pid_parameters, 0, 100) {}
 
 LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
+    // don do anything in engineering mode
+    if (Events::EngineeringMode::instance().is_enabled()) {
+        return Settings::Setpoint::instance().timestep * 1000.0;
+    }
     auto &glycol_temp = Telemetry::GlycolLoopTemperature::instance();
     auto &s_setpoint = Settings::Setpoint::instance();
 
