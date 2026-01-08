@@ -47,7 +47,7 @@ void SavedSetpoints::load() {
 
         auto dat_buf = doc["Date"].as<std::string>();
         auto end = strptime(dat_buf.c_str(), "%Y-%m-%dT%T", &_date);
-        if (*end == '0') {
+        if (end == nullptr || *end == '\0') {
             SPDLOG_WARN("Invalid date in setpoints file {}: {}:", file_path, dat_buf);
             _date.tm_year = 0;
         }
