@@ -33,7 +33,7 @@ AppliedSetpoints::AppliedSetpoints(token) { reset(); }
 void AppliedSetpoints::reset() {
     glycolSetpoint = NAN;
     heatersSetpoint = NAN;
-    _updated = false;
+    _updated = true;
 }
 
 void AppliedSetpoints::send() {
@@ -47,6 +47,8 @@ void AppliedSetpoints::send() {
     }
     _updated = false;
 }
+
+bool AppliedSetpoints::is_valid() { return !(isnan(glycolSetpoint) || isnan(heatersSetpoint)); }
 
 std::pair<bool, bool> AppliedSetpoints::set_applied_setpoints(float new_glycol_setpoint,
                                                               float new_heaters_setpoint) {

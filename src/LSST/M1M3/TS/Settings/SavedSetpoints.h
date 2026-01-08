@@ -21,48 +21,51 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Settings_Setpoint_h
-#define _TS_Settings_Setpoint_h
+#ifndef _TS_Settings_SavedSetpoint_h
+#define _TS_Settings_SavedSetpoint_h
 
-#include <yaml-cpp/yaml.h>
-
-#include <SAL_MTM1M3TS.h>
-
-#include <cRIO/Singleton.h>
-
-#include "Settings/SavedSetpoints.h"
-#include "TSPublisher.h"
+#include <time.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Settings {
 
-class Setpoint : public cRIO::Singleton<Setpoint> {
+/***
+ * Manages saved setpoints. Contains methods to save and load M1M3 TS setpoitns. The setpoints are stored in a
+ * yaml file.
+ */
+class SavedSetpoints {
 public:
-    Setpoint(token);
-    ~Setpoint();
+    /***
+     * Contructs saved setpoints instance.
+     *
+     * @param filename file where setpoints will be saved
+     */
+    SavedSetpoints(std::string filename);
 
-    void load(YAML::Node doc);
+    void load();
+    void save(float glycol, float heaters);
 
-    void save_setpoints(float glycol, float heaters);
+    /***
+     * Returns true if a valid data were loaded from the saved file.
+     *
+     * @return true if valid date were loaded from saved file.
+     */
+    bool is_valid();
 
-    void apply_saved_setpoints();
+    struct tm date() { return _date; }
+    float glycol() { return _glycol; }
+    float heaters() { return _heaters; }
 
-    float timestep;
-    float mixingValveStep;
-    float glycolSupplyPercentage;
-    float high;
-    float low;
+    std::string file_path;
 
-    float safetyRange;
-    float safetyMinOffset;
-    float safetyHeatersOffset;
-    int safetyMaxViolations;
-    float safetyAirTemperatureMaxAge;
+private:
+    struct tm _date;
+    float _glycol;
+    float _heaters;
 
-    SavedSetpoints *_saved_setpoints;
-    uint32_t savedSetpointsMaxAge;
+    bool _is_too_old();
 };
 
 }  // namespace Settings
@@ -70,4 +73,4 @@ public:
 }  // namespace M1M3
 }  // namespace LSST
 
-#endif  //!_TS_Settings_Setpoint_h
+#endif  /// !_TS_Settings_SavedSetpoint_h
