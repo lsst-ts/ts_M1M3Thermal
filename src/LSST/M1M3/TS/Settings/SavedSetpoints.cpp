@@ -47,10 +47,11 @@ void SavedSetpoints::load() {
 
         auto dat_buf = doc["Date"].as<std::string>();
         auto end = strptime(dat_buf.c_str(), "%Y-%m-%dT%T", &_date);
-        if (end == nullptr || *end == '\0') {
-            SPDLOG_WARN("Invalid date in setpoints file {}: {}:", file_path, dat_buf);
+        if (end == nullptr || *end != '\0') {
+            SPDLOG_WARN("Invalid date in setpoints file {}: '{}'", file_path, dat_buf);
             _date.tm_year = 0;
         }
+        _date.tm_isdst = 0;
         auto setpoints = doc["Setpoints"];
         _glycol = setpoints["Glycol"].as<float>(NAN);
         _heaters = setpoints["Heaters"].as<float>(NAN);
@@ -89,11 +90,16 @@ void SavedSetpoints::save(float glycol, float heaters) {
 
     doc["Setpoints"] = setpoints;
 
-    std::ofstream ofs(file_path, std::ostream::out | std::ostream::trunc);
+    try {
+        std::ofstream ofs(file_path, std::ostream::out | std::ostream::trunc);
+        ofs.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+        ofs << YAML::Dump(doc);
 
-    ofs << YAML::Dump(doc);
-
-    ofs.close();
+        ofs.close();
+    } catch (std::ios_base::failure &e) {
+        SPDLOG_ERROR("Cannot write setpoints to {} - {} ({} {})", file_path, strerror(errno),
+                     e.code().message(), e.code().value());
+    }
 
     _glycol = glycol;
     _heaters = heaters;

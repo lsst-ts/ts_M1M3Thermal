@@ -8,7 +8,7 @@ v2.8.0
 ------
 
 * Communicate with two flow meters.
-* Save and load glycol/heaters setpoints.
+* Save and load glycol/heaters setpoints, log errors occuring during saving.
 * Read flow meter identification.
 * Catch error in VFD/EGW Pump read after error.
 
