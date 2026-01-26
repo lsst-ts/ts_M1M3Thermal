@@ -30,7 +30,7 @@ using namespace LSST::M1M3::TS::Tasks;
 
 Controller::Controller(token) {}
 
-void Controller::set_setpoints(float glycol, float heaters) {
+void Controller::set_setpoints(float glycol, float heaters, bool save) {
     const std::lock_guard<std::mutex> lock(_lock);
 
     auto small_change = Events::AppliedSetpoints::instance().set_applied_setpoints(glycol, heaters);
@@ -67,5 +67,7 @@ void Controller::set_setpoints(float glycol, float heaters) {
 
     Events::AppliedSetpoints::instance().send();
     SPDLOG_INFO("Glycol setpoints: {:0.2f} FCU heaters setpoint: {:0.2f}", glycol, heaters);
-    Settings::Setpoint::instance().save_setpoints(glycol, heaters);
+    if (save == true) {
+        Settings::Setpoint::instance().save_setpoints(glycol, heaters);
+    }
 }
