@@ -36,11 +36,21 @@ namespace M1M3 {
 namespace TS {
 namespace Tasks {
 
+/**
+ * Help class to start glycol and heaters temperature control tasks.
+ */
 class Controller : public cRIO::Singleton<Controller> {
 public:
     Controller(token);
 
-    void set_setpoints(float glycol, float heaters);
+    /**
+     * Sets new glycol and heaters setpoints. If needed, starts relevant tasks.
+     *
+     * @param glycol new glycol/EGW setpoint (°C)
+     * @param heaters new FCU heaters setpoint (°C)
+     * @param save when true, new setpoints will be saved
+     */
+    void set_setpoints(float glycol, float heaters, bool save = true);
 
 private:
     std::mutex _lock;

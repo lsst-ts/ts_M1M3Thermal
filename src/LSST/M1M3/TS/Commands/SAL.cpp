@@ -138,8 +138,10 @@ void SAL_enable::execute() {
         auto heaters = target_temp - 1;
         SPDLOG_INFO("Setting setpoints to {:.2f}°C {:.2f}°C - the above mirror temperature is {:.2f}°C.",
                     glycol, heaters, target_temp);
-        applied_setpoints.set_applied_setpoints(glycol, heaters);
-        applied_setpoints.send();
+        Tasks::Controller::instance().set_setpoints(glycol, heaters, false);
+    } else {
+        Tasks::Controller::instance().set_setpoints(applied_setpoints.get_applied_glycol_setpoint(),
+                                                    applied_setpoints.get_applied_heaters_setpoint(), false);
     }
 
     Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_EnabledState);
