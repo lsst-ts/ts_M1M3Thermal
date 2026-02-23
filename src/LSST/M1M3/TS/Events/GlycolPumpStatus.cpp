@@ -39,7 +39,7 @@ GlycolPumpStatus::GlycolPumpStatus(token) {
     _error_count = 0;
 }
 
-void GlycolPumpStatus::update(VFD *vfd) {
+void GlycolPumpStatus::update(VFD* vfd) {
     // mask unused bits
     auto status = vfd->getStatus() & 0x0ebf;
     errorCode = vfd->getDriveErrorCodes();

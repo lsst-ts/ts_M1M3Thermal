@@ -70,7 +70,7 @@ public:
      * @param error_report Error report string.
      * @param traceback Error traceback.
      */
-    void fail(int error_code, const std::string &error_report, const std::string &traceback);
+    void fail(int error_code, const std::string& error_report, const std::string& traceback);
 
     /**
      * Change CSC state.

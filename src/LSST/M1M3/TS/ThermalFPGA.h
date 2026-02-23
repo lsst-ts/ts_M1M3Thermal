@@ -43,13 +43,13 @@ public:
     void open() override;
     void close() override;
     void finalize() override;
-    void writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
-    void writeRequestFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
-    void readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) override;
-    void readU8ResponseFIFO(uint8_t *data, size_t length, uint32_t timeout) override;
-    void readU16ResponseFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
+    void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
+    void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
+    void readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) override;
+    void readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) override;
+    void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
     float chassisTemperature() override;
-    void waitOnIrqs(uint32_t irqs, uint32_t timeout, bool &timedout, uint32_t *triggered = NULL) override;
+    void waitOnIrqs(uint32_t irqs, uint32_t timeout, bool& timedout, uint32_t* triggered = NULL) override;
     void ackIrqs(uint32_t irqs) override;
 
     uint32_t getSession() { return _session; }

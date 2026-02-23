@@ -45,7 +45,7 @@ IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {
                         std::chrono::seconds(Settings::GlycolPump::instance().communicationRecoverPowerOff);
 }
 
-IFPGA &IFPGA::get() {
+IFPGA& IFPGA::get() {
 #ifdef SIMULATOR
     static SimulatedFPGA simulatedfpga;
     return simulatedfpga;
@@ -74,7 +74,7 @@ uint32_t IFPGA::getSlot4DIs() {
     uint16_t buf = FPGAAddress::SLOT4_DIS;
     writeRequestFIFO(&buf, 1, 1);
     uint32_t ret;
-    readU8ResponseFIFO(reinterpret_cast<uint8_t *>(&ret), 4, 10);
+    readU8ResponseFIFO(reinterpret_cast<uint8_t*>(&ret), 4, 10);
     return ret;
 }
 
@@ -118,7 +118,7 @@ void IFPGA::panic() {
     std::vector<int> zeros(cRIO::NUM_TS_ILC, 0);
     try {
         Events::FcuTargets::instance().set_FCU_heaters_fans(zeros, zeros);
-    } catch (std::exception &ex) {
+    } catch (std::exception& ex) {
         SPDLOG_WARN("Cannot zeroe fans and heaters on panic: {}.", ex.what());
     }
 }

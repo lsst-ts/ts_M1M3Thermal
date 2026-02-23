@@ -76,7 +76,7 @@ void Update::_sendMixingValve() {
     try {
         Telemetry::MixingValve::instance().sendPosition(IFPGA::get().getMixingValvePosition());
 
-    } catch (std::exception &e) {
+    } catch (std::exception& e) {
         SPDLOG_WARN("Cannot poll mixing valve: {}", e.what());
     }
 }
@@ -87,7 +87,7 @@ void Update::_sendFCU() {
 
     static auto next_update = std::chrono::steady_clock::now() - 20ms;
 
-    auto &app = TSApplication::instance();
+    auto& app = TSApplication::instance();
 
     auto now = std::chrono::steady_clock::now();
     if (now < next_update) {
@@ -179,12 +179,12 @@ void Update::_sendFCU() {
                         static_cast<int>(_bus_state));
         }
 
-    } catch (Modbus::MissingResponse &e) {
+    } catch (Modbus::MissingResponse& e) {
         if (_bus_state != FAILED) {
             SPDLOG_WARN("No response from the bus, entering ILC failed state.");
             _bus_state = FAILED;
         }
-    } catch (std::exception &e) {
+    } catch (std::exception& e) {
         SPDLOG_WARN("Cannot poll FCU: {}", e.what());
     }
 }

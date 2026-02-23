@@ -111,3 +111,6 @@ Setpoint:
     Filename: saved_setpoints.yaml
     # Maximal time for a saved setpoints to be considered valid. In seconds.
     MaxAge: 86400
+
+simulator:
+  wrong_application_type_address: 3

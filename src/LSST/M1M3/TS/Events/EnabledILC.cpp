@@ -62,6 +62,14 @@ void EnabledILC::communicationProblem(uint8_t ilc) {
     _updated = true;
 }
 
+void EnabledILC::wrong_application_type(uint8_t ilc, uint8_t ilc_application_type) {
+    if (isEnabled(ilc)) {
+        SPDLOG_WARN("Invalid application type of the FCU ILC {}: {}, disabling the ILC.", ilc + 1,
+                    ilc_application_type);
+        setEnabled(ilc, false);
+    }
+}
+
 void EnabledILC::send() {
     if (_updated == false) {
         return;

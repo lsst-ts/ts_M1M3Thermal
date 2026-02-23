@@ -36,7 +36,7 @@
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
 
-void OuterLoopClockThread::run(std::unique_lock<std::mutex> &lock) {
+void OuterLoopClockThread::run(std::unique_lock<std::mutex>& lock) {
     SPDLOG_INFO("OuterLoopClockThread: Run");
 
     while (keepRunning) {

@@ -56,6 +56,14 @@ public:
     void communicationProblem(uint8_t ilc);
 
     /**
+     * Wrong application type.
+     *
+     * @param ilc
+     * @param ilc_application_type
+     */
+    void wrong_application_type(uint8_t ilc, uint8_t ilc_application_type);
+
+    /**
      * Sends updates through SAL/DDS.
      */
     void send();

@@ -54,7 +54,7 @@ std::pair<bool, bool> AppliedSetpoints::set_applied_setpoints(float new_glycol_s
                                                               float new_heaters_setpoint) {
     std::pair<bool, bool> ret(false, false);
 
-    const auto &mixing_settings = Settings::MixingValve::instance();
+    const auto& mixing_settings = Settings::MixingValve::instance();
 
     if (glycolSetpoint != new_glycol_setpoint) {
         if (abs(glycolSetpoint - new_glycol_setpoint) < mixing_settings.clearPIDGlycol) {

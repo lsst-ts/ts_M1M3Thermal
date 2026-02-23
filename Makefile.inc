@@ -18,7 +18,7 @@ endif
 
 CRIOCPP := ../ts_cRIOcpp/
 
-PKG_CPPFLAGS := $(shell pkg-config yaml-cpp spdlog fmt --cflags $(silence))
+PKG_CPPFLAGS := $(shell pkg-config yaml-cpp spdlog fmt avro-cpp --cflags $(silence))
 
 SAL_CPPFLAGS += $(PKG_CPPFLAGS)  \
 	-I${SAL_WORK_DIR}/MTM1M3TS/cpp/src \
@@ -38,9 +38,11 @@ CPP := g++ -std=c++17 -Wall -fPIE ${c_opts}
 ifdef SIMULATOR
   C := gcc -Wall ${c_opts}
   CPP += -DSIMULATOR
+  PKG_LIBS += $(shell pkg-config spdlog avro-cpp --libs $(silence))
 else
   C := gcc -Wall -fmessage-length=0 ${c_opts}
   CPP += -fmessage-length=0
+  PKG_LIBS += $(shell pkg-config spdlog --libs $(silence))
 endif
 
 LIBS += $(PKG_LIBS) -ldl -lpthread -L/usr/lib64/boost${BOOST_RELEASE} -lboost_filesystem -lboost_iostreams \

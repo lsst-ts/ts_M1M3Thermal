@@ -26,8 +26,8 @@ using namespace LSST::M1M3::TS;
 
 Events::ErrorCode::ErrorCode(token) { errorCode = -1; }
 
-void Events::ErrorCode::set(int _error_code, const std::string &_error_report,
-                            const std::string &_traceback) {
+void Events::ErrorCode::set(int _error_code, const std::string& _error_report,
+                            const std::string& _traceback) {
     if (_error_code != errorCode) {
         errorCode = _error_code;
         errorReport = _error_report;
@@ -36,4 +36,4 @@ void Events::ErrorCode::set(int _error_code, const std::string &_error_report,
     }
 }
 
-void Events::ErrorCode::clear(const std::string &error_code) { set(NoFault, error_code, ""); }
+void Events::ErrorCode::clear(const std::string& error_code) { set(NoFault, error_code, ""); }

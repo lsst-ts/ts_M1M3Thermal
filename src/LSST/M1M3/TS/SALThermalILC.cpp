@@ -33,6 +33,8 @@
 
 using namespace LSST::M1M3::TS;
 
+const uint8_t TYPE_THERMAL_ILC = 3;
+
 SALThermalILC::SALThermalILC(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL)
         : ILC::ILCBusList(1), cRIO::ThermalILC(1), _m1m3tsSAL(m1m3tsSAL) {}
 
@@ -54,6 +56,9 @@ void SALThermalILC::processServerID(uint8_t address, uint64_t uniqueID, uint8_t 
     Events::ThermalInfo::instance().processServerID(address, ilcIndex, uniqueID, ilcAppType, networkNodeType,
                                                     ilcSelectedOptions, networkNodeOptions, majorRev,
                                                     minorRev, firmwareName);
+    if (ilcAppType != TYPE_THERMAL_ILC) {
+        Events::EnabledILC::instance().wrong_application_type(ilcIndex, ilcAppType);
+    }
 }
 
 void SALThermalILC::processServerStatus(uint8_t address, uint8_t mode, uint16_t status, uint16_t faults) {

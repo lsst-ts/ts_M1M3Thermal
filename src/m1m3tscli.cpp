@@ -62,15 +62,15 @@ using namespace std::chrono_literals;
 
 #ifdef SIMULATOR
 class PrintFlowMeterDevice : public SimulatedFlowMeter {
-    void write(const unsigned char *buf, size_t len) override;
+    void write(const unsigned char* buf, size_t len) override;
     std::vector<uint8_t> read(size_t len, std::chrono::microseconds timeout,
-                              LSST::cRIO::Thread *calling_thread = NULL) override;
+                              LSST::cRIO::Thread* calling_thread = NULL) override;
 };
 
 class PrintVFDPumpDevice : public SimulatedVFDPump {
-    void write(const unsigned char *buf, size_t len) override;
+    void write(const unsigned char* buf, size_t len) override;
     std::vector<uint8_t> read(size_t len, std::chrono::microseconds timeout,
-                              LSST::cRIO::Thread *calling_thread = NULL) override;
+                              LSST::cRIO::Thread* calling_thread = NULL) override;
 };
 
 #else
@@ -79,15 +79,15 @@ public:
     PrintFPGASerialDevice(uint32_t fpga_session, int write_fifo, int read_fifo,
                           std::chrono::microseconds quiet_time)
             : Transports::FPGASerialDevice(fpga_session, write_fifo, read_fifo, quiet_time) {}
-    void write(const unsigned char *buf, size_t len) override;
+    void write(const unsigned char* buf, size_t len) override;
     std::vector<uint8_t> read(size_t len, std::chrono::microseconds timeout,
-                              LSST::cRIO::Thread *calling_thread = NULL) override;
+                              LSST::cRIO::Thread* calling_thread = NULL) override;
 };
 #endif
 
 class M1M3TScli : public FPGACliApp {
 public:
-    M1M3TScli(const char *name, const char *description);
+    M1M3TScli(const char* name, const char* description);
 
     int openFPGA(command_vec cmds) override;
 
@@ -109,11 +109,11 @@ public:
     int ilcPower(command_vec);
 
 protected:
-    virtual FPGA *newFPGA(const char *dir, bool &fpga_singleton) override;
+    virtual FPGA* newFPGA(const char* dir, bool& fpga_singleton) override;
     virtual ILCUnits getILCs(command_vec cmds) override;
 
 private:
-    void printTelemetry(const std::string &name, std::shared_ptr<MPU> mpu);
+    void printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu);
 
     std::shared_ptr<Transports::Transport> get_transport(std::shared_ptr<MPU> mpu);
 
@@ -143,10 +143,10 @@ public:
 #else
     PrintTSFPGA() : FPGAClass() {}
 #endif
-    void writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
-    void writeRequestFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
-    void readU8ResponseFIFO(uint8_t *data, size_t length, uint32_t timeout) override;
-    void readU16ResponseFIFO(uint16_t *data, size_t length, uint32_t timeout) override;
+    void writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
+    void writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
+    void readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) override;
+    void readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) override;
 
 private:
     void _printTimestamp(std::string prefix, bool nullTimer);
@@ -154,7 +154,7 @@ private:
 
 #define ILC_ARG "<ILC..>"
 
-M1M3TScli::M1M3TScli(const char *name, const char *description) : FPGACliApp(name, description) {
+M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(name, description) {
     addCommand("mpu-read", std::bind(&M1M3TScli::mpuRead, this, std::placeholders::_1), "SS?", NEED_FPGA,
                "<mpu> <register[:length]>..", "Reads given MPU registers");
     addCommand("mpu-flush", std::bind(&M1M3TScli::mpuFlush, this, std::placeholders::_1), "s", NEED_FPGA,
@@ -229,7 +229,7 @@ int M1M3TScli::openFPGA(command_vec cmds) {
     _vfd_device = std::make_shared<SimulatedVFDPump>();
     _glycol_temperature_device = std::make_shared<SimulatedGlycolTemperature>();
 #else
-    int session = dynamic_cast<ThermalFPGA *>(getFPGA())->getSession();
+    int session = dynamic_cast<ThermalFPGA*>(getFPGA())->getSession();
 
     _flow_meter_1_device = std::make_shared<PrintFPGASerialDevice>(
             session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
@@ -369,7 +369,7 @@ int M1M3TScli::printFlowMeter(command_vec cmds) {
 int M1M3TScli::printPump(command_vec cmds) {
     vfd->clear();
 
-    IFPGA *fpga = dynamic_cast<IFPGA *>(getFPGA());
+    IFPGA* fpga = dynamic_cast<IFPGA*>(getFPGA());
     if (cmds.size() > 0) {
         if (cmds[0] == "stop") {
             vfd->stop();
@@ -406,17 +406,17 @@ int M1M3TScli::printPump(command_vec cmds) {
 int M1M3TScli::mixingValve(command_vec cmds) {
     if (cmds.size() == 1) {
         auto pos = std::stof(cmds[0]) / 1000.0f;
-        dynamic_cast<IFPGA *>(getFPGA())->setMixingValvePosition(pos);
+        dynamic_cast<IFPGA*>(getFPGA())->setMixingValvePosition(pos);
         std::cout << "Commanded to " << std::fixed << std::setprecision(5) << pos << " mA" << std::endl;
     }
     std::cout << "Mixing valve: " << std::fixed << std::setprecision(5)
-              << dynamic_cast<IFPGA *>(getFPGA())->getMixingValvePosition() << " V" << std::endl;
+              << dynamic_cast<IFPGA*>(getFPGA())->getMixingValvePosition() << " V" << std::endl;
     return 0;
 }
 
 int M1M3TScli::fcuOnOff(command_vec cmds) {
     if (cmds.size() == 1) {
-        dynamic_cast<IFPGA *>(getFPGA())->setFCUPower(onOff(cmds[0]));
+        dynamic_cast<IFPGA*>(getFPGA())->setFCUPower(onOff(cmds[0]));
         std::cout << "Turned FCU power " << cmds[0] << std::endl;
     }
     return 0;
@@ -424,7 +424,7 @@ int M1M3TScli::fcuOnOff(command_vec cmds) {
 
 int M1M3TScli::pumpOnOff(command_vec cmds) { return 0; }
 
-FPGA *M1M3TScli::newFPGA(const char *dir, bool &fpga_singleton) { return new PrintTSFPGA(); }
+FPGA* M1M3TScli::newFPGA(const char* dir, bool& fpga_singleton) { return new PrintTSFPGA(); }
 
 int M1M3TScli::fcuBroadcast(command_vec cmds) {
     uint8_t heater = std::stoi(cmds[0]);
@@ -471,7 +471,7 @@ int M1M3TScli::setReHeaterGain(command_vec cmds) {
 }
 
 int M1M3TScli::chassisTemperature(command_vec cmds) {
-    float temperature = dynamic_cast<IFPGA *>(getFPGA())->chassisTemperature();
+    float temperature = dynamic_cast<IFPGA*>(getFPGA())->chassisTemperature();
     std::cout << "Chassis temperature: " << std::fixed << std::setprecision(2) << temperature << std::endl;
 
     return 0;
@@ -482,7 +482,7 @@ int M1M3TScli::glycolTemperature(command_vec) {
         std::cout << "Buffer: " << glycolTemperatureBus->getDataBuffer() << std::endl << std::endl;
     }
     auto temp = glycolTemperatureBus->getTemperatures();
-    const char *names[8] = {"Above Mirror",          "Inside Cell 1",        "Inside Cell 2",
+    const char* names[8] = {"Above Mirror",          "Inside Cell 1",        "Inside Cell 2",
                             "Inside Cell 3",         "MTA Coolant Supply",   "MTA Coolant Return",
                             "Mirror Coolant Supply", "Mirror Coolant Return"};
     for (int i = 0; i < 8; i++) {
@@ -493,11 +493,11 @@ int M1M3TScli::glycolTemperature(command_vec) {
 }
 
 int M1M3TScli::slot4(command_vec) {
-    uint32_t dis = dynamic_cast<IFPGA *>(getFPGA())->getSlot4DIs();
+    uint32_t dis = dynamic_cast<IFPGA*>(getFPGA())->getSlot4DIs();
     std::cout << "Slot4: 0x" << std::hex << std::setfill('0') << std::setw(4) << dis << std::endl
               << std::setfill(' ') << std::endl;
 
-    const char *names[32] = {
+    const char* names[32] = {
             "PS 14 Status",                   // DI0
             "PS 15 Status",                   // DI1
             "PS 16 Status",                   // DI2
@@ -548,7 +548,7 @@ int M1M3TScli::slot4(command_vec) {
 
 int M1M3TScli::ilcPower(command_vec cmds) {
     uint16_t buf[2] = {FPGAAddress::ILC_POWER, onOff(cmds[0])};
-    dynamic_cast<IFPGA *>(getFPGA())->writeCommandFIFO(buf, 2, 10);
+    dynamic_cast<IFPGA*>(getFPGA())->writeCommandFIFO(buf, 2, 10);
     return 0;
 }
 
@@ -573,7 +573,7 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
                     continue;
                 }
                 units.push_back(ILCUnit(getILC(0), address));
-            } catch (std::logic_error &e) {
+            } catch (std::logic_error& e) {
                 std::cerr << "Non-numeric address: " << c << std::endl;
                 ret = -1;
             }
@@ -591,7 +591,7 @@ ILCUnits M1M3TScli::getILCs(command_vec cmds) {
     return units;
 }
 
-void M1M3TScli::printTelemetry(const std::string &name, std::shared_ptr<MPU> mpu) {
+void M1M3TScli::printTelemetry(const std::string& name, std::shared_ptr<MPU> mpu) {
     uint64_t send;
     uint64_t received;
     auto transport = get_transport(mpu);
@@ -655,7 +655,7 @@ void _printTimestamp(std::string prefix, bool nullTimer) {
     std::cout << prefix;
 }
 
-void _printBufferU8(std::string prefix, bool nullTimer, const uint8_t *buf, size_t len) {
+void _printBufferU8(std::string prefix, bool nullTimer, const uint8_t* buf, size_t len) {
     if (cli.getDebugLevel() == 0) {
         return;
     }
@@ -667,11 +667,11 @@ void _printBufferU8(std::string prefix, bool nullTimer, const uint8_t *buf, size
     std::cout << std::endl;
 }
 
-void _printBufferU8(std::string prefix, bool nullTimer, const std::vector<uint8_t> &buf) {
+void _printBufferU8(std::string prefix, bool nullTimer, const std::vector<uint8_t>& buf) {
     _printBufferU8(prefix, nullTimer, buf.data(), buf.size());
 }
 
-void _printBufferU16(std::string prefix, bool nullTimer, uint16_t *buf, size_t len) {
+void _printBufferU16(std::string prefix, bool nullTimer, uint16_t* buf, size_t len) {
     if (cli.getDebugLevel() == 0) {
         return;
     }
@@ -692,31 +692,31 @@ void _printBufferU16(std::string prefix, bool nullTimer, uint16_t *buf, size_t l
 }
 
 #ifdef SIMULATOR
-void PrintFlowMeterDevice::write(const unsigned char *buf, size_t len) {
+void PrintFlowMeterDevice::write(const unsigned char* buf, size_t len) {
     _printBufferU8("FlowMeter > ", true, buf, len);
     SimulatedFlowMeter::write(buf, len);
 }
 
 std::vector<uint8_t> PrintFlowMeterDevice::read(size_t len, std::chrono::microseconds timeout,
-                                                LSST::cRIO::Thread *calling_thread) {
+                                                LSST::cRIO::Thread* calling_thread) {
     auto ret = SimulatedFlowMeter::read(len, timeout, calling_thread);
     _printBufferU8("FlowMeter < ", true, ret);
     return ret;
 }
 
-void PrintVFDPumpDevice::write(const unsigned char *buf, size_t len) {
+void PrintVFDPumpDevice::write(const unsigned char* buf, size_t len) {
     _printBufferU8("VFD Pump > ", true, buf, len);
     SimulatedVFDPump::write(buf, len);
 }
 
 std::vector<uint8_t> PrintVFDPumpDevice::read(size_t len, std::chrono::microseconds timeout,
-                                              LSST::cRIO::Thread *calling_thread) {
+                                              LSST::cRIO::Thread* calling_thread) {
     auto ret = SimulatedVFDPump::read(len, timeout, calling_thread);
     _printBufferU8("VFD Pump < ", true, ret);
     return ret;
 }
 #else
-void PrintFPGASerialDevice::write(const unsigned char *buf, size_t len) {
+void PrintFPGASerialDevice::write(const unsigned char* buf, size_t len) {
     if (len <= 0) {
         throw std::runtime_error("MPU - 0 buffer");
     }
@@ -725,31 +725,31 @@ void PrintFPGASerialDevice::write(const unsigned char *buf, size_t len) {
 }
 
 std::vector<uint8_t> PrintFPGASerialDevice::read(size_t len, std::chrono::microseconds timeout,
-                                                 LSST::cRIO::Thread *calling_thread) {
+                                                 LSST::cRIO::Thread* calling_thread) {
     auto ret = FPGASerialDevice::read(len, timeout, calling_thread);
     _printBufferU8("MPU < ", true, ret);
     return ret;
 }
 #endif
 
-void PrintTSFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) {
+void PrintTSFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     _printBufferU16("C>", true, data, length);
     FPGAClass::writeCommandFIFO(data, length, timeout);
 }
 
-void PrintTSFPGA::writeRequestFIFO(uint16_t *data, size_t length, uint32_t timeout) {
+void PrintTSFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     _printBufferU16("R>", false, data, length);
     FPGAClass::writeRequestFIFO(data, length, timeout);
 }
 
-void PrintTSFPGA::readU8ResponseFIFO(uint8_t *data, size_t length, uint32_t timeout) {
+void PrintTSFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU8ResponseFIFO(data, length, timeout);
     _printBufferU8("R8<", false, data, length);
 }
 
-void PrintTSFPGA::readU16ResponseFIFO(uint16_t *data, size_t length, uint32_t timeout) {
+void PrintTSFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     FPGAClass::readU16ResponseFIFO(data, length, timeout);
     _printBufferU16("R16<", false, data, length);
 }
 
-int main(int argc, char *const argv[]) { return cli.run(argc, argv); }
+int main(int argc, char* const argv[]) { return cli.run(argc, argv); }

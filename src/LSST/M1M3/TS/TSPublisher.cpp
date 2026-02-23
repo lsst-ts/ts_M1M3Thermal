@@ -38,7 +38,7 @@
 
 using namespace LSST::M1M3::TS;
 
-extern const char *VERSION;
+extern const char* VERSION;
 
 TSPublisher::TSPublisher(token) {
     _logLevel.level = -1;
@@ -57,31 +57,31 @@ void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
     _m1m3TSSAL = m1m3TSSAL;
 
     SPDLOG_DEBUG("TSPublisher: Initializing SAL Telemetry");
-    _m1m3TSSAL->salTelemetryPub((char *)"MTM1M3TS_thermalData");
-    _m1m3TSSAL->salTelemetryPub((char *)"MTM1M3TS_mixingValve");
-    _m1m3TSSAL->salTelemetryPub((char *)"MTM1M3TS_glycolLoopTemperature");
-    _m1m3TSSAL->salTelemetryPub((char *)"MTM1M3TS_flowMeter");
-    _m1m3TSSAL->salTelemetryPub((char *)"MTM1M3TS_glycolPump");
+    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_thermalData");
+    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_mixingValve");
+    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_glycolLoopTemperature");
+    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_flowMeter");
+    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_glycolPump");
 
     SPDLOG_DEBUG("TSPublisher: Initializing SAL Events");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_airNozzles");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_appliedSetpoints");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_driveStatus2");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_engineeringMode");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_enabledILC");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_errorCode");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_fcuTargets");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_heartbeat");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_logLevel");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_summaryState");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_softwareVersions");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_simulationMode");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_airNozzles");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_appliedSetpoints");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_driveStatus2");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_engineeringMode");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_enabledILC");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_errorCode");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_fcuTargets");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_heartbeat");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_logLevel");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_summaryState");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_softwareVersions");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_simulationMode");
 
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalInfo");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalWarning");
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_glycolPumpStatus");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_thermalInfo");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_thermalWarning");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_glycolPumpStatus");
 
-    _m1m3TSSAL->salEventPub((char *)"MTM1M3TS_logevent_thermalSettings");
+    _m1m3TSSAL->salEventPub((char*)"MTM1M3TS_logevent_thermalSettings");
 }
 
 void TSPublisher::setLogLevel(int newLevel) {
@@ -117,7 +117,7 @@ void TSPublisher::startFlowMeterThread() {
     _flow_meter_thread = new Telemetry::FlowMeterThread(std::make_shared<SimulatedFlowMeter>());
 #else
     _flow_meter_thread = new Telemetry::FlowMeterThread(std::make_shared<Transports::FPGASerialDevice>(
-            dynamic_cast<ThermalFPGA *>(&IFPGA::get())->getSession(),
+            dynamic_cast<ThermalFPGA*>(&IFPGA::get())->getSession(),
             NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
             NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read, 100ms));
 #endif
@@ -132,7 +132,7 @@ void TSPublisher::startGlycolTemperatureThread() {
 #else
     _glycolTemperatureThread =
             new Telemetry::GlycolTemperatureThread(std::make_shared<Transports::FPGASerialDevice>(
-                    dynamic_cast<ThermalFPGA *>(&IFPGA::get())->getSession(),
+                    dynamic_cast<ThermalFPGA*>(&IFPGA::get())->getSession(),
                     NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_CoolantTempWrite,
                     NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_CoolantTempRead, 1ms));
 #endif
@@ -149,7 +149,7 @@ void TSPublisher::startPumpThread() {
     pump_thread = new Telemetry::PumpThread(std::make_shared<SimulatedVFDPump>());
 #else
     pump_thread = new Telemetry::PumpThread(std::make_shared<Transports::FPGASerialDevice>(
-            dynamic_cast<ThermalFPGA *>(&IFPGA::get())->getSession(),
+            dynamic_cast<ThermalFPGA*>(&IFPGA::get())->getSession(),
             NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite,
             NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead, 10ms));
 #endif

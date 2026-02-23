@@ -49,7 +49,7 @@ public:
      *
      * @param temperatures 8 position array with temperature values
      */
-    void update(const std::vector<float> &temperatures);
+    void update(const std::vector<float>& temperatures);
 
     /**
      * Retrieves last air temperature, measured above the mirror

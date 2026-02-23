@@ -43,7 +43,7 @@ GlycolLoopTemperature::GlycolLoopTemperature(token) {
     _safety_violations_count = 0;
 }
 
-void GlycolLoopTemperature::update(const std::vector<float> &temperatures) {
+void GlycolLoopTemperature::update(const std::vector<float>& temperatures) {
     {
         const std::lock_guard<std::mutex> lock(_access_mutex);
 
@@ -61,7 +61,7 @@ void GlycolLoopTemperature::update(const std::vector<float> &temperatures) {
 
     if (!isnan(applied_glycol)) {
         // check M1M3 measurements..
-        auto &s_setpoint = Settings::Setpoint::instance();
+        auto& s_setpoint = Settings::Setpoint::instance();
 
         float target_temp = get_above_mirror_temperature();
         float t_diff = applied_glycol - target_temp;

@@ -48,9 +48,9 @@ public:
 
     ErrorCode(token);
 
-    void set(int error_code, const std::string &error_report, const std::string &traceback);
+    void set(int error_code, const std::string& error_report, const std::string& traceback);
 
-    void clear(const std::string &error_report);
+    void clear(const std::string& error_report);
 
     void send() { TSPublisher::instance().log_error_code(this); }
 };

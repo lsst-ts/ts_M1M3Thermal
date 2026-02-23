@@ -32,13 +32,14 @@
 #include "Settings/MixingValve.h"
 #include "Settings/SavedSetpoints.h"
 #include "Settings/Setpoint.h"
+#include "Settings/Simulator.h"
 #include "Settings/Thermal.h"
 
 using namespace LSST::M1M3::TS::Settings;
 
 Controller::Controller(token) {}
 
-void Controller::load(const std::string &configuration_override) {
+void Controller::load(const std::string& configuration_override) {
     std::string filename = cRIO::Settings::Path::getFilePath("v1/_init.yaml");
     SPDLOG_INFO("Using configuration file \"{}\"", filename);
     try {
@@ -51,7 +52,12 @@ void Controller::load(const std::string &configuration_override) {
         Setpoint::instance().load(doc["Setpoint"]);
         Thermal::instance().load(doc["FCU"]);
         AirNozzles::instance().load("AirNozzles.csv");
-    } catch (YAML::Exception &ex) {
+
+#ifdef SIMULATOR
+        Simulator::instance().load(doc["simulator"]);
+#endif
+
+    } catch (YAML::Exception& ex) {
         auto msg = fmt::format("YAML Loading {}:{}:{} (line, column): {}", filename, ex.mark.line,
                                ex.mark.column, ex.what());
         SPDLOG_ERROR(msg);

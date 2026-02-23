@@ -48,7 +48,7 @@ public:
      *
      * @param filename name of a CSV file, holding the current AirNozzles configuration.
      */
-    void load(const char *filename);
+    void load(const char* filename);
 
     /***
      * Publish logevent_airNozzles event.
