@@ -24,7 +24,7 @@
 #define _TS_Telemetry_PumpThread_
 
 #include <chrono>
-#include <queue>
+#include <deque>
 
 #include <SAL_MTM1M3TS.h>
 
@@ -38,7 +38,7 @@ namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
-typedef enum { NOP, START, STOP, RESET, FREQ, STARTUP, POWERON } request_type;
+typedef enum { NOP, START, STOP, RESET, FREQ, STARTUP, POWERON, AUTO_RECOVER } request_type;
 
 /**
  * Thread reading out pump values. Started from TSPublisher when CSC
@@ -69,14 +69,20 @@ public:
      */
     void poweron();
 
+    /**
+     * Initiate auto-recovery sequence.
+     */
+    void auto_recover();
+
 private:
     VFD vfd;
     std::shared_ptr<Transports::Transport> _transport;
 
-    std::queue<request_type> _next_requests;
+    std::deque<request_type> _next_requests;
     std::mutex _requests_lock;
     float _target_frequency;
 
+    bool _run_loop();
     request_type _check_commands();
 
     int _recovery_left_attempts;

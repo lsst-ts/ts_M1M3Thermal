@@ -104,6 +104,7 @@ void SAL_start::execute() {
 
     if (Settings::GlycolPump::instance().enabled) {
         TSPublisher::instance().startPumpThread();
+        TSPublisher::instance().powerOnPump();
     } else {
         SPDLOG_WARN("Not starting glycol pump - the glycol pump wasn't enabled in M1M3TS config.");
     }

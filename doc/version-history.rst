@@ -4,6 +4,12 @@
 Version History
 ===============
 
+v2.9.0
+------
+
+* Command pump to run only in non-engineering enabled state.
+* Auto-disable ILCs entering bootloader on startup.
+
 v2.8.0
 ------
 

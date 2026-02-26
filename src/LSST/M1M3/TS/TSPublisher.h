@@ -66,6 +66,7 @@ public:
     void startFlowMeterThread();
     void startGlycolTemperatureThread();
     void startPumpThread();
+    void powerOnPump();
     void startupPump();
 
     void stopFlowMeterThread();
