@@ -156,7 +156,7 @@ void TSPublisher::startPumpThread() {
     pump_thread->start();
 }
 
-void TSPublisher::startupPump() { pump_thread->startup(); }
+void TSPublisher::startupPump() { pump_thread->poweron(); }
 
 void TSPublisher::stopFlowMeterThread() {
     if (_flow_meter_thread == NULL) {

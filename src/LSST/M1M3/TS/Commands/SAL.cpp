@@ -103,8 +103,6 @@ void SAL_start::execute() {
     }
 
     if (Settings::GlycolPump::instance().enabled) {
-        IFPGA::get().setCoolantPumpPower(true);
-        SPDLOG_INFO("Glycol pump turned on.");
         TSPublisher::instance().startPumpThread();
     } else {
         SPDLOG_WARN("Not starting glycol pump - the glycol pump wasn't enabled in M1M3TS config.");
@@ -263,9 +261,7 @@ void SAL_setMixingValve::execute() {
 bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().is_enabled(); }
 
 void SAL_coolantPumpPower::execute() {
-    IFPGA::get().setCoolantPumpPower(params.power);
     if (params.power) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
         TSPublisher::instance().startPumpThread();
     } else {
         TSPublisher::instance().stopPumpThread();

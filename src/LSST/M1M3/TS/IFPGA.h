@@ -91,9 +91,6 @@ public:
      * and heaters to 0 and power down the slot.
      */
     void panic();
-
-private:
-    std::chrono::steady_clock::time_point _next_egw_powerup;
 };
 
 }  // namespace TS

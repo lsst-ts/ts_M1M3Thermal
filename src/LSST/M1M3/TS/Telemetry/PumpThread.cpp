@@ -52,7 +52,11 @@ PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
     _success_count = 0;
 
     _fail_after = std::chrono::steady_clock::now() + std::chrono::seconds(pump_settings.communicationTimeout);
+    _power_on_at = std::chrono::steady_clock::now() +
+                   std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
 }
+
+PumpThread::~PumpThread() { IFPGA::get().setCoolantPumpPower(false); }
 
 request_type PumpThread::_check_commands() {
     request_type n_r = NOP;
@@ -89,6 +93,14 @@ request_type PumpThread::_check_commands() {
                 } else {
                     // repeat startup - but don't lock again mutex
                     _next_requests.push(STARTUP);
+                }
+                break;
+            case POWERON:
+                if (std::chrono::steady_clock::now() < _power_on_at) {
+                    IFPGA::get().setCoolantPumpPower(true);
+                    _next_requests.push(STARTUP);
+                } else {
+                    _next_requests.push(POWERON);
                 }
                 break;
             case NOP:
@@ -175,7 +187,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
                                 pump_settings.communicationAutoRecoverAttempts + 1 - _recovery_left_attempts,
                                 pump_settings.communicationAutoRecoverAttempts);
                     _recovery_left_attempts--;
-                    startup();
+                    poweron();
                 } else {
                     Events::SummaryState::instance().fail(
                             Events::ErrorCode::EGWPumpStartup,
@@ -213,16 +225,29 @@ void PumpThread::stop_pump() {
     std::lock_guard<std::mutex> lg(_requests_lock);
     _next_requests.push(STOP);
 }
+
 void PumpThread::reset_pump() {
     std::lock_guard<std::mutex> lg(_requests_lock);
     _next_requests.push(RESET);
 }
+
 void PumpThread::set_target_frequency(float frequency) {
     std::lock_guard<std::mutex> lg(_requests_lock);
     _target_frequency = frequency;
     _next_requests.push(FREQ);
 }
+
 void PumpThread::startup() {
     std::lock_guard<std::mutex> lg(_requests_lock);
     _next_requests.push(STARTUP);
+}
+
+void PumpThread::poweron() {
+    IFPGA::get().setCoolantPumpPower(false);
+    _power_on_at = std::chrono::steady_clock::now() +
+                   std::chrono::seconds(Settings::GlycolPump::instance().communicationRecoverPowerOff);
+    {
+        std::lock_guard<std::mutex> lg(_requests_lock);
+        _next_requests.push(POWERON);
+    }
 }
