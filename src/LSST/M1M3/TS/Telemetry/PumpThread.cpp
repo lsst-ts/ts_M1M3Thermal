@@ -52,9 +52,11 @@ PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
     _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
     _success_count = 0;
 
-    _fail_after = std::chrono::steady_clock::now() + std::chrono::seconds(pump_settings.communicationTimeout);
-    _power_on_at = std::chrono::steady_clock::now() +
-                   std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
+    auto now = std::chrono::steady_clock::now();
+
+    _startup_delay_passed = now + std::chrono::seconds(pump_settings.communicationStartupDelay);
+    _fail_after = now + std::chrono::seconds(pump_settings.communicationTimeout);
+    _power_on_at = now + std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
 }
 
 PumpThread::~PumpThread() { IFPGA::get().setCoolantPumpPower(false); }
@@ -99,13 +101,18 @@ void PumpThread::set_target_frequency(float frequency) {
 
 void PumpThread::startup() {
     std::lock_guard<std::mutex> lg(_requests_lock);
+    auto& pump_settings = Settings::GlycolPump::instance();
+    _startup_delay_passed =
+            std::chrono::steady_clock::now() + std::chrono::seconds(pump_settings.communicationStartupDelay);
     _next_requests.push_back(STARTUP);
 }
 
 void PumpThread::poweron() {
     IFPGA::get().setCoolantPumpPower(false);
+    auto& pump_settings = Settings::GlycolPump::instance();
+    _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
     _power_on_at = std::chrono::steady_clock::now() +
-                   std::chrono::seconds(Settings::GlycolPump::instance().communicationRecoverPowerOff);
+                   std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
     {
         std::lock_guard<std::mutex> lg(_requests_lock);
         _next_requests.push_back(POWERON);
@@ -114,8 +121,10 @@ void PumpThread::poweron() {
 
 void PumpThread::auto_recover() {
     IFPGA::get().setCoolantPumpPower(false);
+    auto& pump_settings = Settings::GlycolPump::instance();
+    _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
     _power_on_at = std::chrono::steady_clock::now() +
-                   std::chrono::seconds(Settings::GlycolPump::instance().communicationRecoverPowerOff);
+                   std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
     {
         std::lock_guard<std::mutex> lg(_requests_lock);
         _next_requests.push_back(AUTO_RECOVER);
@@ -133,6 +142,10 @@ bool PumpThread::_run_loop() {
         n_r = _check_commands();
 
         if (n_r == POWERON || n_r == AUTO_RECOVER) {
+            return true;
+        }
+
+        if (n_r == STARTUP && std::chrono::steady_clock::now() < _startup_delay_passed) {
             return true;
         }
 
@@ -160,9 +173,6 @@ bool PumpThread::_run_loop() {
         }
 
         _success_count++;
-        if (n_r == POWERON) {
-            _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
-        }
     } catch (LSST::cRIO::NiError& ni_error) {
         Events::SummaryState::instance().fail(
                 Events::ErrorCode::EGWPump,
@@ -220,6 +230,8 @@ request_type PumpThread::_check_commands() {
 
     std::lock_guard<std::mutex> lg(_requests_lock);
 
+    auto& pump_settings = Settings::GlycolPump::instance();
+
     if (not(_next_requests.empty())) {
         n_r = _next_requests.front();
         bool keep = false;
@@ -238,16 +250,12 @@ request_type PumpThread::_check_commands() {
                 break;
             case STARTUP:
                 if (_success_count > 2) {
-                    auto freq = Settings::GlycolPump::instance().startupFrequency;
+                    auto freq = pump_settings.startupFrequency;
                     vfd.reset();
                     vfd.set_frequency(freq);
                     vfd.start();
 
                     SPDLOG_INFO("Commanded pump to start at frequency {} Hz.", freq);
-                } else if (_fail_after < std::chrono::steady_clock::now()) {
-                    Events::SummaryState::instance().fail(
-                            Events::ErrorCode::EGWPumpStartup,
-                            "Cannot start the EGW pump - no communication detected.", "");
                 } else {
                     // repeat poweron - but don't lock again mutex
                     keep = true;
@@ -261,10 +269,12 @@ request_type PumpThread::_check_commands() {
                 }
                 break;
             case AUTO_RECOVER:
-                if (std::chrono::steady_clock::now() <= _power_on_at) {
+                if (std::chrono::steady_clock::now() > _power_on_at) {
                     IFPGA::get().setCoolantPumpPower(true);
                     if (Events::SummaryState::instance().enabled() &&
                         !Events::EngineeringMode::instance().is_enabled()) {
+                        _startup_delay_passed = std::chrono::steady_clock::now() +
+                                                std::chrono::seconds(pump_settings.communicationStartupDelay);
                         _next_requests.push_back(STARTUP);
                     }
                 } else {

@@ -83,7 +83,7 @@ void IFPGA::setFCUPower(bool on) {
 }
 
 void IFPGA::setCoolantPumpPower(bool on) {
-    SPDLOG_INFO("Turning EGW pump power {},", on ? "ON" : "OFF");
+    SPDLOG_INFO("Turning EGW pump power {}.", on ? "ON" : "OFF");
     uint16_t buf[2];
     buf[0] = FPGAAddress::COOLANT_PUMP_ON;
     buf[1] = on;
