@@ -65,10 +65,10 @@ public:
     IFPGA();
     virtual ~IFPGA() {}
 
-    static IFPGA &get();
+    static IFPGA& get();
 
-    virtual void readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) = 0;
-    virtual void readU8ResponseFIFO(uint8_t *data, size_t length, uint32_t timeout) = 0;
+    virtual void readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) = 0;
+    virtual void readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) = 0;
 
     uint16_t getTxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_TX; }
     uint16_t getRxCommand(uint8_t bus) override { return FPGAAddress::MODBUS_A_RX; }
@@ -91,9 +91,6 @@ public:
      * and heaters to 0 and power down the slot.
      */
     void panic();
-
-private:
-    std::chrono::steady_clock::time_point _next_egw_powerup;
 };
 
 }  // namespace TS

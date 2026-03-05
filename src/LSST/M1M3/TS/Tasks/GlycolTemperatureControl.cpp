@@ -41,8 +41,8 @@ LSST::cRIO::task_return_t GlycolTemperatureControl::run() {
     if (Events::EngineeringMode::instance().is_enabled()) {
         return Settings::Setpoint::instance().timestep * 1000.0;
     }
-    auto &glycol_temp = Telemetry::GlycolLoopTemperature::instance();
-    auto &s_setpoint = Settings::Setpoint::instance();
+    auto& glycol_temp = Telemetry::GlycolLoopTemperature::instance();
+    auto& s_setpoint = Settings::Setpoint::instance();
 
     auto mirror_loop = glycol_temp.get_mirror_loop_average(s_setpoint.glycolSupplyPercentage / 100.0);
     float target_glycol_temp = Events::AppliedSetpoints::instance().get_applied_glycol_setpoint();

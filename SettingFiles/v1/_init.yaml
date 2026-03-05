@@ -11,6 +11,8 @@ GlycolPump:
   Enabled: true
   StartupFrequency: 30
   Communication:
+    # Delay introduced after powering up the pump, before communication is attempted. In seconds.
+    StartupDelay: 20
     # Timeout in seconds. When no data are received for the given period, CSC
     # will either fault or try to recover, based on the AutoRecoverAttempts
     # value and history of previous recoveries.
@@ -111,3 +113,6 @@ Setpoint:
     Filename: saved_setpoints.yaml
     # Maximal time for a saved setpoints to be considered valid. In seconds.
     MaxAge: 86400
+
+simulator:
+  wrong_application_type_address: 3

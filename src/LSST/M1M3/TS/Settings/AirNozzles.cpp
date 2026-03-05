@@ -52,14 +52,14 @@ AirNozzles::AirNozzles(token) {
 }
 
 template <typename T>
-void check_changes(std::vector<T> &arr, bool &changed, int index, T val) {
+void check_changes(std::vector<T>& arr, bool& changed, int index, T val) {
     if (arr[index] != val) {
         changed = true;
         arr[index] = val;
     }
 };
 
-void AirNozzles::load(const char *filename) {
+void AirNozzles::load(const char* filename) {
     auto full_path = cRIO::Settings::Path::getFilePath("v1/tables/AirNozzles.csv");
     bool changed = false;
 
@@ -130,12 +130,12 @@ void AirNozzles::load(const char *filename) {
                                 "Mis-formatted nozzle label - expected [A-F][1-{}], find on row {} '{}'",
                                 NOZZLE_NUM, row, label));
                 }
-            } catch (std::exception &ex) {
+            } catch (std::exception& ex) {
                 throw std::runtime_error(fmt::format("Cannot read AirNozzles table - in {}:{} ({}, {}) - {}",
                                                      full_path, row, label, type_str, ex.what()));
             }
         }
-    } catch (std::ios_base::failure &er) {
+    } catch (std::ios_base::failure& er) {
         throw std::runtime_error(
                 fmt::format("Cannot read AirNozzles table from {}: {}", full_path, er.what()));
     }

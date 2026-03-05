@@ -83,7 +83,7 @@ void ThermalFPGA::finalize() {
     NiThrowError(__PRETTY_FUNCTION__, NiFpga_Finalize());
 }
 
-void ThermalFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeout) {
+void ThermalFPGA::writeCommandFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_CommandFIFO,
                                      data, length, timeout, NULL));
@@ -91,7 +91,7 @@ void ThermalFPGA::writeCommandFIFO(uint16_t *data, size_t length, uint32_t timeo
     writeDebugFile<uint16_t>("CMD<", data, length);
 }
 
-void ThermalFPGA::writeRequestFIFO(uint16_t *data, size_t length, uint32_t timeout) {
+void ThermalFPGA::writeRequestFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_WriteFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU16_RequestFIFO,
                                      data, length, timeout, NULL));
@@ -99,13 +99,13 @@ void ThermalFPGA::writeRequestFIFO(uint16_t *data, size_t length, uint32_t timeo
     writeDebugFile<uint16_t>("REQ<", data, length);
 }
 
-void ThermalFPGA::readSGLResponseFIFO(float *data, size_t length, uint32_t timeout) {
+void ThermalFPGA::readSGLResponseFIFO(float* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoSgl(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoSgl_SGLResponseFIFO,
                                     data, length, timeout, NULL));
 }
 
-void ThermalFPGA::readU8ResponseFIFO(uint8_t *data, size_t length, uint32_t timeout) {
+void ThermalFPGA::readU8ResponseFIFO(uint8_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU8(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_U8ResponseFIFO,
                                    data, length, timeout, NULL));
@@ -113,7 +113,7 @@ void ThermalFPGA::readU8ResponseFIFO(uint8_t *data, size_t length, uint32_t time
     writeDebugFile<uint8_t>("U8>", data, length);
 }
 
-void ThermalFPGA::readU16ResponseFIFO(uint16_t *data, size_t length, uint32_t timeout) {
+void ThermalFPGA::readU16ResponseFIFO(uint16_t* data, size_t length, uint32_t timeout) {
     NiThrowError(__PRETTY_FUNCTION__,
                  NiFpga_ReadFifoU16(_session, NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU16_U16ResponseFIFO,
                                     data, length, timeout, NULL));
@@ -131,13 +131,13 @@ float ThermalFPGA::chassisTemperature() {
                                         temperature);
 }
 
-void ThermalFPGA::waitOnIrqs(uint32_t irqs, uint32_t timeout, bool &timedout, uint32_t *triggered) {
+void ThermalFPGA::waitOnIrqs(uint32_t irqs, uint32_t timeout, bool& timedout, uint32_t* triggered) {
     static std::hash<std::thread::id> hasher;
     size_t k = hasher(std::this_thread::get_id());
     NiFpga_IrqContext contex;
     try {
         contex = _contexes.at(k);
-    } catch (std::out_of_range &e) {
+    } catch (std::out_of_range& e) {
         NiFpga_ReserveIrqContext(_session, &contex);
         _contexes[k] = contex;
     }

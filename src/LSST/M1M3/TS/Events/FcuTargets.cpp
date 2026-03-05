@@ -54,7 +54,7 @@ void FcuTargets::send() {
 }
 
 void FcuTargets::set_FCU_heaters_fans(std::vector<int> _heater_PWM, std::vector<int> _fan_RPM) {
-    auto &app = TSApplication::instance();
+    auto& app = TSApplication::instance();
 
     app.ilc()->clear();
 

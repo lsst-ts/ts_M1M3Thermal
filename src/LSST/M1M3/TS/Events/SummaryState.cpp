@@ -57,7 +57,7 @@ bool SummaryState::enabled() {
     return summaryState == MTM1M3TS_shared_SummaryStates_EnabledState;
 }
 
-void SummaryState::fail(int error_code, const std::string &error_report, const std::string &traceback) {
+void SummaryState::fail(int error_code, const std::string& error_report, const std::string& traceback) {
     _switch_state(MTM1M3TS_shared_SummaryStates_FaultState);
     Events::ErrorCode::instance().set(error_code, error_report, traceback);
     SPDLOG_ERROR("Faulted ({}): {}", error_code, error_report);
@@ -65,7 +65,7 @@ void SummaryState::fail(int error_code, const std::string &error_report, const s
     // cleanup - close mixing valve
     try {
         IFPGA::get().panic();
-    } catch (std::runtime_error &er) {
+    } catch (std::runtime_error& er) {
         SPDLOG_ERROR("Cannot panic CSC: {}", er.what());
     }
 }

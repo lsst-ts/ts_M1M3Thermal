@@ -1,7 +1,7 @@
 /*
  * This file is part of LSST M1M3 thermal system package.
  *
- * Developed for the LSST Data Management System.
+ * Developed for the LSST Telescope & Site Software
  * This product includes software developed by the LSST Project
  * (https://www.lsst.org).
  * See the COPYRIGHT file at the top-level directory of this distribution
@@ -21,39 +21,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _TS_Settings_Heaters_h
-#define _TS_Settings_Heaters_h
+#ifdef SIMULATOR
 
-#include <vector>
+#include <spdlog/spdlog.h>
 
-#include <yaml-cpp/yaml.h>
+#include "Settings/Simulator.h"
 
-#include <cRIO/ThermalILC.h>
-#include <cRIO/Singleton.h>
-#include <PID/LimitedPID.h>
+using namespace LSST::M1M3::TS::Settings;
 
-namespace LSST {
-namespace M1M3 {
-namespace TS {
-namespace Settings {
+Simulator::Simulator(token) {}
 
-class Heaters : public cRIO::Singleton<Heaters> {
-public:
-    Heaters(token);
-    ~Heaters();
+void Simulator::load(YAML::Node doc) {
+    wrong_application_type_address =
+            doc["wrong_application_type_address"].as<int>(wrong_application_type_address);
+}
 
-    void load(YAML::Node doc);
-
-    void reset_FCU_PIDs();
-
-    PID::LimitedPID* heaters_PID[cRIO::NUM_TS_ILC];
-
-    float interval;
-};
-
-}  // namespace Settings
-}  // namespace TS
-}  // namespace M1M3
-}  // namespace LSST
-
-#endif  //!_TS_Settings_Heaters_h
+#endif

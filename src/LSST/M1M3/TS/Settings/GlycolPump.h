@@ -46,6 +46,7 @@ public:
     // TODO move to XML - OSW-1311
     bool enabled;
     float startupFrequency;
+    int communicationStartupDelay;
     int communicationTimeout;
     int communicationAutoRecoverAttempts;
     int communicationRecoverPowerOff;

@@ -124,7 +124,7 @@ public:
      */
     void update();
 
-    static const char *getDriveError(uint16_t code);
+    static const char* getDriveError(uint16_t code);
 };
 
 class VFDPrint : public VFD {

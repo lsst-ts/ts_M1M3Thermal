@@ -87,20 +87,20 @@ TSSubscriber::TSSubscriber(std::shared_ptr<SAL_MTM1M3TS> m1m3tsSAL) {
             spdlog::set_level(spdlog::level::trace);
             newData.level = 0;
         }
-        m1m3tsSAL->ackCommand_setLogLevel(commandID, ACK_COMPLETE, 0, (char *)"Complete");
+        m1m3tsSAL->ackCommand_setLogLevel(commandID, ACK_COMPLETE, 0, (char*)"Complete");
         m1m3tsSAL->logEvent_logLevel(&newData, 0);
     };
 
     // register all commands
     for (auto c : _commands) {
         SPDLOG_TRACE("Registering command {}", c.first);
-        m1m3tsSAL->salProcessor((char *)("MTM1M3TS_command_" + c.first).c_str());
+        m1m3tsSAL->salProcessor((char*)("MTM1M3TS_command_" + c.first).c_str());
     }
 }
 
 TSSubscriber::~TSSubscriber() {}
 
-void TSSubscriber::run(std::unique_lock<std::mutex> &lock) {
+void TSSubscriber::run(std::unique_lock<std::mutex>& lock) {
     while (keepRunning) {
         tryCommands();
         runCondition.wait_for(lock, 100us);

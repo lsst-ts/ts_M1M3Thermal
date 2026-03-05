@@ -61,7 +61,7 @@ public:
     int safetyMaxViolations;
     float safetyAirTemperatureMaxAge;
 
-    SavedSetpoints *_saved_setpoints;
+    SavedSetpoints* _saved_setpoints;
     uint32_t savedSetpointsMaxAge;
 };
 

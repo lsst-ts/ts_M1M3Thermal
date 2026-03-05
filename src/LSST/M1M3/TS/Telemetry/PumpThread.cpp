@@ -25,6 +25,7 @@
 #include <cRIO/NiError.h>
 
 #include "Events/DriveStatus2.h"
+#include "Events/EngineeringMode.h"
 #include "Events/ErrorCode.h"
 #include "Events/GlycolPumpStatus.h"
 #include "Events/SummaryState.h"
@@ -51,7 +52,177 @@ PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
     _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
     _success_count = 0;
 
-    _fail_after = std::chrono::steady_clock::now() + std::chrono::seconds(pump_settings.communicationTimeout);
+    auto now = std::chrono::steady_clock::now();
+
+    _startup_delay_passed = now + std::chrono::seconds(pump_settings.communicationStartupDelay);
+    _fail_after = now + std::chrono::seconds(pump_settings.communicationTimeout);
+    _power_on_at = now + std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
+}
+
+PumpThread::~PumpThread() { IFPGA::get().setCoolantPumpPower(false); }
+
+void PumpThread::run(std::unique_lock<std::mutex>& lock) {
+    runCondition.wait_for(lock, std::chrono::seconds(3));
+
+    SPDLOG_INFO("Running Pump Thread.");
+    while (keepRunning) {
+        auto end = std::chrono::steady_clock::now() + 2s;
+
+        if (_run_loop() == false) {
+            break;
+        }
+
+        runCondition.wait_until(lock, end);
+    }
+
+    SPDLOG_INFO("Pump Thread stopped.");
+}
+
+void PumpThread::start_pump() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _next_requests.push_back(START);
+}
+
+void PumpThread::stop_pump() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _next_requests.push_back(STOP);
+}
+
+void PumpThread::reset_pump() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _next_requests.push_back(RESET);
+}
+
+void PumpThread::set_target_frequency(float frequency) {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    _target_frequency = frequency;
+    _next_requests.push_back(FREQ);
+}
+
+void PumpThread::startup() {
+    std::lock_guard<std::mutex> lg(_requests_lock);
+    auto& pump_settings = Settings::GlycolPump::instance();
+    _startup_delay_passed =
+            std::chrono::steady_clock::now() + std::chrono::seconds(pump_settings.communicationStartupDelay);
+    _next_requests.push_back(STARTUP);
+}
+
+void PumpThread::poweron() {
+    IFPGA::get().setCoolantPumpPower(false);
+    auto& pump_settings = Settings::GlycolPump::instance();
+    _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
+    _power_on_at = std::chrono::steady_clock::now() +
+                   std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
+    {
+        std::lock_guard<std::mutex> lg(_requests_lock);
+        _next_requests.push_back(POWERON);
+    }
+}
+
+void PumpThread::auto_recover() {
+    IFPGA::get().setCoolantPumpPower(false);
+    auto& pump_settings = Settings::GlycolPump::instance();
+    _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
+    _power_on_at = std::chrono::steady_clock::now() +
+                   std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
+    {
+        std::lock_guard<std::mutex> lg(_requests_lock);
+        _next_requests.push_back(AUTO_RECOVER);
+    }
+}
+
+bool PumpThread::_run_loop() {
+    request_type n_r = NOP;
+
+    auto& pump_settings = Settings::GlycolPump::instance();
+
+    try {
+        vfd.clear();
+
+        n_r = _check_commands();
+
+        if (n_r == POWERON || n_r == AUTO_RECOVER) {
+            return true;
+        }
+
+        if (n_r == STARTUP && std::chrono::steady_clock::now() < _startup_delay_passed) {
+            return true;
+        }
+
+        vfd.readInfo();
+
+        _transport->commands(vfd, 3s, this);
+
+        Events::GlycolPumpStatus::instance().update(&vfd);
+        Events::DriveStatus2::instance().set(vfd.get_drive_status_2());
+
+        commandedFrequency = vfd.getCommandedFrequency();
+        targetFrequency = vfd.getTargetFrequency();
+        outputFrequency = vfd.getOutputFrequency();
+        speedFeedback = vfd.get_speed_feedback();
+        outputCurrent = vfd.getOutputCurrent();
+        busVoltage = vfd.getDCBusVoltage();
+        outputVoltage = vfd.getOutputVoltage();
+
+        _fail_after =
+                std::chrono::steady_clock::now() + std::chrono::seconds(pump_settings.communicationTimeout);
+
+        salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
+        if (ret != SAL__OK) {
+            SPDLOG_WARN("Cannot send VFD: {}", ret);
+        }
+
+        _success_count++;
+    } catch (LSST::cRIO::NiError& ni_error) {
+        Events::SummaryState::instance().fail(
+                Events::ErrorCode::EGWPump,
+                fmt::format("Cannot communicate with the EGW pump - National Instruments Error: {}. "
+                            "Mostly likely CSC has to be restarted to recover.",
+                            ni_error.what()),
+                "");
+    } catch (std::exception& ex) {
+        if (_fail_after < std::chrono::steady_clock::now()) {
+            Events::SummaryState::instance().fail(
+                    Events::ErrorCode::EGWPump,
+                    fmt::format("Cannot communicate with the EGW pump for more than {}, last error was {}.",
+                                pump_settings.communicationTimeout, ex.what()),
+                    "");
+            return false;
+        }
+
+        SPDLOG_WARN("Error in running Glycol Pump thread: {}", ex.what());
+        _success_count = 0;
+        if (n_r == STARTUP) {
+            if (_recovery_left_attempts > 0) {
+                SPDLOG_INFO("Queing again failed startup sequence - try {}/{}.",
+                            pump_settings.communicationAutoRecoverAttempts + 1 - _recovery_left_attempts,
+                            pump_settings.communicationAutoRecoverAttempts);
+                _recovery_left_attempts--;
+                auto_recover();
+            } else {
+                Events::SummaryState::instance().fail(
+                        Events::ErrorCode::EGWPumpStartup,
+                        fmt::format("Run out of allowed auto-recovery attempts {} - cannot start the EGW "
+                                    "pump.",
+                                    pump_settings.communicationAutoRecoverAttempts),
+                        "");
+                return false;
+            }
+        }
+        try {
+            auto buf = _transport->read(200, 2s, this);
+            if (!(buf.empty())) {
+                SPDLOG_ERROR("Read \"{}\" after error.", Modbus::hexDump(buf));
+            }
+        } catch (std::exception& ex) {
+            Events::SummaryState::instance().fail(
+                    Events::ErrorCode::EGWPump,
+                    fmt::format("Cannot read remaining bytes from the EGW pump: {}.", ex.what()), "");
+            return false;
+        }
+    }
+
+    return true;
 }
 
 request_type PumpThread::_check_commands() {
@@ -59,8 +230,11 @@ request_type PumpThread::_check_commands() {
 
     std::lock_guard<std::mutex> lg(_requests_lock);
 
+    auto& pump_settings = Settings::GlycolPump::instance();
+
     if (not(_next_requests.empty())) {
         n_r = _next_requests.front();
+        bool keep = false;
         switch (n_r) {
             case START:
                 vfd.start();
@@ -76,25 +250,44 @@ request_type PumpThread::_check_commands() {
                 break;
             case STARTUP:
                 if (_success_count > 2) {
-                    auto freq = Settings::GlycolPump::instance().startupFrequency;
+                    auto freq = pump_settings.startupFrequency;
                     vfd.reset();
                     vfd.set_frequency(freq);
                     vfd.start();
 
                     SPDLOG_INFO("Commanded pump to start at frequency {} Hz.", freq);
-                } else if (_fail_after < std::chrono::steady_clock::now()) {
-                    Events::SummaryState::instance().fail(
-                            Events::ErrorCode::EGWPumpStartup,
-                            "Cannot start the EGW pump - no communication detected.", "");
                 } else {
-                    // repeat startup - but don't lock again mutex
-                    _next_requests.push(STARTUP);
+                    // repeat poweron - but don't lock again mutex
+                    keep = true;
+                }
+                break;
+            case POWERON:
+                if (std::chrono::steady_clock::now() > _power_on_at) {
+                    IFPGA::get().setCoolantPumpPower(true);
+                } else {
+                    keep = true;
+                }
+                break;
+            case AUTO_RECOVER:
+                if (std::chrono::steady_clock::now() > _power_on_at) {
+                    IFPGA::get().setCoolantPumpPower(true);
+                    if (Events::SummaryState::instance().enabled() &&
+                        !Events::EngineeringMode::instance().is_enabled()) {
+                        _startup_delay_passed = std::chrono::steady_clock::now() +
+                                                std::chrono::seconds(pump_settings.communicationStartupDelay);
+                        _next_requests.push_back(STARTUP);
+                    }
+                } else {
+                    keep = true;
                 }
                 break;
             case NOP:
                 break;
         }
-        _next_requests.pop();
+
+        if (keep == false) {
+            _next_requests.pop_front();
+        }
 
         if (n_r == NOP) {
             return NOP;
@@ -104,125 +297,4 @@ request_type PumpThread::_check_commands() {
     }
 
     return n_r;
-}
-
-void PumpThread::run(std::unique_lock<std::mutex>& lock) {
-    runCondition.wait_for(lock, std::chrono::seconds(3));
-
-    auto& pump_settings = Settings::GlycolPump::instance();
-
-    SPDLOG_INFO("Running Pump Thread.");
-    while (keepRunning) {
-        auto end = std::chrono::steady_clock::now() + 2s;
-
-        request_type n_r = NOP;
-
-        try {
-            vfd.clear();
-
-            n_r = _check_commands();
-
-            vfd.readInfo();
-
-            _transport->commands(vfd, 3s, this);
-
-            Events::GlycolPumpStatus::instance().update(&vfd);
-            Events::DriveStatus2::instance().set(vfd.get_drive_status_2());
-
-            commandedFrequency = vfd.getCommandedFrequency();
-            targetFrequency = vfd.getTargetFrequency();
-            outputFrequency = vfd.getOutputFrequency();
-            speedFeedback = vfd.get_speed_feedback();
-            outputCurrent = vfd.getOutputCurrent();
-            busVoltage = vfd.getDCBusVoltage();
-            outputVoltage = vfd.getOutputVoltage();
-
-            _fail_after = std::chrono::steady_clock::now() +
-                          std::chrono::seconds(pump_settings.communicationTimeout);
-
-            salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
-            if (ret != SAL__OK) {
-                SPDLOG_WARN("Cannot send VFD: {}", ret);
-            }
-
-            _success_count++;
-            if (n_r == STARTUP) {
-                _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
-            }
-        } catch (LSST::cRIO::NiError& ni_error) {
-            Events::SummaryState::instance().fail(
-                    Events::ErrorCode::EGWPump,
-                    fmt::format("Cannot communicate with the EGW pump - National Instruments Error: {}. "
-                                "Mostly likely CSC has to be restarted to recover.",
-                                ni_error.what()),
-                    "");
-        } catch (std::exception& ex) {
-            if (_fail_after < std::chrono::steady_clock::now()) {
-                Events::SummaryState::instance().fail(
-                        Events::ErrorCode::EGWPump,
-                        fmt::format(
-                                "Cannot communicate with the EGW pump for more than {}, last error was {}.",
-                                pump_settings.communicationTimeout, ex.what()),
-                        "");
-                break;
-            }
-
-            SPDLOG_WARN("Error in running Glycol Pump thread: {}", ex.what());
-            _success_count = 0;
-            if (n_r == STARTUP) {
-                if (_recovery_left_attempts > 0) {
-                    SPDLOG_INFO("Queing again failed startup sequence - try {}/{}.",
-                                pump_settings.communicationAutoRecoverAttempts + 1 - _recovery_left_attempts,
-                                pump_settings.communicationAutoRecoverAttempts);
-                    _recovery_left_attempts--;
-                    startup();
-                } else {
-                    Events::SummaryState::instance().fail(
-                            Events::ErrorCode::EGWPumpStartup,
-                            fmt::format("Run out of allowed auto-recovery attempts {} - cannot start the EGW "
-                                        "pump.",
-                                        pump_settings.communicationAutoRecoverAttempts),
-                            "");
-                    break;
-                }
-            }
-            try {
-                auto buf = _transport->read(200, 2s, this);
-                if (!(buf.empty())) {
-                    SPDLOG_ERROR("Read \"{}\" after error.", Modbus::hexDump(buf));
-                }
-            } catch (std::exception& ex) {
-                Events::SummaryState::instance().fail(
-                        Events::ErrorCode::EGWPump,
-                        fmt::format("Cannot read remaining bytes from the EGW pump: {}.", ex.what()), "");
-            }
-        }
-
-        runCondition.wait_until(lock, end);
-    }
-
-    SPDLOG_INFO("Pump Thread stopped.");
-}
-
-void PumpThread::start_pump() {
-    std::lock_guard<std::mutex> lg(_requests_lock);
-    _next_requests.push(START);
-}
-
-void PumpThread::stop_pump() {
-    std::lock_guard<std::mutex> lg(_requests_lock);
-    _next_requests.push(STOP);
-}
-void PumpThread::reset_pump() {
-    std::lock_guard<std::mutex> lg(_requests_lock);
-    _next_requests.push(RESET);
-}
-void PumpThread::set_target_frequency(float frequency) {
-    std::lock_guard<std::mutex> lg(_requests_lock);
-    _target_frequency = frequency;
-    _next_requests.push(FREQ);
-}
-void PumpThread::startup() {
-    std::lock_guard<std::mutex> lg(_requests_lock);
-    _next_requests.push(STARTUP);
 }

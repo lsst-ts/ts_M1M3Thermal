@@ -59,11 +59,11 @@ void sig_usr1(int signal) {
     LSST::cRIO::ControllerThread::instance().enqueue(std::make_shared<Commands::ReloadConfiguration>());
 }
 
-extern const char *VERSION;
+extern const char* VERSION;
 
 class M1M3thermald : public LSST::cRIO::CSC {
 public:
-    M1M3thermald(const char *name, const char *description) : CSC(name, description) {}
+    M1M3thermald(const char* name, const char* description) : CSC(name, description) {}
 
 protected:
     void init() override;
@@ -86,7 +86,7 @@ void M1M3thermald::init() {
     SPDLOG_INFO("Initializing M1M3TS SAL");
     try {
         _m1m3tsSAL = std::make_shared<SAL_MTM1M3TS>();
-    } catch (std::runtime_error &er) {
+    } catch (std::runtime_error& er) {
         SPDLOG_CRITICAL("Cannot initialize SAL: {}", er.what());
         throw er;
     }
@@ -95,7 +95,7 @@ void M1M3thermald::init() {
 
     addSink(std::make_shared<SALSink_mt>(_m1m3tsSAL));
 
-    SALThermalILC *ilc = new SALThermalILC(_m1m3tsSAL);
+    SALThermalILC* ilc = new SALThermalILC(_m1m3tsSAL);
 
     TSApplication::instance().setILC(ilc);
 
@@ -146,14 +146,14 @@ int M1M3thermald::runLoop() {
     return LSST::cRIO::ControllerThread::exitRequested() ? 0 : 1;
 }
 
-int main(int argc, char *const argv[]) {
+int main(int argc, char* const argv[]) {
     M1M3thermald csc("M1M3TS", "M1M3 Thermal System CSC");
 
     csc.processArgs(argc, argv);
 
     try {
         csc.run(&IFPGA::get());
-    } catch (LSST::cRIO::NiError &nie) {
+    } catch (LSST::cRIO::NiError& nie) {
         SPDLOG_CRITICAL("Main: Error initializing ThermalFPGA: {}", nie.what());
     }
 

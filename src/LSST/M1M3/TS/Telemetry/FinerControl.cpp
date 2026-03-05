@@ -87,7 +87,7 @@ float FinerControl::get_target(float valve_position) {
 
     auto now = std::chrono::steady_clock::now();
 
-    auto &mixing_settings = Settings::MixingValve::instance();
+    auto& mixing_settings = Settings::MixingValve::instance();
 
     // do not change state for at least two seconds, as the valve moves with delay
     bool transition =

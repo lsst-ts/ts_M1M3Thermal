@@ -54,7 +54,7 @@ ThermalWarning::ThermalWarning(token) {
 
 void ThermalWarning::update(uint8_t _address, uint8_t mode, uint16_t status, uint16_t faults) {
     int index = _address - 1;
-    auto update_field = [index, this](std::vector<bool> &values, bool new_value) {
+    auto update_field = [index, this](std::vector<bool>& values, bool new_value) {
         if (values[index] != new_value) {
             values[index] = new_value;
             _updated = true;
@@ -83,7 +83,7 @@ void ThermalWarning::update(uint8_t _address, uint8_t mode, uint16_t status, uin
 
 void ThermalWarning::send() {
     if (_updated) {
-        auto check_any = [](const std::vector<bool> &values) -> bool {
+        auto check_any = [](const std::vector<bool>& values) -> bool {
             return std::find(values.begin(), values.end(), true) != values.end();
         };
 

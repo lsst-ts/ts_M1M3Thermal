@@ -37,14 +37,14 @@ class TSApplication : public cRIO::Singleton<TSApplication> {
 public:
     TSApplication(token) { _ilc = NULL; }
 
-    void setILC(SALThermalILC *ilc) { _ilc = ilc; }
+    void setILC(SALThermalILC* ilc) { _ilc = ilc; }
 
     void callFunctionOnAllIlcs(std::function<void(uint8_t)> func);
 
-    static SALThermalILC *ilc() { return instance()._ilc; }
+    static SALThermalILC* ilc() { return instance()._ilc; }
 
 private:
-    SALThermalILC *_ilc;
+    SALThermalILC* _ilc;
 };
 
 }  // namespace TS

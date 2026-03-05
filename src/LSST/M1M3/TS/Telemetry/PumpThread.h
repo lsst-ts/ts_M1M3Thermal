@@ -24,7 +24,7 @@
 #define _TS_Telemetry_PumpThread_
 
 #include <chrono>
-#include <queue>
+#include <deque>
 
 #include <SAL_MTM1M3TS.h>
 
@@ -38,7 +38,7 @@ namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
-typedef enum { NOP, START, STOP, RESET, FREQ, STARTUP } request_type;
+typedef enum { NOP, START, STOP, RESET, FREQ, STARTUP, POWERON, AUTO_RECOVER } request_type;
 
 /**
  * Thread reading out pump values. Started from TSPublisher when CSC
@@ -47,6 +47,7 @@ typedef enum { NOP, START, STOP, RESET, FREQ, STARTUP } request_type;
 class PumpThread final : public cRIO::Thread, MTM1M3TS_glycolPumpC {
 public:
     PumpThread(std::shared_ptr<Transports::Transport> transport);
+    virtual ~PumpThread(void);
 
     void run(std::unique_lock<std::mutex>& lock) override;
 
@@ -54,21 +55,41 @@ public:
     void stop_pump();
     void reset_pump();
     void set_target_frequency(float frequency);
+
+    /**
+     * Issue commands to start the pump. Reset VFD, set frequency, issue start
+     * command.
+     */
     void startup();
+
+    /**
+     * Initiates power-on sequence. Powers off VFD, wait
+     * CommunicationRecoverPowerOff seconds, call startup - set pump
+     * frequency,...
+     */
+    void poweron();
+
+    /**
+     * Initiate auto-recovery sequence.
+     */
+    void auto_recover();
 
 private:
     VFD vfd;
     std::shared_ptr<Transports::Transport> _transport;
 
-    std::queue<request_type> _next_requests;
+    std::deque<request_type> _next_requests;
     std::mutex _requests_lock;
     float _target_frequency;
 
+    bool _run_loop();
     request_type _check_commands();
 
     int _recovery_left_attempts;
     int _success_count;
+    std::chrono::steady_clock::time_point _startup_delay_passed;
     std::chrono::steady_clock::time_point _fail_after;
+    std::chrono::steady_clock::time_point _power_on_at;
 };
 
 }  // namespace Telemetry

@@ -51,21 +51,22 @@ public:
 
     void setLogLevel(int newLevel);
 
-    void log_error_code(MTM1M3TS_logevent_errorCodeC *data) { _m1m3TSSAL->logEvent_errorCode(data, 0); }
-    void log_drive_status_2(MTM1M3TS_logevent_driveStatus2C *data) {
+    void log_error_code(MTM1M3TS_logevent_errorCodeC* data) { _m1m3TSSAL->logEvent_errorCode(data, 0); }
+    void log_drive_status_2(MTM1M3TS_logevent_driveStatus2C* data) {
         _m1m3TSSAL->logEvent_driveStatus2(data, 0);
     }
 
     void logSoftwareVersions();
     void logSimulationMode();
-    void logThermalInfo(MTM1M3TS_logevent_thermalInfoC *data) { _m1m3TSSAL->logEvent_thermalInfo(data, 0); }
-    void logThermalWarning(MTM1M3TS_logevent_thermalWarningC *data) {
+    void logThermalInfo(MTM1M3TS_logevent_thermalInfoC* data) { _m1m3TSSAL->logEvent_thermalInfo(data, 0); }
+    void logThermalWarning(MTM1M3TS_logevent_thermalWarningC* data) {
         _m1m3TSSAL->logEvent_thermalWarning(data, 0);
     }
 
     void startFlowMeterThread();
     void startGlycolTemperatureThread();
     void startPumpThread();
+    void powerOnPump();
     void startupPump();
 
     void stopFlowMeterThread();
@@ -74,15 +75,15 @@ public:
 
     static double getTimestamp() { return instance()._m1m3TSSAL->getCurrentTime(); }
 
-    Telemetry::PumpThread *pump_thread;
+    Telemetry::PumpThread* pump_thread;
 
 private:
     std::shared_ptr<SAL_MTM1M3TS> _m1m3TSSAL;
 
     MTM1M3TS_logevent_logLevelC _logLevel;
 
-    Telemetry::FlowMeterThread *_flow_meter_thread;
-    Telemetry::GlycolTemperatureThread *_glycolTemperatureThread;
+    Telemetry::FlowMeterThread* _flow_meter_thread;
+    Telemetry::GlycolTemperatureThread* _glycolTemperatureThread;
 };
 
 }  // namespace TS

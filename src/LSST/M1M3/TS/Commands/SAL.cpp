@@ -56,7 +56,7 @@ void changeAllILCsMode(uint16_t mode) {
 
     try {
         IFPGA::get().ilcCommands(*TSApplication::ilc(), 1000);
-    } catch (std::exception &ex) {
+    } catch (std::exception& ex) {
         SPDLOG_WARN(ex.what());
     }
 }
@@ -92,7 +92,7 @@ void SAL_start::execute() {
 
         Events::ThermalInfo::instance().log();
         Events::FcuTargets::instance().send();
-    } catch (std::exception &ex) {
+    } catch (std::exception& ex) {
         ackFailed(fmt::format("Cannot communicate with FCU's ILCs on startup: {}", ex.what()));
     }
 
@@ -103,9 +103,8 @@ void SAL_start::execute() {
     }
 
     if (Settings::GlycolPump::instance().enabled) {
-        IFPGA::get().setCoolantPumpPower(true);
-        SPDLOG_INFO("Glycol pump turned on.");
         TSPublisher::instance().startPumpThread();
+        TSPublisher::instance().powerOnPump();
     } else {
         SPDLOG_WARN("Not starting glycol pump - the glycol pump wasn't enabled in M1M3TS config.");
     }
@@ -130,7 +129,7 @@ void SAL_enable::execute() {
         TSPublisher::instance().startupPump();
     }
 
-    auto &applied_setpoints = Events::AppliedSetpoints::instance();
+    auto& applied_setpoints = Events::AppliedSetpoints::instance();
 
     if (applied_setpoints.is_valid() == false) {
         auto target_temp = Telemetry::GlycolLoopTemperature::instance().get_above_mirror_temperature();
@@ -154,7 +153,7 @@ void SAL_disable::execute() {
 
     try {
         Events::FcuTargets::instance().set_FCU_heaters_fans(zeros, zeros);
-    } catch (std::runtime_error &er) {
+    } catch (std::runtime_error& er) {
         SPDLOG_WARN(
                 "Cannot set FCUs heaters and fans demands to 0/0 as the system transitions to disabled "
                 "state: {}",
@@ -167,7 +166,7 @@ void SAL_disable::execute() {
         IFPGA::get().setMixingValvePosition(0);
         IFPGA::get().setFCUPower(false);
         Telemetry::FinerControl::instance().set_target(0);
-    } catch (std::runtime_error &er) {
+    } catch (std::runtime_error& er) {
         SPDLOG_WARN(
                 "Cannot close mixing valve or power down FCUs and finer control as the system transitions to "
                 "disabled state: {}",
@@ -235,7 +234,7 @@ void SAL_heaterFanDemand::execute() {
     try {
         Events::FcuTargets::instance().set_FCU_heaters_fans(params.heaterPWM, params.fanRPM);
         ackComplete();
-    } catch (std::exception &e) {
+    } catch (std::exception& e) {
         ackFailed(e.what());
     }
 }
@@ -263,9 +262,7 @@ void SAL_setMixingValve::execute() {
 bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().is_enabled(); }
 
 void SAL_coolantPumpPower::execute() {
-    IFPGA::get().setCoolantPumpPower(params.power);
     if (params.power) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
         TSPublisher::instance().startPumpThread();
     } else {
         TSPublisher::instance().stopPumpThread();
@@ -321,7 +318,7 @@ bool SAL_applySetpoints::validate() {
         return false;
     }
 
-    auto &s_setpoint = Settings::Setpoint::instance();
+    auto& s_setpoint = Settings::Setpoint::instance();
 
     if (params.glycolSetpoint < s_setpoint.low || params.glycolSetpoint > s_setpoint.high) {
         ackFailed(fmt::format(

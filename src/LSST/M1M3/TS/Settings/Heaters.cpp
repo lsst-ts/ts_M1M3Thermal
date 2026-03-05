@@ -62,7 +62,7 @@ void Heaters::load(YAML::Node doc) {
             heaters_PID[i] = new PID::LimitedPID(fcu_pid.at(i), 0, 255);
             SPDLOG_DEBUG("FCU heaters custom PID {} - timestep: {} P: {} I: {} D: {} N: {}", i + 1,
                          fcu_pid[i].timestep, fcu_pid[i].P, fcu_pid[i].I, fcu_pid[i].D, fcu_pid[i].N);
-        } catch (std::out_of_range &ex) {
+        } catch (std::out_of_range& ex) {
             heaters_PID[i] = new PID::LimitedPID(default_params, 0, 255);
         }
     }

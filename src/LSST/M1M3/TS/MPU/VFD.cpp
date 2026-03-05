@@ -41,7 +41,7 @@ void VFD::update() {
     readHoldingRegisters(REGISTERS::DRIVE_ERROR_CODE, 6);
 }
 
-const char *VFD::getDriveError(uint16_t code) {
+const char* VFD::getDriveError(uint16_t code) {
     switch (code) {
         case 0:
             return "No Fault";

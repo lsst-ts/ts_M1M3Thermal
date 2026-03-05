@@ -40,12 +40,9 @@
 using namespace std::chrono_literals;
 using namespace LSST::M1M3::TS;
 
-IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {
-    _next_egw_powerup = std::chrono::steady_clock::now() +
-                        std::chrono::seconds(Settings::GlycolPump::instance().communicationRecoverPowerOff);
-}
+IFPGA::IFPGA() : cRIO::FPGA(cRIO::fpgaType::TS) {}
 
-IFPGA &IFPGA::get() {
+IFPGA& IFPGA::get() {
 #ifdef SIMULATOR
     static SimulatedFPGA simulatedfpga;
     return simulatedfpga;
@@ -74,7 +71,7 @@ uint32_t IFPGA::getSlot4DIs() {
     uint16_t buf = FPGAAddress::SLOT4_DIS;
     writeRequestFIFO(&buf, 1, 1);
     uint32_t ret;
-    readU8ResponseFIFO(reinterpret_cast<uint8_t *>(&ret), 4, 10);
+    readU8ResponseFIFO(reinterpret_cast<uint8_t*>(&ret), 4, 10);
     return ret;
 }
 
@@ -86,16 +83,7 @@ void IFPGA::setFCUPower(bool on) {
 }
 
 void IFPGA::setCoolantPumpPower(bool on) {
-    if (on) {
-        if (_next_egw_powerup > std::chrono::steady_clock::now()) {
-            SPDLOG_INFO("Waiting for EGW pump power down.");
-            std::this_thread::sleep_until(_next_egw_powerup);
-        }
-    } else {
-        _next_egw_powerup =
-                std::chrono::steady_clock::now() +
-                std::chrono::seconds(Settings::GlycolPump::instance().communicationRecoverPowerOff);
-    }
+    SPDLOG_INFO("Turning EGW pump power {}.", on ? "ON" : "OFF");
     uint16_t buf[2];
     buf[0] = FPGAAddress::COOLANT_PUMP_ON;
     buf[1] = on;
@@ -118,7 +106,7 @@ void IFPGA::panic() {
     std::vector<int> zeros(cRIO::NUM_TS_ILC, 0);
     try {
         Events::FcuTargets::instance().set_FCU_heaters_fans(zeros, zeros);
-    } catch (std::exception &ex) {
+    } catch (std::exception& ex) {
         SPDLOG_WARN("Cannot zeroe fans and heaters on panic: {}.", ex.what());
     }
 }

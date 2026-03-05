@@ -67,7 +67,7 @@ void SavedSetpoints::load() {
         } else {
             SPDLOG_INFO("Setpoint file {} doesn't contain valid data, ignoring it.", file_path);
         }
-    } catch (YAML::Exception &ex) {
+    } catch (YAML::Exception& ex) {
         auto msg = fmt::format("Cannot load saved setpoints from {}:{}:{} (line, column): {}", file_path,
                                ex.mark.line, ex.mark.column, ex.what());
         SPDLOG_WARN(msg);
@@ -96,7 +96,7 @@ void SavedSetpoints::save(float glycol, float heaters) {
         ofs << YAML::Dump(doc);
 
         ofs.close();
-    } catch (std::ios_base::failure &e) {
+    } catch (std::ios_base::failure& e) {
         SPDLOG_ERROR("Cannot write setpoints to {} - {} ({} {})", file_path, strerror(errno),
                      e.code().message(), e.code().value());
     }
