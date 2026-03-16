@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.9.1
+------
+
+* Fix EGW pump auto-recovery - power off (auto-recover) the pump in any state.
+
 v2.9.0
 ------
 
