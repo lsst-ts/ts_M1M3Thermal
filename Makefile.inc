@@ -30,7 +30,7 @@ LIBS += $(PKG_LIBS) -ldl -lpthread -L/usr/lib64/boost${BOOST_RELEASE} -lboost_fi
 	-L${LSST_SAL_PREFIX}/lib -L${SAL_WORK_DIR}/lib -lcurl -lrdkafka++ -lrdkafka -lavrocpp -lavro -ljansson -lserdes++ -lserdes -lsasl2
 LIBS_FLAGS += -L${LSST_SAL_PREFIX}/lib
 
-PKG_LIBS := $(shell pkg-config yaml-cpp spdlog fmt --libs $(silence)) 
+PKG_LIBS := $(shell pkg-config yaml-cpp spdlog fmt --libs $(silence))
 
 CPP := g++ -std=c++17 -Wall -fPIE ${c_opts}
 
