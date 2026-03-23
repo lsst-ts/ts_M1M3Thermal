@@ -28,7 +28,13 @@ from lsst.ts.salobj import Domain, Remote, State
 class CSCTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_commands(self) -> None:
         async with Domain() as domain, Remote(domain=domain, name="MTM1M3TS") as m1m3ts:
-            await m1m3ts.cmd_start.start()
+            await m1m3ts.cmd_start.start(timeout=60)
+
             await asyncio.sleep(10)
             await m1m3ts.cmd_enable.start()
+
+            await asyncio.sleep(10)
             assert m1m3ts.evt_summaryState.get().summaryState == State.ENABLED
+
+            await m1m3ts.cmd_disable.start()
+            await m1m3ts.cmd_standby.start()
