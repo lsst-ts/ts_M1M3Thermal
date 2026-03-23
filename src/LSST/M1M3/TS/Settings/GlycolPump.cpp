@@ -39,6 +39,7 @@ void GlycolPump::load(YAML::Node doc) {
     startupFrequency = doc["StartupFrequency"].as<float>();
 
     communicationStartupDelay = doc["Communication"]["StartupDelay"].as<int>();
+    communicationStartedFine = doc["Communication"]["StartedFine"].as<int>();
     communicationTimeout = doc["Communication"]["Timeout"].as<int>();
     communicationAutoRecoverAttempts = doc["Communication"]["AutoRecoverAttempts"].as<int>();
     communicationRecoverPowerOff = doc["Communication"]["RecoverPowerOff"].as<int>();

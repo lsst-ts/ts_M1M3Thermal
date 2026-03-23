@@ -88,6 +88,7 @@ private:
     int _recovery_left_attempts;
     int _success_count;
     std::chrono::steady_clock::time_point _startup_delay_passed;
+    std::chrono::steady_clock::time_point _startup_fine_passed;
     std::chrono::steady_clock::time_point _fail_after;
     std::chrono::steady_clock::time_point _power_on_at;
 };

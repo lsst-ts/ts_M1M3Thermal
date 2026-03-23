@@ -15,6 +15,7 @@ GlycolPump:
     # Timeout in seconds. When no data are received for the given period, CSC
     # will either fault or try to recover, based on the AutoRecoverAttempts
     # value and history of previous recoveries.
+    StartedFine: 120
     Timeout: 120
     # On communication timeout, outside of the engineering mode, try to
     # autorecover - turn off the pump power, wait for RecoverPowerOff seconds, turn the power back.

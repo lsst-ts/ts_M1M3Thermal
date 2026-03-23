@@ -47,6 +47,7 @@ public:
     bool enabled;
     float startupFrequency;
     int communicationStartupDelay;
+    int communicationStartedFine;
     int communicationTimeout;
     int communicationAutoRecoverAttempts;
     int communicationRecoverPowerOff;

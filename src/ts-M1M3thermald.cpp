@@ -100,9 +100,9 @@ void M1M3thermald::init() {
     TSApplication::instance().setILC(ilc);
 
 #ifdef SIMULATOR
-    SPDLOG_WARN("Starting Simulator version! Version {}", VERSION);
+    SPDLOG_WARN("Starting Simulator version! Version {}.", VERSION);
 #else
-    SPDLOG_INFO("Starting cRIO/real HW version. Version {}", VERSION);
+    SPDLOG_INFO("Starting cRIO/real HW version. Version {}.", VERSION);
 #endif
 
     SPDLOG_INFO("Creating publisher");
@@ -132,12 +132,12 @@ void M1M3thermald::done() {
     TSPublisher::instance().stopFlowMeterThread();
     TSPublisher::instance().stopPumpThread();
 
-    SPDLOG_INFO("Shutting down M1M3thermald");
+    SPDLOG_INFO("Shutting down M1M3TS CSC.");
     removeSink();
 
     std::this_thread::sleep_for(10ms);
 
-    SPDLOG_INFO("Main: Shutting down M1M3 TS SAL");
+    SPDLOG_INFO("Main: Shutting down M1M3TS SAL.");
     _m1m3tsSAL->salShutdown();
 }
 
