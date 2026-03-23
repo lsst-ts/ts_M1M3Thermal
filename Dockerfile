@@ -1,39 +1,100 @@
-FROM lsstts/develop-env:develop as crio-develop
-
-ARG XML_BRANCH=develop
+FROM lsstts/develop-env:develop AS crio-develop
 
 USER root
-RUN chmod a+rwX -R /home/saluser/
+RUN cd /opt/lsst/tssw/ && git clone https://github.com/apache/avro 
+
+RUN source /home/saluser/.setup_salobj.sh && cd /opt/lsst/tssw/avro/lang/c \
+    && cmake . && make && make install \
+    && cd ../c++ && cmake . && make && make install
+
+RUN cd /opt/lsst/tssw/ && git clone https://github.com/confluentinc/libserdes 
+
+COPY libserdes.patch /opt/lsst/tssw/libserdes
+RUN source /home/saluser/.setup_salobj.sh && cd /opt/lsst/tssw/libserdes \
+    && patch -p1 < libserdes.patch
+
+RUN source /home/saluser/.setup_salobj.sh \
+    && export CPATH="/usr/local/include" \
+    && export LIBRARY_PATH="/usr/local/lib64:/opt/lsst/tssw/ts_sal/lib" \
+    && cd /opt/lsst/tssw/libserdes && ./configure && make && make install
+
 USER saluser
-
-ARG XML_BRANCH=main
-
+ARG XML_BRANCH=develop
 WORKDIR /home/saluser
 
-RUN source ~/.setup.sh \
-    && mamba install -y readline yaml-cpp catch2 spdlog \
+RUN source ~/.setup_salobj.sh \
+    && mamba install -y readline yaml-cpp catch2 spdlog texlive-core ghostscript 
+
+RUN source ~/.setup_salobj.sh \
     && echo > .crio_setup.sh -e \
 echo "Configuring cRIO development environment" \\n\
-export SHELL=bash \\n\
-source /home/saluser/.setup_salobj.sh \\n\
-export PATH=\$CONDA_PREFIX/bin:\$PATH \\n\
-export LIBS="-L\$CONDA_PREFIX/lib" \\n\
-export CPP_FLAGS="-I\$CONDA_PREFIX/include" \\n
+export SAL_HOME=/opt/lsst/tssw/ts_sal/lsstsal\\n\
+export SAL_WORK_DIR=/home/saluser/repos/ts_sal/test\\n\
+export LSST_KAFKA_PREFIX=sal\\n\
+export LSST_KAFKA_SECURITY_MECHANISM=SCRAM-SHA-512\\n\
+export LSST_KAFKA_CLASSDIR=/opt/lsst/tssw/ts_sal/lib\\n\
+export LSST_KAFKA_IP=\\n\
+export LSST_KAFKA_SECURITY_PROTOCOL=SASL_SSL\\n\
+export AVRO_RELEASE=1.11.3\\n\
+export LSST_TOPIC_SUBNAME=sal\\n\
+\\n\
+export LSST_SAL_PREFIX=/usr/local\\n\
+\\n\
+export LSST_KAFKA_LOCAL_SCHEMAS=$SAL_WORK_DIR\\n\
+\\n\
+export TS_CONFIG_OCS_DIR=/lsst/ts_config_ocs/\\n\
+\\n\
+export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig\\n\
+\\n\
+export LIBRARY_PATH=/usr/local/lib64:/usr/local/lib:/opt/lsst/tssw/ts_sal/lib\\n\
+export LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib\\n\
+\\n\
+source /home/saluser/.setup_salobj.sh \
+source /opt/lsst/tssw/ts_sal/setupKafka.env \
+\\n\
+setup ts_idl -t current \\n\
+setup ts_sal -t current \\n\
+setup ts_salobj -t current \\n\
+setup ts_xml -t current \\n\
+\\n\
+export CPATH=/usr/local/include\\n\
+\\n\
+export SAL_DIR=/opt/lsst/tssw/ts_sal/lsstsal/scripts\\n\
+\\n\
+export LSST_KAFKA_LOCAL_SCHEMAS=\${SAL_WORK_DIR}
 
-RUN source ~/.crio_setup.sh && cd $TS_XML_DIR \
-    && ~/.checkout_repo.sh $XML_BRANCH develop && git pull \
+ARG KAFKA_HOST=
+ARG KAFKA_BROKER_PORT=
+ARG SCHEMA_REGISTRY_URI=
+
+RUN [ -z $KAFKA_HOST -o -z $KAFKA_BROKER_PORT ] || echo >> .crio_setup.sh -e \
+\\n\
+export LSST_KAFKA_BROKER_ADDR="${KAFKA_HOST}:${KAFKA_BROKER_PORT}"\\n\
+export LSST_KAFKA_HOST=${KAFKA_HOST}\\n\
+export LSST_KAFKA_BROKER_PORT=${KAFKA_BROKER_PORT}
+
+RUN [ -z $SCHEMA_REGISTRY_URI ] || echo >> .crio_setup.sh -e \
+\\n\
+export LSST_SCHEMA_REGISTRY_URL=${SCHEMA_REGISTRY_URI}
+
+RUN source ~/.crio_setup.sh \
+    && cd $TS_XML_DIR \
+    && git fetch && git checkout $XML_BRANCH && git pull \
+    && pip install .
+
+RUN source ~/.crio_setup.sh \
     && salgeneratorKafka generate cpp MTM1M3TS
 
-FROM crio-develop
-
-ARG cRIO_CPP=v1.11.0
+ARG cRIO_CPP=v1.16.1
 ARG M1M3_THERMAL=develop
-ARG TARGET="SIMULATOR=1"
+ARG TARGET=simulator
 
-RUN cd repos && git clone --branch $cRIO_CPP https://github.com/lsst-ts/ts_cRIOcpp
-RUN source ~/.crio_setup.sh && cd repos/ts_cRIOcpp && make
+RUN source ~/.crio_setup.sh \
+    && git clone --branch $cRIO_CPP https://github.com/lsst-ts/ts_cRIOcpp \
+    && cd ts_cRIOcpp && make
 
-RUN cd repos && git clone --branch $M1M3_THERMAL https://github.com/lsst-ts/ts_m1m3thermal
-RUN source ~/.crio_setup.sh && cd repos/ts_m1m3thermal && make $TARGET
+RUN source ~/.crio_setup.sh \
+    && git clone --branch $M1M3_THERMAL https://github.com/lsst-ts/ts_m1m3thermal \
+    && cd ts_m1m3thermal && make $TARGET
 
 SHELL ["/bin/bash", "-lc"]

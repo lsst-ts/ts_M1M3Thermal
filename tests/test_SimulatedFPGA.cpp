@@ -56,7 +56,7 @@ void TestILC::processServerID(uint8_t address, uint64_t uniqueID, uint8_t ilcApp
                               uint8_t minorRev, std::string firmwareName) {
     REQUIRE(address == 16);
     REQUIRE(uniqueID == 0x040302010000 + (static_cast<uint64_t>(address) << 40));
-    REQUIRE(ilcAppType == 0x02);
+    REQUIRE(ilcAppType == 0x03);
     REQUIRE(networkNodeType == 0x02);
     REQUIRE(ilcSelectedOptions == 0x02);
     REQUIRE(networkNodeOptions == 0x00);

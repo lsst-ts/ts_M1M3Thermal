@@ -110,7 +110,6 @@ void PumpThread::startup() {
 void PumpThread::poweron() {
     IFPGA::get().setCoolantPumpPower(false);
     auto& pump_settings = Settings::GlycolPump::instance();
-    _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
     _power_on_at = std::chrono::steady_clock::now() +
                    std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
     {
@@ -122,7 +121,6 @@ void PumpThread::poweron() {
 void PumpThread::auto_recover() {
     IFPGA::get().setCoolantPumpPower(false);
     auto& pump_settings = Settings::GlycolPump::instance();
-    _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
     _power_on_at = std::chrono::steady_clock::now() +
                    std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
     {
@@ -145,7 +143,7 @@ bool PumpThread::_run_loop() {
             return true;
         }
 
-        if (n_r == STARTUP && std::chrono::steady_clock::now() < _startup_delay_passed) {
+        if (std::chrono::steady_clock::now() < _startup_delay_passed) {
             return true;
         }
 
@@ -166,6 +164,8 @@ bool PumpThread::_run_loop() {
 
         _fail_after =
                 std::chrono::steady_clock::now() + std::chrono::seconds(pump_settings.communicationTimeout);
+
+        _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
 
         salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
         if (ret != SAL__OK) {
@@ -192,22 +192,20 @@ bool PumpThread::_run_loop() {
 
         SPDLOG_WARN("Error in running Glycol Pump thread: {}", ex.what());
         _success_count = 0;
-        if (n_r == STARTUP) {
-            if (_recovery_left_attempts > 0) {
-                SPDLOG_INFO("Queing again failed startup sequence - try {}/{}.",
-                            pump_settings.communicationAutoRecoverAttempts + 1 - _recovery_left_attempts,
-                            pump_settings.communicationAutoRecoverAttempts);
-                _recovery_left_attempts--;
-                auto_recover();
-            } else {
-                Events::SummaryState::instance().fail(
-                        Events::ErrorCode::EGWPumpStartup,
-                        fmt::format("Run out of allowed auto-recovery attempts {} - cannot start the EGW "
-                                    "pump.",
-                                    pump_settings.communicationAutoRecoverAttempts),
-                        "");
-                return false;
-            }
+        if (_recovery_left_attempts > 0) {
+            SPDLOG_INFO("Queing again failed auto-recover sequence - try {}/{}.",
+                        pump_settings.communicationAutoRecoverAttempts + 1 - _recovery_left_attempts,
+                        pump_settings.communicationAutoRecoverAttempts);
+            _recovery_left_attempts--;
+            auto_recover();
+        } else {
+            Events::SummaryState::instance().fail(
+                    Events::ErrorCode::EGWPumpStartup,
+                    fmt::format("Run out of allowed auto-recovery attempts {} - cannot start the EGW "
+                                "pump.",
+                                pump_settings.communicationAutoRecoverAttempts),
+                    "");
+            return false;
         }
         try {
             auto buf = _transport->read(200, 2s, this);
@@ -264,6 +262,8 @@ request_type PumpThread::_check_commands() {
             case POWERON:
                 if (std::chrono::steady_clock::now() > _power_on_at) {
                     IFPGA::get().setCoolantPumpPower(true);
+                    _startup_delay_passed = std::chrono::steady_clock::now() +
+                                            std::chrono::seconds(pump_settings.communicationStartupDelay);
                 } else {
                     keep = true;
                 }
@@ -271,10 +271,10 @@ request_type PumpThread::_check_commands() {
             case AUTO_RECOVER:
                 if (std::chrono::steady_clock::now() > _power_on_at) {
                     IFPGA::get().setCoolantPumpPower(true);
+                    _startup_delay_passed = std::chrono::steady_clock::now() +
+                                            std::chrono::seconds(pump_settings.communicationStartupDelay);
                     if (Events::SummaryState::instance().enabled() &&
                         !Events::EngineeringMode::instance().is_enabled()) {
-                        _startup_delay_passed = std::chrono::steady_clock::now() +
-                                                std::chrono::seconds(pump_settings.communicationStartupDelay);
                         _next_requests.push_back(STARTUP);
                     }
                 } else {

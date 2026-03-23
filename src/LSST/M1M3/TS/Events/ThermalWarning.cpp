@@ -50,6 +50,8 @@ ThermalWarning::ThermalWarning(token) {
     anyEventTrapReset = false;
     anySSRPowerFault = false;
     anyAuxPowerFault = false;
+
+    _updated = true;
 }
 
 void ThermalWarning::update(uint8_t _address, uint8_t mode, uint16_t status, uint16_t faults) {
@@ -108,5 +110,7 @@ void ThermalWarning::send() {
         anyAuxPowerFault = check_any(auxPowerFault);
 
         TSPublisher::instance().logThermalWarning(this);
+
+        _updated = false;
     }
 }
