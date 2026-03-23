@@ -68,13 +68,34 @@ node {
                     cd $WORKSPACE/ts_m1m3thermal
                     make SIMULATOR=1
 
-                    export LSST_KAFKA_HOST="35.85.18.232"
-                    export LSST_KAFKA_BROKER_PORT="9092"
-                    export LSST_SCHEMA_REGISTRY_URL="http://35.85.18.232:8081"
-
                     make SIMULATOR=1 junit
                  """
              }
+        }
+
+    }
+
+    stage('Running container')
+    {
+        withEnv(["SALUSER_HOME=" + SALUSER_HOME]){
+            M1M3sim.inside("--entrypoint=''") {
+                sh """
+                    source $SALUSER_HOME/.crio_setup.sh
+
+                    create_topics MTM1M3TS
+
+                    cd $WORKSPACE/ts_m1m3thermal
+                    ./ts-M1M3thermald -c SettingFiles &
+ 
+                    echo "Waiting for 30 seconds"
+                    sleep 30
+
+                    pytest --junit-xml=tests/test_CSC.xml tests
+
+                    sleep 30
+                    killall ts-M1M3thermald
+                """
+            }
         }
 
         junit 'ts_m1m3thermal/tests/*.xml'
@@ -89,35 +110,6 @@ node {
                 make doc
              """
          }
-    }
-
-    stage('Running container')
-    {
-        withEnv(["SALUSER_HOME=" + SALUSER_HOME]){
-            M1M3sim.inside("--entrypoint=''") {
-                sh """
-                    source $SALUSER_HOME/.crio_setup.sh
-
-                    export LSST_KAFKA_HOST="35.85.18.232"
-                    export LSST_KAFKA_BROKER_PORT="9092"
-                    export LSST_KAFKA_BROKER_ADDR="35.85.18.232:9092"
-                    export LSST_SCHEMA_REGISTRY_URL="http://35.85.18.232:8081"
-
-                    create_topics MTM1M3TS
-
-                    cd $WORKSPACE/ts_m1m3thermal
-                    ./ts-M1M3thermald -c SettingFiles &
- 
-                    echo "Waiting for 30 seconds"
-                    sleep 30
- 
-                    cd $SALUSER_HOME/repos
-                    ./ts_sal/test/MTM1M3TS/cpp/src/sacpp_MTM1M3TS_start_commander Default
-                    sleep 30
-                    killall ts-M1M3thermald
-                """
-            }
-        }
     }
 
     if (BRANCH == "main" || BRANCH == "develop")
