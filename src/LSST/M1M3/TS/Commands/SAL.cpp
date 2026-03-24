@@ -78,7 +78,9 @@ void SAL_start::execute() {
 
     Events::ErrorCode::instance().clear("CSC started");
 
+    Telemetry::FinerControl::instance().reset_move_timeout();
     Telemetry::FinerControl::instance().set_target(0);
+
     IFPGA::get().setMixingValvePosition(0);
 
     try {

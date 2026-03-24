@@ -76,9 +76,7 @@ void FinerControl::set_target(float demand) {
         // move to demand after mixing valve moves close enough to
         // _comp_setpoint target.
         _last_setpoint = demand;
-        _move_timeout =
-                std::chrono::steady_clock::now() +
-                std::chrono::milliseconds((int)(Settings::MixingValve::instance().maxMovingTime * 1000));
+        reset_move_timeout();
     }
 }
 
@@ -102,7 +100,7 @@ float FinerControl::get_target(float valve_position) {
         case MOVING_TO_COMPENSATED_TARGET:
             if (abs(valve_position - _comp_setpoint) < mixing_settings.inPosition && transition) {
                 state = MOVING_TO_TARGET;
-                _move_timeout = now + std::chrono::milliseconds((int)(mixing_settings.maxMovingTime * 1000));
+                reset_move_timeout();
                 return _last_setpoint;
             }
             if (now >= _move_timeout) {
@@ -147,4 +145,9 @@ float FinerControl::get_target(float valve_position) {
         default:
             return _last_setpoint;
     }
+}
+
+void FinerControl::reset_move_timeout() {
+    _move_timeout = std::chrono::steady_clock::now() +
+                    std::chrono::milliseconds((int)(Settings::MixingValve::instance().maxMovingTime * 1000));
 }
