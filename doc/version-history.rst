@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.9.2
+------
+
+* Fail CSC if the VFD pump speed cannot be set and maintained.
+
 v2.9.1
 ------
 

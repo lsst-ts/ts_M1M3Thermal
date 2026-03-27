@@ -62,6 +62,8 @@ public:
      */
     float get_target(float valve_position);
 
+    void reset_move_timeout();
+
     /***
      * State machine states.
      *

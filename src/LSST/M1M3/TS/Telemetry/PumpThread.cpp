@@ -55,6 +55,7 @@ PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
     auto now = std::chrono::steady_clock::now();
 
     _startup_delay_passed = now + std::chrono::seconds(pump_settings.communicationStartupDelay);
+    _startup_fine_passed = now + std::chrono::seconds(pump_settings.communicationStartedFine);
     _fail_after = now + std::chrono::seconds(pump_settings.communicationTimeout);
     _power_on_at = now + std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
 }
@@ -66,7 +67,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
 
     SPDLOG_INFO("Running Pump Thread.");
     while (keepRunning) {
-        auto end = std::chrono::steady_clock::now() + 2s;
+        auto end = std::chrono::steady_clock::now() + 8s;
 
         if (_run_loop() == false) {
             break;
@@ -162,10 +163,15 @@ bool PumpThread::_run_loop() {
         busVoltage = vfd.getDCBusVoltage();
         outputVoltage = vfd.getOutputVoltage();
 
-        _fail_after =
-                std::chrono::steady_clock::now() + std::chrono::seconds(pump_settings.communicationTimeout);
+        auto now = std::chrono::steady_clock::now();
 
-        _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
+        _fail_after = now + std::chrono::seconds(pump_settings.communicationTimeout);
+
+        if (n_r == NOP && _recovery_left_attempts != pump_settings.communicationAutoRecoverAttempts &&
+            now > _startup_fine_passed) {
+            SPDLOG_INFO("Pump running fine so far, reseting startup counter.");
+            _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
+        }
 
         salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
         if (ret != SAL__OK) {
@@ -180,6 +186,7 @@ bool PumpThread::_run_loop() {
                             "Mostly likely CSC has to be restarted to recover.",
                             ni_error.what()),
                 "");
+        return false;
     } catch (std::exception& ex) {
         if (_fail_after < std::chrono::steady_clock::now()) {
             Events::SummaryState::instance().fail(
@@ -212,6 +219,7 @@ bool PumpThread::_run_loop() {
             if (!(buf.empty())) {
                 SPDLOG_ERROR("Read \"{}\" after error.", Modbus::hexDump(buf));
             }
+            _transport->flush();
         } catch (std::exception& ex) {
             Events::SummaryState::instance().fail(
                     Events::ErrorCode::EGWPump,
@@ -229,6 +237,7 @@ request_type PumpThread::_check_commands() {
     std::lock_guard<std::mutex> lg(_requests_lock);
 
     auto& pump_settings = Settings::GlycolPump::instance();
+    auto now = std::chrono::steady_clock::now();
 
     if (not(_next_requests.empty())) {
         n_r = _next_requests.front();
@@ -253,6 +262,8 @@ request_type PumpThread::_check_commands() {
                     vfd.set_frequency(freq);
                     vfd.start();
 
+                    _startup_fine_passed = now + std::chrono::seconds(pump_settings.communicationStartedFine);
+
                     SPDLOG_INFO("Commanded pump to start at frequency {} Hz.", freq);
                 } else {
                     // repeat poweron - but don't lock again mutex
@@ -262,8 +273,8 @@ request_type PumpThread::_check_commands() {
             case POWERON:
                 if (std::chrono::steady_clock::now() > _power_on_at) {
                     IFPGA::get().setCoolantPumpPower(true);
-                    _startup_delay_passed = std::chrono::steady_clock::now() +
-                                            std::chrono::seconds(pump_settings.communicationStartupDelay);
+                    _startup_delay_passed =
+                            now + std::chrono::seconds(pump_settings.communicationStartupDelay);
                 } else {
                     keep = true;
                 }
@@ -271,8 +282,8 @@ request_type PumpThread::_check_commands() {
             case AUTO_RECOVER:
                 if (std::chrono::steady_clock::now() > _power_on_at) {
                     IFPGA::get().setCoolantPumpPower(true);
-                    _startup_delay_passed = std::chrono::steady_clock::now() +
-                                            std::chrono::seconds(pump_settings.communicationStartupDelay);
+                    _startup_delay_passed =
+                            now + std::chrono::seconds(pump_settings.communicationStartupDelay);
                     if (Events::SummaryState::instance().enabled() &&
                         !Events::EngineeringMode::instance().is_enabled()) {
                         _next_requests.push_back(STARTUP);
