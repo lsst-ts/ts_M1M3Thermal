@@ -67,7 +67,7 @@ void PumpThread::run(std::unique_lock<std::mutex>& lock) {
 
     SPDLOG_INFO("Running Pump Thread.");
     while (keepRunning) {
-        auto end = std::chrono::steady_clock::now() + 2s;
+        auto end = std::chrono::steady_clock::now() + 8s;
 
         if (_run_loop() == false) {
             break;

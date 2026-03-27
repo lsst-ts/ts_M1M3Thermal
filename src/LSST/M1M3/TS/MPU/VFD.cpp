@@ -30,15 +30,15 @@
 using namespace LSST::M1M3::TS;
 
 void VFD::readInfo() {
-    readHoldingRegisters(REGISTERS::SPEED_FEEDBACK, 1, 1500);
-    readHoldingRegisters(REGISTERS::DRIVE_STATUS_2, 1, 1500);
+    readHoldingRegisters(REGISTERS::SPEED_FEEDBACK, 1, 3000);
+    readHoldingRegisters(REGISTERS::DRIVE_STATUS_2, 1, 3000);
     readHoldingRegisters(REGISTERS::COMMAND, 3, 1500);
-    readHoldingRegisters(REGISTERS::VELOCITY_BITS, 7, 1500);
+    readHoldingRegisters(REGISTERS::VELOCITY_BITS, 7, 3000);
 }
 
 void VFD::update() {
-    readHoldingRegisters(REGISTERS::DRIVE_STATUS_2, 1, 1500);
-    readHoldingRegisters(REGISTERS::DRIVE_ERROR_CODE, 6);
+    readHoldingRegisters(REGISTERS::DRIVE_STATUS_2, 1, 3000);
+    readHoldingRegisters(REGISTERS::DRIVE_ERROR_CODE, 6, 3000);
 }
 
 const char* VFD::getDriveError(uint16_t code) {
