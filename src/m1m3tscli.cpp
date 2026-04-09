@@ -34,6 +34,8 @@
 #include <cRIO/PrintILC.h>
 #include <cRIO/ThermalILC.h>
 
+#include <Transports/FPGASerialPort.h>
+
 #ifndef SIMULATOR
 #include <Transports/FPGASerialDevice.h>
 #endif
@@ -109,6 +111,7 @@ public:
     int ilcPower(command_vec);
 
 protected:
+    virtual void processArg(int opt, char* optarg) override;
     virtual FPGA* newFPGA(const char* dir, bool& fpga_singleton) override;
     virtual ILCUnits getILCs(command_vec cmds) override;
 
@@ -124,6 +127,8 @@ private:
 
     std::shared_ptr<Transports::Transport> _flow_meter_1_device, _flow_meter_2_device, _vfd_device,
             _glycol_temperature_device;
+
+    bool _open_terminals = false;
 };
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
@@ -215,6 +220,8 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
     vfd = std::make_shared<VFDPrint>();
     addMPU("vfd", vfd);
 
+    addArgument('t', "open virtual terminals for the serial ports");
+
 #ifdef SIMULATOR
     std::cout << "Starting SIMULATED m1m3tscli!" << std::endl;
 #endif
@@ -231,17 +238,39 @@ int M1M3TScli::openFPGA(command_vec cmds) {
 #else
     int session = dynamic_cast<ThermalFPGA*>(getFPGA())->getSession();
 
-    _flow_meter_1_device = std::make_shared<PrintFPGASerialDevice>(
-            session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
-            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read, 10ms);
+    if (_open_terminals) {
+        _flow_meter_1_device = std::make_shared<Transports::FPGASerialPort>(
+                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
+                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read, "Flow 1", 10ms);
 
-    _flow_meter_2_device = std::make_shared<PrintFPGASerialDevice>(
-            session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter2Write,
-            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter2Read, 10ms);
+        _flow_meter_2_device = std::make_shared<Transports::FPGASerialPort>(
+                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter2Write,
+                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter2Read, "Flow 2", 10ms);
 
-    _vfd_device = std::make_shared<PrintFPGASerialDevice>(
-            session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite,
-            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead, 10ms);
+        _vfd_device = std::make_shared<Transports::FPGASerialPort>(
+                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite,
+                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead, "VFD", 10ms);
+
+        dynamic_cast<Transports::FPGASerialPort*>(_flow_meter_1_device.get())->init_pt();
+        dynamic_cast<Transports::FPGASerialPort*>(_flow_meter_2_device.get())->init_pt();
+        dynamic_cast<Transports::FPGASerialPort*>(_vfd_device.get())->init_pt();
+
+        dynamic_cast<Transports::FPGASerialPort*>(_flow_meter_1_device.get())->start();
+        dynamic_cast<Transports::FPGASerialPort*>(_flow_meter_2_device.get())->start();
+        dynamic_cast<Transports::FPGASerialPort*>(_vfd_device.get())->start();
+    } else {
+        _flow_meter_1_device = std::make_shared<PrintFPGASerialDevice>(
+                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
+                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read, 10ms);
+
+        _flow_meter_2_device = std::make_shared<PrintFPGASerialDevice>(
+                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter2Write,
+                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter2Read, 10ms);
+
+        _vfd_device = std::make_shared<PrintFPGASerialDevice>(
+                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite,
+                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead, 10ms);
+    }
 
     _glycol_temperature_device = std::make_shared<Transports::FPGASerialDevice>(
             session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_CoolantTempWrite,
@@ -423,6 +452,16 @@ int M1M3TScli::fcuOnOff(command_vec cmds) {
 }
 
 int M1M3TScli::pumpOnOff(command_vec cmds) { return 0; }
+
+void M1M3TScli::processArg(int opt, char* optarg) {
+    switch (opt) {
+        case 't':
+            _open_terminals = true;
+            break;
+        default:
+            FPGACliApp::processArg(opt, optarg);
+    };
+}
 
 FPGA* M1M3TScli::newFPGA(const char* dir, bool& fpga_singleton) { return new PrintTSFPGA(); }
 

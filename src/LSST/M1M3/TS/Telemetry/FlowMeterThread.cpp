@@ -60,10 +60,6 @@ void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
             positiveTotalizer = get_positive_totalizer();
             negativeTotalizer = get_negative_totalizer();
 
-            salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
-            if (ret != SAL__OK) {
-                SPDLOG_WARN("Cannot send FlowMeter: {}", ret);
-            }
             error_count = 0;
         } catch (std::runtime_error& er) {
             if (error_count == 0) {
