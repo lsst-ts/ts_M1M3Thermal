@@ -129,7 +129,7 @@ void M1M3thermald::done() {
     Events::SummaryState::set_state(MTM1M3TS::MTM1M3TS_shared_SummaryStates_OfflineState);
 
     LSST::cRIO::ControllerThread::instance().stop();
-    TSPublisher::instance().stopFlowMeterThread();
+    // TSPublisher::instance().stopFlowMeterThread();
     TSPublisher::instance().stopPumpThread();
 
     SPDLOG_INFO("Shutting down M1M3thermald");

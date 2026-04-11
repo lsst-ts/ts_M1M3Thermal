@@ -63,13 +63,13 @@ public:
         _m1m3TSSAL->logEvent_thermalWarning(data, 0);
     }
 
-    void startFlowMeterThread();
+    // void startFlowMeterThread();
     void startGlycolTemperatureThread();
     void startPumpThread();
     void powerOnPump();
     void startupPump();
 
-    void stopFlowMeterThread();
+    // void stopFlowMeterThread();
     void stopGlycolTemperatureThread();
     void stopPumpThread();
 
@@ -82,7 +82,7 @@ private:
 
     MTM1M3TS_logevent_logLevelC _logLevel;
 
-    Telemetry::FlowMeterThread* _flow_meter_thread;
+    // Telemetry::FlowMeterThread* _flow_meter_thread;
     Telemetry::GlycolTemperatureThread* _glycolTemperatureThread;
 };
 

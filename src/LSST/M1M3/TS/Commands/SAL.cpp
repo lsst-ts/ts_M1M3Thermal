@@ -97,7 +97,7 @@ void SAL_start::execute() {
     }
 
     if (Settings::FlowMeter::instance().enabled) {
-        TSPublisher::instance().startFlowMeterThread();
+        // TSPublisher::instance().startFlowMeterThread();
     } else {
         SPDLOG_WARN("Skipping flow meter telemetry - the flow meter wasn't enabled in the M1M3TS config.");
     }
@@ -178,7 +178,7 @@ void SAL_disable::execute() {
 }
 
 void SAL_standby::execute() {
-    TSPublisher::instance().stopFlowMeterThread();
+    // TSPublisher::instance().stopFlowMeterThread();
     TSPublisher::instance().stopPumpThread();
     IFPGA::get().setCoolantPumpPower(false);
 

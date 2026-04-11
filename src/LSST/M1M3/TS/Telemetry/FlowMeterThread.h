@@ -38,15 +38,15 @@ namespace Telemetry {
  * Thread reading out flow meter values. Started from TSPublisher when CSC
  * enteres disabled state, updates SAL flow meter telemetery.
  */
-class FlowMeterThread final : public cRIO::Thread, public FlowMeter, MTM1M3TS_flowMeterC {
-public:
-    FlowMeterThread(std::shared_ptr<Transports::Transport> transport);
+// class FlowMeterThread final : public cRIO::Thread, public FlowMeter, MTM1M3TS_flowMeterC {
+// public:
+//     FlowMeterThread(std::shared_ptr<Transports::Transport> transport);
 
-    void run(std::unique_lock<std::mutex>& lock) override;
+//     void run(std::unique_lock<std::mutex>& lock) override;
 
-private:
-    std::shared_ptr<Transports::Transport> _transport;
-};
+// private:
+//     std::shared_ptr<Transports::Transport> _transport;
+// };
 
 }  // namespace Telemetry
 }  // namespace TS

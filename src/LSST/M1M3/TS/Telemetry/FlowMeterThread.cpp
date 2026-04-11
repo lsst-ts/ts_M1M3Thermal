@@ -31,48 +31,48 @@
 using namespace LSST::M1M3::TS::Telemetry;
 using namespace std::chrono_literals;
 
-FlowMeterThread::FlowMeterThread(std::shared_ptr<Transports::Transport> transport) {
-    _transport = transport;
-    signalStrength = NAN;
-    flowRate = NAN;
-    netTotalizer = NAN;
-    positiveTotalizer = NAN;
-    negativeTotalizer = NAN;
-}
+// FlowMeterThread::FlowMeterThread(std::shared_ptr<Transports::Transport> transport) {
+//     _transport = transport;
+//     signalStrength = NAN;
+//     flowRate = NAN;
+//     netTotalizer = NAN;
+//     positiveTotalizer = NAN;
+//     negativeTotalizer = NAN;
+// }
 
-void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
-    SPDLOG_DEBUG("Running Flow Meter Thread.");
-    int error_count = 0;
+// void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
+//     SPDLOG_DEBUG("Running Flow Meter Thread.");
+//     int error_count = 0;
 
-    while (keepRunning) {
-        auto end = std::chrono::steady_clock::now() + 2s;
+//     while (keepRunning) {
+//         auto end = std::chrono::steady_clock::now() + 2s;
 
-        try {
-            read_telemetry();
+//         try {
+//             read_telemetry();
 
-            _transport->commands(*this, 2s, this);
+//             _transport->commands(*this, 2s, this);
 
-            SPDLOG_TRACE("Sending FlowMeterMPUStatus");
+//             SPDLOG_TRACE("Sending FlowMeterMPUStatus");
 
-            signalStrength = get_signal_strength();
-            flowRate = get_flow_rate();
-            netTotalizer = get_net_totalizer();
-            positiveTotalizer = get_positive_totalizer();
-            negativeTotalizer = get_negative_totalizer();
+//             signalStrength = get_signal_strength();
+//             flowRate = get_flow_rate();
+//             netTotalizer = get_net_totalizer();
+//             positiveTotalizer = get_positive_totalizer();
+//             negativeTotalizer = get_negative_totalizer();
 
-            salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
-            if (ret != SAL__OK) {
-                SPDLOG_WARN("Cannot send FlowMeter: {}", ret);
-            }
-            error_count = 0;
-        } catch (std::runtime_error& er) {
-            if (error_count == 0) {
-                SPDLOG_ERROR("Error in Flow Meter telemetry readout: {}", er.what());
-            }
-            error_count++;
-        }
+//             salReturn ret = TSPublisher::SAL()->putSample_flowMeter(this);
+//             if (ret != SAL__OK) {
+//                 SPDLOG_WARN("Cannot send FlowMeter: {}", ret);
+//             }
+//             error_count = 0;
+//         } catch (std::runtime_error& er) {
+//             if (error_count == 0) {
+//                 SPDLOG_ERROR("Error in Flow Meter telemetry readout: {}", er.what());
+//             }
+//             error_count++;
+//         }
 
-        runCondition.wait_until(lock, end);
-    }
-    SPDLOG_DEBUG("Flow Meter Thread Stopped.");
-}
+//         runCondition.wait_until(lock, end);
+//     }
+//     SPDLOG_DEBUG("Flow Meter Thread Stopped.");
+// }
