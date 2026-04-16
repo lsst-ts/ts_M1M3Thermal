@@ -52,20 +52,20 @@ bool AppliedSetpoints::is_valid() { return !(isnan(glycolSetpoint) || isnan(heat
 
 std::pair<bool, bool> AppliedSetpoints::set_applied_setpoints(float new_glycol_setpoint,
                                                               float new_heaters_setpoint) {
-    std::pair<bool, bool> ret(false, false);
+    std::pair<bool, bool> ret(true, true);
 
     const auto& mixing_settings = Settings::MixingValve::instance();
 
     if (glycolSetpoint != new_glycol_setpoint) {
-        if (abs(glycolSetpoint - new_glycol_setpoint) < mixing_settings.clearPIDGlycol) {
-            ret.first = true;
+        if (abs(glycolSetpoint - new_glycol_setpoint) > mixing_settings.clearPIDGlycol) {
+            ret.first = false;
         }
         glycolSetpoint = new_glycol_setpoint;
         _updated = true;
     }
     if (heatersSetpoint != new_heaters_setpoint) {
-        if (abs(heatersSetpoint - new_heaters_setpoint) < mixing_settings.clearPIDHeaters) {
-            ret.second = true;
+        if (abs(heatersSetpoint - new_heaters_setpoint) > mixing_settings.clearPIDHeaters) {
+            ret.second = false;
         }
         heatersSetpoint = new_heaters_setpoint;
         _updated = true;
