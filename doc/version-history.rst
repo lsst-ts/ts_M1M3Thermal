@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.9.2
+------
+
+* Don't reset PIDs when the commanded setpoints aren't changed.
+
 v2.9.1
 ------
 
