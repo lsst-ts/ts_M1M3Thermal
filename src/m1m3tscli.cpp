@@ -334,14 +334,14 @@ int M1M3TScli::mpuWrite(command_vec cmds) {
     }
     auto transport = get_transport(mpu);
 
+    mpu->next_message();
+
     mpu->clear();
 
     uint16_t addrs = stoi(cmds[1], nullptr, 0);
     uint16_t value = stoi(cmds[2], nullptr, 0);
 
     mpu->presetHoldingRegister(addrs, value);
-
-    mpu->clear();
 
     transport->commands(*mpu, 2s);
 

@@ -8,6 +8,7 @@ v2.9.2
 ------
 
 * Don't reset PIDs when the commanded setpoints aren't changed.
+* Fixed m1m3tscli mpu-write command.
 
 v2.9.1
 ------
