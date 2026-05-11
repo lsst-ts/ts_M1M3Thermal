@@ -149,6 +149,12 @@ bool PumpThread::_run_loop() {
     try {
         vfd.clear();
 
+        // don't read pump status when pump is powered off
+        if (Events::PowerStatus::instance().pump_on() == false) {
+            _transport->flush();
+            return true;
+        }
+
         n_r = _check_commands();
 
         if (n_r == POWERON || n_r == AUTO_RECOVER) {

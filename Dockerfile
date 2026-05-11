@@ -21,6 +21,8 @@ RUN source /home/saluser/.setup_salobj.sh \
     && export LIBRARY_PATH="/usr/local/lib64:/opt/lsst/tssw/ts_sal/lib" \
     && cd /opt/lsst/tssw/libserdes && ./configure && make && make install
 
+RUN dnf install -y boost-devel
+
 USER saluser
 ARG XML_BRANCH=develop
 WORKDIR /home/saluser

@@ -264,13 +264,8 @@ void SAL_setMixingValve::execute() {
 bool SAL_coolantPumpPower::validate() { return Events::EngineeringMode::instance().is_enabled(); }
 
 void SAL_coolantPumpPower::execute() {
-    if (params.power) {
-        TSPublisher::instance().startPumpThread();
-    } else {
-        TSPublisher::instance().stopPumpThread();
-    }
+    IFPGA::get().setCoolantPumpPower(params.power);
     ackComplete();
-    SPDLOG_INFO("Glycol coolant pump powered {}", params.power ? "on" : "off");
 }
 
 bool SAL_coolantPumpStart::validate() {
