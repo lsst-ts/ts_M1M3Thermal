@@ -73,6 +73,8 @@ public:
     void stopGlycolTemperatureThread();
     void stopPumpThread();
 
+    void pump_communication_check();
+
     static double getTimestamp() { return instance()._m1m3TSSAL->getCurrentTime(); }
 
     Telemetry::PumpThread* pump_thread;

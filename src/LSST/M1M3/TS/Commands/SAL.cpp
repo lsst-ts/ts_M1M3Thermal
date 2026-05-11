@@ -173,6 +173,8 @@ void SAL_disable::execute() {
                 er.what());
     }
 
+    TSPublisher::instance().pump_communication_check();
+
     Events::SummaryState::set_state(MTM1M3TS_shared_SummaryStates_DisabledState);
     ackComplete();
 }

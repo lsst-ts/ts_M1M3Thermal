@@ -1,6 +1,9 @@
 FROM lsstts/develop-env:develop AS crio-develop
 
 USER root
+
+RUN rm -rf  /home/saluser/repos/ts_sal/include/avro/
+
 RUN cd /opt/lsst/tssw/ && git clone https://github.com/apache/avro 
 
 RUN source /home/saluser/.setup_salobj.sh && cd /opt/lsst/tssw/avro/lang/c \
@@ -23,7 +26,7 @@ ARG XML_BRANCH=develop
 WORKDIR /home/saluser
 
 RUN source ~/.setup_salobj.sh \
-    && mamba install -y readline yaml-cpp catch2 spdlog texlive-core ghostscript 
+    && mamba install -y readline yaml-cpp catch2 spdlog texlive-core ghostscript libboost-devel
 
 RUN source ~/.setup_salobj.sh \
     && echo > .crio_setup.sh -e \
@@ -62,20 +65,6 @@ export CPATH=/usr/local/include\\n\
 export SAL_DIR=/opt/lsst/tssw/ts_sal/lsstsal/scripts\\n\
 \\n\
 export LSST_KAFKA_LOCAL_SCHEMAS=\${SAL_WORK_DIR}
-
-ARG KAFKA_HOST=
-ARG KAFKA_BROKER_PORT=
-ARG SCHEMA_REGISTRY_URI=
-
-RUN [ -z $KAFKA_HOST -o -z $KAFKA_BROKER_PORT ] || echo >> .crio_setup.sh -e \
-\\n\
-export LSST_KAFKA_BROKER_ADDR="${KAFKA_HOST}:${KAFKA_BROKER_PORT}"\\n\
-export LSST_KAFKA_HOST=${KAFKA_HOST}\\n\
-export LSST_KAFKA_BROKER_PORT=${KAFKA_BROKER_PORT}
-
-RUN [ -z $SCHEMA_REGISTRY_URI ] || echo >> .crio_setup.sh -e \
-\\n\
-export LSST_SCHEMA_REGISTRY_URL=${SCHEMA_REGISTRY_URI}
 
 RUN source ~/.crio_setup.sh \
     && cd $TS_XML_DIR \

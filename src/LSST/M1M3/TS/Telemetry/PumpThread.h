@@ -38,7 +38,18 @@ namespace M1M3 {
 namespace TS {
 namespace Telemetry {
 
-typedef enum { NOP, START, STOP, RESET, FREQ, STARTUP, POWERON, AUTO_RECOVER } request_type;
+typedef enum {
+    NOP,
+    START,
+    STOP,
+    RESET,
+    FREQ,
+    STARTUP,
+    POWERON,
+    AUTO_RECOVER,
+} request_type;
+
+typedef enum { NO_COMMUNICATION, COMMUNICATION_OK, RUNNING, FAILED } communication_state;
 
 /**
  * Thread reading out pump values. Started from TSPublisher when CSC
@@ -74,9 +85,16 @@ public:
      */
     void auto_recover();
 
+    /**
+     * Starts pump auto-recovery if its communication failed.
+     */
+    void communication_check();
+
 private:
     VFD vfd;
     std::shared_ptr<Transports::Transport> _transport;
+
+    communication_state _pump_comm_state;
 
     std::deque<request_type> _next_requests;
     std::mutex _requests_lock;

@@ -57,6 +57,8 @@ PumpThread::PumpThread(std::shared_ptr<Transports::Transport> transport) {
     _startup_delay_passed = now + std::chrono::seconds(pump_settings.communicationStartupDelay);
     _fail_after = now + std::chrono::seconds(pump_settings.communicationTimeout);
     _power_on_at = now + std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
+
+    _pump_comm_state = NO_COMMUNICATION;
 }
 
 PumpThread::~PumpThread() { IFPGA::get().setCoolantPumpPower(false); }
@@ -110,6 +112,7 @@ void PumpThread::startup() {
 void PumpThread::poweron() {
     IFPGA::get().setCoolantPumpPower(false);
     auto& pump_settings = Settings::GlycolPump::instance();
+    _pump_comm_state = NO_COMMUNICATION;
     _power_on_at = std::chrono::steady_clock::now() +
                    std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
     {
@@ -121,11 +124,20 @@ void PumpThread::poweron() {
 void PumpThread::auto_recover() {
     IFPGA::get().setCoolantPumpPower(false);
     auto& pump_settings = Settings::GlycolPump::instance();
+    _pump_comm_state = NO_COMMUNICATION;
     _power_on_at = std::chrono::steady_clock::now() +
                    std::chrono::seconds(pump_settings.communicationRecoverPowerOff);
     {
         std::lock_guard<std::mutex> lg(_requests_lock);
         _next_requests.push_back(AUTO_RECOVER);
+    }
+}
+
+void PumpThread::communication_check() {
+    std::unique_lock<std::mutex> _lg(_requests_lock);
+    if (_pump_comm_state == FAILED) {
+        _lg.unlock();
+        auto_recover();
     }
 }
 
@@ -151,28 +163,44 @@ bool PumpThread::_run_loop() {
 
         _transport->commands(vfd, 3s, this);
 
-        Events::GlycolPumpStatus::instance().update(&vfd);
-        Events::DriveStatus2::instance().set(vfd.get_drive_status_2());
-
-        commandedFrequency = vfd.getCommandedFrequency();
-        targetFrequency = vfd.getTargetFrequency();
-        outputFrequency = vfd.getOutputFrequency();
-        speedFeedback = vfd.get_speed_feedback();
-        outputCurrent = vfd.getOutputCurrent();
-        busVoltage = vfd.getDCBusVoltage();
-        outputVoltage = vfd.getOutputVoltage();
-
-        _fail_after =
-                std::chrono::steady_clock::now() + std::chrono::seconds(pump_settings.communicationTimeout);
-
-        _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
-
-        salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
-        if (ret != SAL__OK) {
-            SPDLOG_WARN("Cannot send VFD: {}", ret);
+        if (vfd.getCommandedFrequency() == vfd.getTargetFrequency() && vfd.get_speed_feedback() < 3000) {
+            if (_recovery_left_attempts != pump_settings.communicationAutoRecoverAttempts) {
+                SPDLOG_INFO("Pump running OK, resetting counter for recovery attempts.");
+                _recovery_left_attempts = pump_settings.communicationAutoRecoverAttempts;
+                _pump_comm_state = COMMUNICATION_OK;
+            }
         }
 
-        _success_count++;
+        if (vfd.get_speed_feedback() < 3000) {
+            Events::GlycolPumpStatus::instance().update(&vfd);
+            Events::DriveStatus2::instance().set(vfd.get_drive_status_2());
+
+            commandedFrequency = vfd.getCommandedFrequency();
+            targetFrequency = vfd.getTargetFrequency();
+            outputFrequency = vfd.getOutputFrequency();
+            speedFeedback = vfd.get_speed_feedback();
+            outputCurrent = vfd.getOutputCurrent();
+            busVoltage = vfd.getDCBusVoltage();
+            outputVoltage = vfd.getOutputVoltage();
+
+            _fail_after = std::chrono::steady_clock::now() +
+                          std::chrono::seconds(pump_settings.communicationTimeout);
+
+            salReturn ret = TSPublisher::SAL()->putSample_glycolPump(this);
+            if (ret != SAL__OK) {
+                SPDLOG_WARN("Cannot send VFD: {}", ret);
+            }
+            _success_count++;
+
+            // transtion from NOP to runnning
+            if (vfd.getCommandedFrequency() == vfd.getTargetFrequency() && vfd.getTargetFrequency() > 0 &&
+                vfd.get_speed_feedback() < 3000) {
+                if (_pump_comm_state != RUNNING) {
+                    SPDLOG_INFO("EGW pump running fine, frequency {}.", vfd.getCommandedFrequency());
+                    _pump_comm_state = RUNNING;
+                }
+            }
+        }
     } catch (LSST::cRIO::NiError& ni_error) {
         Events::SummaryState::instance().fail(
                 Events::ErrorCode::EGWPump,
@@ -181,24 +209,35 @@ bool PumpThread::_run_loop() {
                             ni_error.what()),
                 "");
     } catch (std::exception& ex) {
-        if (_fail_after < std::chrono::steady_clock::now()) {
-            Events::SummaryState::instance().fail(
-                    Events::ErrorCode::EGWPump,
-                    fmt::format("Cannot communicate with the EGW pump for more than {}, last error was {}.",
-                                pump_settings.communicationTimeout, ex.what()),
-                    "");
-            return false;
-        }
-
-        SPDLOG_WARN("Error in running Glycol Pump thread: {}", ex.what());
         _success_count = 0;
+
+        if (Events::EngineeringMode::instance().is_enabled() == true) {
+            SPDLOG_WARN("VFD controller error {} occured in engineering mode, ignored.", ex.what());
+            return true;
+        }
+        if (_fail_after < std::chrono::steady_clock::now()) {
+            std::lock_guard<std::mutex> lg(_requests_lock);
+            _pump_comm_state = FAILED;
+            SPDLOG_WARN("Cannot communicate with the EGW pump for more than {}s, last error was {}.",
+                        pump_settings.communicationTimeout, ex.what());
+            return true;
+        }
+        if (_pump_comm_state == RUNNING) {
+            SPDLOG_WARN("VFD controller communication error while pump was running: {}, ignored.", ex.what());
+            return true;
+        }
+        if (_pump_comm_state == FAILED) {
+            SPDLOG_INFO("VFD communication cannot be recovered: {}.", ex.what());
+            return true;
+        }
         if (_recovery_left_attempts > 0) {
-            SPDLOG_INFO("Queing again failed auto-recover sequence - try {}/{}.",
+            SPDLOG_INFO("Queing again failed auto-recover sequence - try {}/{}. Error {}.",
                         pump_settings.communicationAutoRecoverAttempts + 1 - _recovery_left_attempts,
-                        pump_settings.communicationAutoRecoverAttempts);
+                        pump_settings.communicationAutoRecoverAttempts, ex.what());
             _recovery_left_attempts--;
             auto_recover();
-        } else {
+        }
+        if (n_r != NOP) {
             Events::SummaryState::instance().fail(
                     Events::ErrorCode::EGWPumpStartup,
                     fmt::format("Run out of allowed auto-recovery attempts {} - cannot start the EGW "
@@ -219,7 +258,6 @@ bool PumpThread::_run_loop() {
             return false;
         }
     }
-
     return true;
 }
 
@@ -260,7 +298,9 @@ request_type PumpThread::_check_commands() {
                 }
                 break;
             case POWERON:
-                if (std::chrono::steady_clock::now() > _power_on_at) {
+                // power on when requested in engineering mode
+                if (std::chrono::steady_clock::now() > _power_on_at ||
+                    Events::EngineeringMode::instance().is_enabled() == true) {
                     IFPGA::get().setCoolantPumpPower(true);
                     _startup_delay_passed = std::chrono::steady_clock::now() +
                                             std::chrono::seconds(pump_settings.communicationStartupDelay);
@@ -290,7 +330,7 @@ request_type PumpThread::_check_commands() {
         }
 
         if (n_r == NOP) {
-            return NOP;
+            return n_r;
         }
 
         _transport->commands(vfd, 2s, this);

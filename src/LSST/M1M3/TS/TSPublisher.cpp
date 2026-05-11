@@ -197,3 +197,11 @@ void TSPublisher::stopPumpThread() {
     delete pump_thread;
     pump_thread = NULL;
 }
+
+void TSPublisher::pump_communication_check() {
+    if (pump_thread == NULL) {
+        return;
+    }
+
+    pump_thread->communication_check();
+}
