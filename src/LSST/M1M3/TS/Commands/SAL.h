@@ -56,11 +56,11 @@ SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), coolantPumpPower);
 
 SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), coolantPumpStart);
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), coolantPumpStop);
+SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), coolantPumpStop);
 
 SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), coolantPumpFrequency);
 
-SAL_COMMAND_CLASS(MTM1M3TS, TSPublisher::SAL(), coolantPumpReset);
+SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), coolantPumpReset);
 
 SAL_COMMAND_CLASS_validate(MTM1M3TS, TSPublisher::SAL(), applySetpoints);
 

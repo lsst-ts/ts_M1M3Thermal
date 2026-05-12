@@ -282,6 +282,14 @@ void SAL_coolantPumpStart::execute() {
     SPDLOG_INFO("Glycol coolant pump started");
 }
 
+void SAL_coolantPumpStop::validate() {
+    if (TSPublisher::instance().pump_thread == NULL) {
+        ackFailed("Cannot command pump when it is powered off.");
+        return false;
+    }
+    return true;
+}
+
 void SAL_coolantPumpStop::execute() {
     TSPublisher::instance().pump_thread->stop_pump();
     ackComplete();
@@ -289,6 +297,11 @@ void SAL_coolantPumpStop::execute() {
 }
 
 bool SAL_coolantPumpFrequency::validate() {
+    if (TSPublisher::instance().pump_thread == NULL) {
+        ackFailed("Cannot command pump when it is powered off.");
+        return false;
+    }
+
     if (params.targetFrequency < 0) {
         ackFailed(fmt::format("Target frequency must be bigger than 0 Hz, was {:+0.02f} Hz",
                               params.targetFrequency));
@@ -301,6 +314,14 @@ void SAL_coolantPumpFrequency::execute() {
     TSPublisher::instance().pump_thread->set_target_frequency(params.targetFrequency);
     ackComplete();
     SPDLOG_INFO("Changed coolant pump target frequency to {:0.02f} Hz", params.targetFrequency);
+}
+
+void SAL_coolantPumpReset::validate() {
+    if (TSPublisher::instance().pump_thread == NULL) {
+        ackFailed("Cannot command pump when it is powered off.");
+        return false;
+    }
+    return true;
 }
 
 void SAL_coolantPumpReset::execute() {
