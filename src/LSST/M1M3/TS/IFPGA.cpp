@@ -33,6 +33,7 @@
 #endif
 
 #include "Events/FcuTargets.h"
+#include "Events/PowerStatus.h"
 #include "Events/SummaryState.h"
 #include "Settings/GlycolPump.h"
 #include "Telemetry/FinerControl.h"
@@ -80,6 +81,7 @@ void IFPGA::setFCUPower(bool on) {
     buf[0] = FPGAAddress::FCU_ON;
     buf[1] = on;
     writeCommandFIFO(buf, 2, 10);
+    Events::PowerStatus::instance().set_heaters_power(on);
 }
 
 void IFPGA::setCoolantPumpPower(bool on) {
@@ -88,6 +90,7 @@ void IFPGA::setCoolantPumpPower(bool on) {
     buf[0] = FPGAAddress::COOLANT_PUMP_ON;
     buf[1] = on;
     writeCommandFIFO(buf, 2, 10);
+    Events::PowerStatus::instance().set_pump_power(on);
 }
 
 void IFPGA::setHeartbeat(bool heartbeat) {

@@ -29,6 +29,7 @@
 #include "Events/EngineeringMode.h"
 #include "Events/FcuTargets.h"
 #include "Events/Heartbeat.h"
+#include "Events/PowerStatus.h"
 #include "Events/SummaryState.h"
 #include "Events/ThermalInfo.h"
 #include "Events/ThermalWarning.h"
@@ -53,6 +54,7 @@ LSST::cRIO::task_return_t Update::run() {
     _sendMixingValve();
 
     Events::EnabledILC::instance().send();
+    Events::PowerStatus::instance().send();
     Events::ThermalWarning::instance().send();
 
     SPDLOG_TRACE("Commands::Update leaving execute");

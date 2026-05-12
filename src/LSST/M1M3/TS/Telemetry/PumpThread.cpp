@@ -28,6 +28,7 @@
 #include "Events/EngineeringMode.h"
 #include "Events/ErrorCode.h"
 #include "Events/GlycolPumpStatus.h"
+#include "Events/PowerStatus.h"
 #include "Events/SummaryState.h"
 #include "IFPGA.h"
 #include "TSPublisher.h"
