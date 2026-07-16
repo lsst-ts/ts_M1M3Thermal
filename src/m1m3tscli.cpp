@@ -29,34 +29,31 @@
 #include <spdlog/spdlog.h>
 #include <fmt/ranges.h>
 
-#include <cRIO/FPGACliApp.h>
-#include <cRIO/MPU.h>
-#include <cRIO/PrintILC.h>
-#include <cRIO/ThermalILC.h>
+#include "cRIO/FPGACliApp.h"
+#include "cRIO/MPU.h"
+#include "cRIO/PrintILC.h"
+#include "cRIO/ThermalILC.h"
 
-#include <Transports/FPGASerialPort.h>
-
-#ifndef SIMULATOR
-#include <Transports/FPGASerialDevice.h>
-#endif
+#include "Transports/PseudoSerialPort.h"
 
 #ifdef SIMULATOR
-#include <SimulatedFPGA.h>
+#include "SimulatedFPGA.h"
 #define FPGAClass SimulatedFPGA
 #else
-#include <NiFpga/NiFpga_ts_M1M3ThermalFPGA.h>
-#include <ThermalFPGA.h>
+#include "Transports/FPGASerialDevice.h"
+#include "NiFpga/NiFpga_ts_M1M3ThermalFPGA.h"
+#include "ThermalFPGA.h"
 #define FPGAClass ThermalFPGA
 #endif
 
-#include <MPU/FlowMeter.h>
-#include <MPU/GlycolTemperature.h>
+#include "MPU/FlowMeter.h"
+#include "MPU/GlycolTemperature.h"
 #ifdef SIMULATOR
-#include <MPU/SimulatedFlowMeter.h>
-#include <MPU/SimulatedVFDPump.h>
-#include <MPU/SimulatedGlycolTemperature.h>
+#include "MPU/SimulatedFlowMeter.h"
+#include "MPU/SimulatedVFDPump.h"
+#include "MPU/SimulatedGlycolTemperature.h"
 #endif
-#include <MPU/VFD.h>
+#include "MPU/VFD.h"
 
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
@@ -234,48 +231,49 @@ int M1M3TScli::openFPGA(command_vec cmds) {
     _flow_meter_1_device = std::make_shared<SimulatedFlowMeter>();
     _flow_meter_2_device = std::make_shared<SimulatedFlowMeter>();
     _vfd_device = std::make_shared<SimulatedVFDPump>();
+
     _glycol_temperature_device = std::make_shared<SimulatedGlycolTemperature>();
 #else
     int session = dynamic_cast<ThermalFPGA*>(getFPGA())->getSession();
 
-    if (_open_terminals) {
-        _flow_meter_1_device = std::make_shared<Transports::FPGASerialPort>(
-                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
-                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read, "Flow 1", 10ms);
+    _flow_meter_1_device = std::make_shared<PrintFPGASerialDevice>(
+            session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
+            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read, 10ms);
 
-        _flow_meter_2_device = std::make_shared<Transports::FPGASerialPort>(
-                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter2Write,
-                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter2Read, "Flow 2", 10ms);
+    _flow_meter_2_device = std::make_shared<PrintFPGASerialDevice>(
+            session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter2Write,
+            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter2Read, 10ms);
 
-        _vfd_device = std::make_shared<Transports::FPGASerialPort>(
-                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite,
-                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead, "VFD", 10ms);
-
-        dynamic_cast<Transports::FPGASerialPort*>(_flow_meter_1_device.get())->init_pt();
-        dynamic_cast<Transports::FPGASerialPort*>(_flow_meter_2_device.get())->init_pt();
-        dynamic_cast<Transports::FPGASerialPort*>(_vfd_device.get())->init_pt();
-
-        dynamic_cast<Transports::FPGASerialPort*>(_flow_meter_1_device.get())->start();
-        dynamic_cast<Transports::FPGASerialPort*>(_flow_meter_2_device.get())->start();
-        dynamic_cast<Transports::FPGASerialPort*>(_vfd_device.get())->start();
-    } else {
-        _flow_meter_1_device = std::make_shared<PrintFPGASerialDevice>(
-                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
-                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read, 10ms);
-
-        _flow_meter_2_device = std::make_shared<PrintFPGASerialDevice>(
-                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter2Write,
-                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter2Read, 10ms);
-
-        _vfd_device = std::make_shared<PrintFPGASerialDevice>(
-                session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite,
-                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead, 10ms);
-    }
+    _vfd_device = std::make_shared<PrintFPGASerialDevice>(
+            session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_GlycoolWrite,
+            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_GlycoolRead, 10ms);
 
     _glycol_temperature_device = std::make_shared<Transports::FPGASerialDevice>(
             session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_CoolantTempWrite,
             NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_CoolantTempRead, 1ms);
 #endif
+
+    if (_open_terminals) {
+        std::cout << "Creating and opening serial terminals." << std::endl;
+        _flow_meter_1_device = std::make_shared<Transports::PseudoSerialPort>(_flow_meter_1_device, "Flow 1");
+        _flow_meter_2_device = std::make_shared<Transports::PseudoSerialPort>(_flow_meter_2_device, "Flow 2");
+        _vfd_device = std::make_shared<Transports::PseudoSerialPort>(_vfd_device, "VFD");
+
+        try {
+            dynamic_cast<Transports::PseudoSerialPort*>(_flow_meter_1_device.get())->init_pt();
+            dynamic_cast<Transports::PseudoSerialPort*>(_flow_meter_2_device.get())->init_pt();
+            dynamic_cast<Transports::PseudoSerialPort*>(_vfd_device.get())->init_pt();
+
+            dynamic_cast<Transports::PseudoSerialPort*>(_flow_meter_1_device.get())->start();
+            dynamic_cast<Transports::PseudoSerialPort*>(_flow_meter_2_device.get())->start();
+            dynamic_cast<Transports::PseudoSerialPort*>(_vfd_device.get())->start();
+        } catch (std::runtime_error& er) {
+            std::cerr << "Cannot start threads: " << er.what() << std::endl;
+            return -1;
+        }
+
+        std::cout << "Started." << std::endl;
+    }
 
     glycolTemperatureBus = std::make_shared<GlycolTemperature>(_glycol_temperature_device);
 
