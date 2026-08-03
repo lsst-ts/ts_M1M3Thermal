@@ -32,7 +32,7 @@ LIBS_FLAGS += -L${LSST_SAL_PREFIX}/lib
 
 PKG_LIBS := $(shell pkg-config yaml-cpp spdlog fmt --libs $(silence))
 
-CPP := g++ -std=c++17 -Wall -fPIE ${c_opts}
+CPP := g++ -std=c++20 -Wall -fPIE ${c_opts}
 
 # compile x86 simulator or real cRIO stuff
 ifdef SIMULATOR
