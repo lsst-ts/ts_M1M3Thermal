@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v2.10.0
+-------
+
+* Pseudo terminal for flow meter serial connections.
+
 v2.9.2
 ------
 

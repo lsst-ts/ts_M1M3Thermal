@@ -29,32 +29,31 @@
 #include <spdlog/spdlog.h>
 #include <fmt/ranges.h>
 
-#include <cRIO/FPGACliApp.h>
-#include <cRIO/MPU.h>
-#include <cRIO/PrintILC.h>
-#include <cRIO/ThermalILC.h>
+#include "cRIO/FPGACliApp.h"
+#include "cRIO/MPU.h"
+#include "cRIO/PrintILC.h"
+#include "cRIO/ThermalILC.h"
 
-#ifndef SIMULATOR
-#include <Transports/FPGASerialDevice.h>
-#endif
+#include "Transports/PseudoSerialPort.h"
 
 #ifdef SIMULATOR
-#include <SimulatedFPGA.h>
+#include "SimulatedFPGA.h"
 #define FPGAClass SimulatedFPGA
 #else
-#include <NiFpga/NiFpga_ts_M1M3ThermalFPGA.h>
-#include <ThermalFPGA.h>
+#include "Transports/FPGASerialDevice.h"
+#include "NiFpga/NiFpga_ts_M1M3ThermalFPGA.h"
+#include "ThermalFPGA.h"
 #define FPGAClass ThermalFPGA
 #endif
 
-#include <MPU/FlowMeter.h>
-#include <MPU/GlycolTemperature.h>
+#include "MPU/FlowMeter.h"
+#include "MPU/GlycolTemperature.h"
 #ifdef SIMULATOR
-#include <MPU/SimulatedFlowMeter.h>
-#include <MPU/SimulatedVFDPump.h>
-#include <MPU/SimulatedGlycolTemperature.h>
+#include "MPU/SimulatedFlowMeter.h"
+#include "MPU/SimulatedVFDPump.h"
+#include "MPU/SimulatedGlycolTemperature.h"
 #endif
-#include <MPU/VFD.h>
+#include "MPU/VFD.h"
 
 using namespace LSST::cRIO;
 using namespace LSST::M1M3::TS;
@@ -109,6 +108,7 @@ public:
     int ilcPower(command_vec);
 
 protected:
+    virtual void processArg(int opt, char* optarg) override;
     virtual FPGA* newFPGA(const char* dir, bool& fpga_singleton) override;
     virtual ILCUnits getILCs(command_vec cmds) override;
 
@@ -124,6 +124,8 @@ private:
 
     std::shared_ptr<Transports::Transport> _flow_meter_1_device, _flow_meter_2_device, _vfd_device,
             _glycol_temperature_device;
+
+    bool _open_terminals = false;
 };
 
 class PrintThermalILC : public ThermalILC, public PrintILC {
@@ -215,6 +217,8 @@ M1M3TScli::M1M3TScli(const char* name, const char* description) : FPGACliApp(nam
     vfd = std::make_shared<VFDPrint>();
     addMPU("vfd", vfd);
 
+    addArgument('t', "open virtual terminals for the serial ports");
+
 #ifdef SIMULATOR
     std::cout << "Starting SIMULATED m1m3tscli!" << std::endl;
 #endif
@@ -227,6 +231,7 @@ int M1M3TScli::openFPGA(command_vec cmds) {
     _flow_meter_1_device = std::make_shared<SimulatedFlowMeter>();
     _flow_meter_2_device = std::make_shared<SimulatedFlowMeter>();
     _vfd_device = std::make_shared<SimulatedVFDPump>();
+
     _glycol_temperature_device = std::make_shared<SimulatedGlycolTemperature>();
 #else
     int session = dynamic_cast<ThermalFPGA*>(getFPGA())->getSession();
@@ -247,6 +252,28 @@ int M1M3TScli::openFPGA(command_vec cmds) {
             session, NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_CoolantTempWrite,
             NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_CoolantTempRead, 1ms);
 #endif
+
+    if (_open_terminals) {
+        std::cout << "Creating and opening serial terminals." << std::endl;
+        _flow_meter_1_device = std::make_shared<Transports::PseudoSerialPort>(_flow_meter_1_device, "Flow 1");
+        _flow_meter_2_device = std::make_shared<Transports::PseudoSerialPort>(_flow_meter_2_device, "Flow 2");
+        _vfd_device = std::make_shared<Transports::PseudoSerialPort>(_vfd_device, "VFD");
+
+        try {
+            dynamic_cast<Transports::PseudoSerialPort*>(_flow_meter_1_device.get())->init_pt();
+            dynamic_cast<Transports::PseudoSerialPort*>(_flow_meter_2_device.get())->init_pt();
+            dynamic_cast<Transports::PseudoSerialPort*>(_vfd_device.get())->init_pt();
+
+            dynamic_cast<Transports::PseudoSerialPort*>(_flow_meter_1_device.get())->start();
+            dynamic_cast<Transports::PseudoSerialPort*>(_flow_meter_2_device.get())->start();
+            dynamic_cast<Transports::PseudoSerialPort*>(_vfd_device.get())->start();
+        } catch (std::runtime_error& er) {
+            std::cerr << "Cannot start threads: " << er.what() << std::endl;
+            return -1;
+        }
+
+        std::cout << "Started." << std::endl;
+    }
 
     glycolTemperatureBus = std::make_shared<GlycolTemperature>(_glycol_temperature_device);
 
@@ -423,6 +450,16 @@ int M1M3TScli::fcuOnOff(command_vec cmds) {
 }
 
 int M1M3TScli::pumpOnOff(command_vec cmds) { return 0; }
+
+void M1M3TScli::processArg(int opt, char* optarg) {
+    switch (opt) {
+        case 't':
+            _open_terminals = true;
+            break;
+        default:
+            FPGACliApp::processArg(opt, optarg);
+    };
+}
 
 FPGA* M1M3TScli::newFPGA(const char* dir, bool& fpga_singleton) { return new PrintTSFPGA(); }
 

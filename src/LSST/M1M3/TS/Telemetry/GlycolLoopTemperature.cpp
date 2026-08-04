@@ -92,11 +92,11 @@ void GlycolLoopTemperature::update(const std::vector<float>& temperatures) {
                     }
                 }
             } else {
-                SPDLOG_DEBUG("Checked diff: {:.02f} \u00b0C counts {:i}", t_diff, _safety_violations_count);
+                SPDLOG_DEBUG("Checked diff: {:.02f} \u00b0C counts {:d}", t_diff, _safety_violations_count);
                 _safety_violations_count++;
             }
         } else {
-            SPDLOG_TRACE("Glycol temp OK: {:.02f} \u00b0C {:i}", t_diff, _safety_violations_count);
+            SPDLOG_TRACE("Glycol temp OK: {:.02f} \u00b0C {:d}", t_diff, _safety_violations_count);
             _safety_violations_count = 0;
         }
     }

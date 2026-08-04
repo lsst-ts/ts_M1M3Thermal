@@ -60,7 +60,6 @@ void TSPublisher::setSAL(std::shared_ptr<SAL_MTM1M3TS> m1m3TSSAL) {
     _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_thermalData");
     _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_mixingValve");
     _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_glycolLoopTemperature");
-    _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_flowMeter");
     _m1m3TSSAL->salTelemetryPub((char*)"MTM1M3TS_glycolPump");
 
     SPDLOG_DEBUG("TSPublisher: Initializing SAL Events");

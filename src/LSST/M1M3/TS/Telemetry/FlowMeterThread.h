@@ -38,7 +38,7 @@ namespace Telemetry {
  * Thread reading out flow meter values. Started from TSPublisher when CSC
  * enteres disabled state, updates SAL flow meter telemetery.
  */
-class FlowMeterThread final : public cRIO::Thread, public FlowMeter, MTM1M3TS_flowMeterC {
+class FlowMeterThread final : public cRIO::Thread, public FlowMeter {
 public:
     FlowMeterThread(std::shared_ptr<Transports::Transport> transport);
 
@@ -46,6 +46,12 @@ public:
 
 private:
     std::shared_ptr<Transports::Transport> _transport;
+
+    float signalStrength;
+    float flowRate;
+    float netTotalizer;
+    float positiveTotalizer;
+    float negativeTotalizer;
 };
 
 }  // namespace Telemetry
