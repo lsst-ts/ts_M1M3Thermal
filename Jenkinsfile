@@ -26,76 +26,32 @@ node {
 
     stage('Cloning sources')
     {
-        dir("ts_cRIOcpp") {
-            git branch: CRIO_BRANCH, url: 'https://github.com/lsst-ts/ts_cRIOcpp'
-        }
         dir("ts_m1m3thermal") {
             checkout scm
         }
     }
 
-    stage('Building dev container')
+    stage('Building dev container (with tests)')
     {
         M1M3sim = docker.build(
             "lsstts/mtm1m3_sim:" + env.BRANCH_NAME.replace("/", "_"),
             "--target crio-develop --build-arg XML_BRANCH=main "
             + "--build-arg KAFKA_HOST=$LSST_KAFKA_HOST --build-arg KAFKA_BROKER_PORT=$LSST_KAFKA_BROKER_PORT "
             + "--build-arg SCHEMA_REGISTRY_URI=$LSST_SCHEMA_REGISTRY_URL "
-            + "--build-arg cRIO_CPP=$CRIO_BRANCH --build-arg M1M3_THERMAL=$BRANCH"
-            + (params.noCache ? " --no-cache " : " ") + "$WORKSPACE/ts_m1m3thermal"
+            + "--build-arg cRIO_CPP=$CRIO_BRANCH --build-arg M1M3_THERMAL=$BRANCH "
+            + "--build-arg TARGET=junit "
+            + (params.noCache ? "--no-cache " : " ") + "$WORKSPACE/ts_m1m3thermal"
         )
     }
 
-    stage("Running tests")
+    stage("Copying test results")
     {
         withEnv(["SALUSER_HOME=" + SALUSER_HOME]) {
              M1M3sim.inside("--entrypoint=''") {
-                 if (params.clean) {
                  sh """
-                    cd $WORKSPACE/ts_cRIOcpp
-                    make clean
-                    cd $WORKSPACE/ts_m1m3thermal
-                    make clean
-                 """
-                 }
-                 sh """
-                    source $SALUSER_HOME/.crio_setup.sh
-    
-                    export PATH=\$CONDA_PREFIX/bin:$PATH
-                    cd $WORKSPACE/ts_cRIOcpp
-                    make
-    
-                    cd $WORKSPACE/ts_m1m3thermal
-                    make SIMULATOR=1
-
-                    make SIMULATOR=1 junit
+                    cp -v $SALUSER_HOME/ts_m1m3thermal/tests/*.xml $WORKSPACE/ts_m1m3thermal/tests
                  """
              }
-        }
-
-    }
-
-    stage('Running container')
-    {
-        withEnv(["SALUSER_HOME=" + SALUSER_HOME]){
-            M1M3sim.inside("--entrypoint=''") {
-                sh """
-                    source $SALUSER_HOME/.crio_setup.sh
-
-                    create_topics MTM1M3TS
-
-                    cd $WORKSPACE/ts_m1m3thermal
-                    ./ts-M1M3thermald -c SettingFiles &
- 
-                    echo "Waiting for 30 seconds"
-                    sleep 30
-
-                    pytest --junit-xml=tests/test_CSC.xml tests
-
-                    sleep 30
-                    killall ts-M1M3thermald
-                """
-            }
         }
 
         junit 'ts_m1m3thermal/tests/*.xml'
@@ -106,7 +62,9 @@ node {
          M1M3sim.inside("--entrypoint=''") {
              sh """
                 source $SALUSER_HOME/.crio_setup.sh
-                cd $WORKSPACE/ts_m1m3thermal
+
+                mamba install -y doxygen
+                cd $SALUSER_HOME/ts_m1m3thermal
                 make doc
              """
          }
@@ -120,7 +78,7 @@ node {
                 M1M3sim.inside("--entrypoint=''") {
                     sh """
                         source $SALUSER_HOME/.crio_setup.sh
-                        ltd upload --product ts-m1m3thermal --git-ref """ + BRANCH + """ --dir $WORKSPACE/ts_m1m3thermal/doc/html
+                        ltd upload --product ts-m1m3thermal --git-ref """ + BRANCH + """ --dir $SALUSER_HOME/ts_m1m3thermal/doc/html
                     """
                 }
             }
