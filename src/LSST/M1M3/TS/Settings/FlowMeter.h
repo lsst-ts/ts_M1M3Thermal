@@ -26,13 +26,22 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <TSPublisher.h>
 #include <cRIO/Singleton.h>
 
 namespace LSST {
 namespace M1M3 {
 namespace TS {
 namespace Settings {
+
+class ModbusServer {
+public:
+    ModbusServer();
+
+    void load(YAML::Node doc);
+
+    std::string address;
+    int port;
+};
 
 class FlowMeter : public cRIO::Singleton<FlowMeter> {
 public:
@@ -41,6 +50,9 @@ public:
     void load(YAML::Node doc);
 
     bool enabled;
+
+    const static int NUM_FLOWMETERS = 2;
+    ModbusServer server[NUM_FLOWMETERS];
 };
 
 }  // namespace Settings

@@ -34,13 +34,13 @@ SimulatedVFDPump::SimulatedVFDPump() { _pump_voltage = 1; }
 
 void SimulatedVFDPump::generate_response(const unsigned char* buf, size_t len) {
     Modbus::Parser parser(std::vector<uint8_t>(buf, buf + len));
-    _response.push_back(parser.address());
+    _response.vector.push_back(parser.address());
     switch (parser.func()) {
         case MPU::READ_HOLDING_REGISTERS: {
             uint16_t reg = parser.read<uint16_t>();
             uint16_t reg_len = parser.read<uint16_t>() * 2;
-            _response.push_back(parser.func());
-            _response.push_back(reg_len);
+            _response.vector.push_back(parser.func());
+            _response.vector.push_back(reg_len);
             for (size_t i = 0; i < reg_len; i += 2, reg++) {
                 // simulates various registers
                 switch (reg) {
@@ -52,8 +52,8 @@ void SimulatedVFDPump::generate_response(const unsigned char* buf, size_t len) {
                         _pump_voltage += 1;
                         break;
                     default:
-                        _response.push_back(i);
-                        _response.push_back(i + 1);
+                        _response.vector.push_back(i);
+                        _response.vector.push_back(i + 1);
                 }
             }
             break;
@@ -62,7 +62,7 @@ void SimulatedVFDPump::generate_response(const unsigned char* buf, size_t len) {
             uint16_t reg = parser.read<uint16_t>();
             uint16_t reg_len = parser.read<uint16_t>();
 
-            _response.push_back(parser.func());
+            _response.vector.push_back(parser.func());
             _response.write(reg);
             _response.write(reg_len);
 

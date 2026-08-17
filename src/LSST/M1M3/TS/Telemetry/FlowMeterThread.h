@@ -23,6 +23,8 @@
 #ifndef _TS_Telemetry_FlowMeterThread_
 #define _TS_Telemetry_FlowMeterThread_
 
+#include <modbus.h>
+
 #include <SAL_MTM1M3TS.h>
 #include <cRIO/Thread.h>
 
@@ -40,18 +42,29 @@ namespace Telemetry {
  */
 class FlowMeterThread final : public cRIO::Thread, public FlowMeter {
 public:
-    FlowMeterThread(std::shared_ptr<Transports::Transport> transport);
+    /**
+     *
+     */
+    FlowMeterThread(std::shared_ptr<Transports::Transport> transport, const std::string& server_address,
+                    int server_port);
 
     void run(std::unique_lock<std::mutex>& lock) override;
 
 private:
     std::shared_ptr<Transports::Transport> _transport;
 
-    float signalStrength;
-    float flowRate;
-    float netTotalizer;
-    float positiveTotalizer;
-    float negativeTotalizer;
+    int server_socket;
+    modbus_t* ctx;
+
+    void _process_read_registers(uint8_t* req, int rc);
+
+    /**
+     * Closes ModBus connections.
+     */
+    void _close_connection();
+
+    const std::string _server_address;
+    int _server_port;
 };
 
 }  // namespace Telemetry
