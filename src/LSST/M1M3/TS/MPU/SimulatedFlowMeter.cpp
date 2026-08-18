@@ -24,6 +24,7 @@
 
 #include <cRIO/MPU.h>
 
+#include "FlowMeter.h"
 #include "SimulatedFlowMeter.h"
 
 using namespace LSST::cRIO;
@@ -47,35 +48,45 @@ void SimulatedFlowMeter::generate_response(const unsigned char* buf, size_t len)
             for (size_t i = 0; i < reg_len; i += 2, reg++) {
                 // simulates various registers
                 switch (reg) {
-                    case 1600:
+                    case FlowMeter::FLOW_RATE:
                         _flow_rate.value += 3.3;
-                    case 1601:
-                        _response.vector.push_back(_flow_rate.bytes[3 - 2 * (reg - 1600)]);
-                        _response.vector.push_back(_flow_rate.bytes[2 - 2 * (reg - 1600)]);
+                    case FlowMeter::FLOW_RATE + 1:
+                    case FlowMeter::FLOW_RATE + 2:
+                    case FlowMeter::FLOW_RATE + 3:
+                        _response.vector.push_back(_flow_rate.bytes[7 - 2 * (reg - FlowMeter::FLOW_RATE)]);
+                        _response.vector.push_back(_flow_rate.bytes[6 - 2 * (reg - FlowMeter::FLOW_RATE)]);
                         break;
-                    case 2600:
+                    case FlowMeter::NET_TOTALIZER:
                         _flowmeter_net_totalizer.value += 11.1;
-                    case 2601:
-                    case 2602:
-                    case 2603:
-                        _response.vector.push_back(_flowmeter_net_totalizer.bytes[7 - 2 * (reg - 2600)]);
-                        _response.vector.push_back(_flowmeter_net_totalizer.bytes[6 - 2 * (reg - 2600)]);
+                    case FlowMeter::NET_TOTALIZER + 1:
+                    case FlowMeter::NET_TOTALIZER + 2:
+                    case FlowMeter::NET_TOTALIZER + 3:
+                        _response.vector.push_back(
+                                _flowmeter_net_totalizer.bytes[7 - 2 * (reg - FlowMeter::NET_TOTALIZER)]);
+                        _response.vector.push_back(
+                                _flowmeter_net_totalizer.bytes[6 - 2 * (reg - FlowMeter::NET_TOTALIZER)]);
                         break;
-                    case 2604:
-                    case 2605:
-                    case 2606:
-                    case 2607:
-                        _response.vector.push_back(_flowmeter_net_totalizer.bytes[7 - 2 * (reg - 2604)]);
-                        _response.vector.push_back(_flowmeter_net_totalizer.bytes[6 - 2 * (reg - 2604)]);
+                    case FlowMeter::POSITIVE_TOTALIZER:
+                    case FlowMeter::POSITIVE_TOTALIZER + 1:
+                    case FlowMeter::POSITIVE_TOTALIZER + 2:
+                    case FlowMeter::POSITIVE_TOTALIZER + 3:
+                        _response.vector.push_back(
+                                _flowmeter_net_totalizer
+                                        .bytes[7 - 2 * (reg - FlowMeter::POSITIVE_TOTALIZER)]);
+                        _response.vector.push_back(
+                                _flowmeter_net_totalizer
+                                        .bytes[6 - 2 * (reg - FlowMeter::POSITIVE_TOTALIZER)]);
                         break;
-                    case 2608:
-                    case 2609:
-                    case 2610:
-                    case 2611:
-                        _response.vector.push_back(_flowmeter_net_totalizer.bytes[7 - 2 * (reg - 2608)]);
-                        _response.vector.push_back(_flowmeter_net_totalizer.bytes[6 - 2 * (reg - 2608)]);
-                        break;
-                    case 5500:
+                    case FlowMeter::NEGATIVE_TOTALIZER:
+                    case FlowMeter::NEGATIVE_TOTALIZER + 1:
+                    case FlowMeter::NEGATIVE_TOTALIZER + 2:
+                    case FlowMeter::NEGATIVE_TOTALIZER + 3: {
+                        Transports::BytesValue<double> nt;
+                        nt.value = -_flowmeter_net_totalizer.value;
+                        _response.vector.push_back(nt.bytes[7 - 2 * (reg - FlowMeter::NEGATIVE_TOTALIZER)]);
+                        _response.vector.push_back(nt.bytes[6 - 2 * (reg - FlowMeter::NEGATIVE_TOTALIZER)]);
+                    } break;
+                    case FlowMeter::SIGNAL_STRENGTH:
                         _response.vector.push_back(_signal.bytes[1]);
                         _response.vector.push_back(_signal.bytes[0]);
                         _signal.value += 1;

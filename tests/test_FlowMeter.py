@@ -59,13 +59,43 @@ class FlowMeterTest(unittest.IsolatedAsyncioTestCase):
         assert coils.exception_code == 1
 
     async def test_registers(self) -> None:
-        rr = await self.client.read_holding_registers(Registers.FLOW_RATE, count=16, device_id=1)
-        assert not (rr.isError())
-        flow_rate = self.client.convert_from_registers(
-            rr.registers[0:2],
-            data_type=self.client.DATATYPE.FLOAT32,
-        )
-        assert flow_rate > 1, f"Flow rate is {flow_rate}."
+        last_flow: float | None = None
+        last_net_totalizer: float | None = None
+
+        for run in range(10):
+            rr = await self.client.read_holding_registers(Registers.FLOW_RATE, count=8, device_id=1)
+            assert not (rr.isError())
+
+            flow_rate = self.client.convert_from_registers(
+                rr.registers[0:4],
+                data_type=self.client.DATATYPE.FLOAT64,
+            )
+            assert flow_rate > 1, f"Flow rate is {flow_rate}."
+            if last_flow is not None:
+                self.assertAlmostEqual(flow_rate, last_flow + 3.3, 1)
+
+            last_flow = flow_rate
+
+            rr = await self.client.read_holding_registers(Registers.NET_TOTALIZER, count=16, device_id=1)
+
+            net_totalizer = self.client.convert_from_registers(
+                rr.registers[0:4], data_type=self.client.DATATYPE.FLOAT64
+            )
+            assert net_totalizer > 0, "Net totalizer is {net_totalizer}."
+            if last_net_totalizer is not None:
+                self.assertAlmostEqual(net_totalizer, last_net_totalizer + 11.1, 1)
+            last_net_totalizer = net_totalizer
+
+            assert net_totalizer == self.client.convert_from_registers(
+                rr.registers[4:8], data_type=self.client.DATATYPE.FLOAT64
+            )
+            self.assertAlmostEqual(
+                -net_totalizer,
+                self.client.convert_from_registers(
+                    rr.registers[8:12], data_type=self.client.DATATYPE.FLOAT64
+                ),
+                1,
+            )
 
 
 if __name__ == "__main__":

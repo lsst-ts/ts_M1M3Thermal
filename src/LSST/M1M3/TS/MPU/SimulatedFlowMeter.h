@@ -39,7 +39,7 @@ protected:
 
 private:
     Transports::BytesValue<uint16_t> _signal;
-    Transports::BytesValue<float> _flow_rate;
+    Transports::BytesValue<double> _flow_rate;
     Transports::BytesValue<double> _flowmeter_net_totalizer;
 };
 
