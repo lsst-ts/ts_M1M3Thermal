@@ -33,7 +33,7 @@ ARG M1M3_THERMAL=develop
 ARG TARGET=simulator
 
 RUN source ~/.crio_setup.sh  \
-    && cd ts_cRIOcpp && git fetch && git checkout $cRIO_CPP \
+    && cd ts_cRIOcpp && git fetch && git checkout $cRIO_CPP && git pull \
     && make clean && make -j$(nproc)
 
 RUN source ~/.crio_setup.sh \

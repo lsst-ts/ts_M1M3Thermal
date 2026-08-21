@@ -44,6 +44,9 @@ FlowMeterThread::FlowMeterThread(std::shared_ptr<Transports::Transport> transpor
                                  const std::string& server_address, int server_port)
         : _server_address(server_address), _server_port(server_port) {
     _transport = transport;
+
+    ctx = NULL;
+    server_socket = -1;
 }
 
 void FlowMeterThread::run(std::unique_lock<std::mutex>& lock) {
@@ -165,6 +168,9 @@ void FlowMeterThread::_process_read_registers(uint8_t* req, int rc) {
     } catch (std::runtime_error& er) {
         SPDLOG_WARN("Error processing read register request {} {}: {}.", address, count, er.what());
         modbus_reply_exception(ctx, req, MODBUS_EXCEPTION_SLAVE_OR_SERVER_FAILURE);
+
+        modbus_mapping_free(mb_mapping);
+        return;
     }
 
     modbus_reply(ctx, req, rc, mb_mapping);
