@@ -23,9 +23,16 @@
 
 #include <spdlog/spdlog.h>
 
-#include <Settings/FlowMeter.h>
+#include "Settings/FlowMeter.h"
 
 using namespace LSST::M1M3::TS::Settings;
+
+ModbusServer::ModbusServer() : address(""), port(-1) {}
+
+void ModbusServer::load(YAML::Node doc) {
+    address = doc["Address"].as<std::string>(address);
+    port = doc["Port"].as<int>();
+}
 
 FlowMeter::FlowMeter(token) { enabled = false; }
 
@@ -33,4 +40,8 @@ void FlowMeter::load(YAML::Node doc) {
     SPDLOG_INFO("Loading Flow Meter settings.");
 
     enabled = doc["Enabled"].as<bool>();
+
+    for (int i = 0; i < NUM_FLOWMETERS; i++) {
+        server[i].load(doc["Server_" + std::to_string(i + 1)]);
+    }
 }

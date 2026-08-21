@@ -43,7 +43,10 @@ extern const char* VERSION;
 TSPublisher::TSPublisher(token) {
     _logLevel.level = -1;
 
-    _flow_meter_thread = NULL;
+    for (int i = 0; i < Settings::FlowMeter::NUM_FLOWMETERS; i++) {
+        _flow_meter_thread[i] = NULL;
+    }
+
     pump_thread = NULL;
     _glycolTemperatureThread = NULL;
 }
@@ -111,16 +114,30 @@ void TSPublisher::logSimulationMode() {
 }
 
 void TSPublisher::startFlowMeterThread() {
-    delete _flow_meter_thread;
+    auto& fm_settings = Settings::FlowMeter::instance();
+
+    for (int i = 0; i < Settings::FlowMeter::NUM_FLOWMETERS; i++) {
+        delete _flow_meter_thread[i];
 #ifdef SIMULATOR
-    _flow_meter_thread = new Telemetry::FlowMeterThread(std::make_shared<SimulatedFlowMeter>());
+        _flow_meter_thread[i] =
+                new Telemetry::FlowMeterThread(std::make_shared<SimulatedFlowMeter>(),
+                                               fm_settings.server[i].address, fm_settings.server[i].port);
 #else
-    _flow_meter_thread = new Telemetry::FlowMeterThread(std::make_shared<Transports::FPGASerialDevice>(
-            dynamic_cast<ThermalFPGA*>(&IFPGA::get())->getSession(),
-            NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
-            NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read, 100ms));
+        static int host_to_target[Settings::FlowMeter::NUM_FLOWMETERS] = {
+                NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter1Write,
+                NiFpga_ts_M1M3ThermalFPGA_HostToTargetFifoU8_FlowMeter2Write};
+        static int target_to_host[Settings::FlowMeter::NUM_FLOWMETERS] = {
+                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter1Read,
+                NiFpga_ts_M1M3ThermalFPGA_TargetToHostFifoU8_FlowMeter2Read};
+
+        _flow_meter_thread[i] = new Telemetry::FlowMeterThread(
+                std::make_shared<Transports::FPGASerialDevice>(
+                        dynamic_cast<ThermalFPGA*>(&IFPGA::get())->getSession(), host_to_target[i],
+                        target_to_host[i], 100ms),
+                fm_settings.server[i].address, fm_settings.server[i].port);
 #endif
-    _flow_meter_thread->start();
+        _flow_meter_thread[i]->start();
+    }
 }
 
 void TSPublisher::startGlycolTemperatureThread() {
@@ -168,13 +185,15 @@ void TSPublisher::startupPump() {
 }
 
 void TSPublisher::stopFlowMeterThread() {
-    if (_flow_meter_thread == NULL) {
-        return;
-    }
+    for (int i = 0; i < Settings::FlowMeter::NUM_FLOWMETERS; i++) {
+        if (_flow_meter_thread[i] == NULL) {
+            continue;
+        }
 
-    _flow_meter_thread->stop();
-    delete _flow_meter_thread;
-    _flow_meter_thread = NULL;
+        _flow_meter_thread[i]->stop();
+        delete _flow_meter_thread[i];
+        _flow_meter_thread[i] = NULL;
+    }
 }
 
 void TSPublisher::stopGlycolTemperatureThread() {

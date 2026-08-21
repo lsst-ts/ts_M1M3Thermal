@@ -6,6 +6,10 @@ FCU:
 
 FlowMeter:
   Enabled: true
+  Server_1:
+    Port: 1501
+  Server_2:
+    Port: 1502
 
 GlycolPump:
   Enabled: true

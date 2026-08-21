@@ -6,6 +6,14 @@ FCU:
 
 FlowMeter:
   Enabled: true
+  # Settings for Flow Meter's Modbus TCP/IP servers. Appart from Port,
+  # specifying port number, Address can specify bind address/interface (the
+  # interface server will listen on). If Address is not specified, all
+  # interfaces will be used.
+  Server_1:
+    Port: 1501
+  Server_2:
+    Port: 1502
 
 GlycolPump:
   Enabled: true

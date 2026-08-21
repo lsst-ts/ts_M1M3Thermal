@@ -32,6 +32,7 @@
 #include <cRIO/Singleton.h>
 
 #include "MPU/FlowMeter.h"
+#include "Settings/FlowMeter.h"
 #include "Telemetry/FlowMeterThread.h"
 #include "Telemetry/GlycolTemperatureThread.h"
 #include "Telemetry/PumpThread.h"
@@ -82,7 +83,8 @@ private:
 
     MTM1M3TS_logevent_logLevelC _logLevel;
 
-    Telemetry::FlowMeterThread* _flow_meter_thread;
+    Telemetry::FlowMeterThread* _flow_meter_thread[Settings::FlowMeter::NUM_FLOWMETERS];
+
     Telemetry::GlycolTemperatureThread* _glycolTemperatureThread;
 };
 

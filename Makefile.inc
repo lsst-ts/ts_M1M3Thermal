@@ -18,7 +18,7 @@ endif
 
 CRIOCPP := ../ts_cRIOcpp/
 
-PKG_CPPFLAGS := $(shell pkg-config yaml-cpp spdlog fmt avro-cpp --cflags $(silence))
+PKG_CPPFLAGS := $(shell pkg-config yaml-cpp spdlog fmt avro-cpp libmodbus --cflags $(silence))
 
 SAL_CPPFLAGS += $(PKG_CPPFLAGS)  \
 	-I${SAL_WORK_DIR}/MTM1M3TS/cpp/src \
@@ -44,7 +44,7 @@ LIBS += $(PKG_LIBS) -ldl -lpthread -L/usr/lib64/boost${BOOST_RELEASE} -lboost_fi
 	-L${LSST_SAL_PREFIX}/lib -L${SAL_WORK_DIR}/lib $(LIBSCHEMAREGISTRY_LDLIBS) -lcurl -lrdkafka++ -lrdkafka -lavrocpp -lavro -ljansson -lsasl2
 LIBS_FLAGS += -L${LSST_SAL_PREFIX}/lib
 
-PKG_LIBS := $(shell pkg-config yaml-cpp spdlog fmt --libs $(silence))
+PKG_LIBS := $(shell pkg-config yaml-cpp spdlog fmt libmodbus --libs $(silence))
 
 CPP := g++ -std=c++20 -Wall -fPIE ${c_opts}
 
